@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Vikash Thyadi — Developer & Designer. A refined brutalist portfolio showcasing projects, skills, and creative work.">
+  <meta name="theme-color" content="#2A2529">
+  <title>Vikash Thyadi — Portfolio</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+</head>
+<body>
+
+  <!-- Loading Screen -->
+  <div class="loader" id="loader">
+    <div class="loader-bar"></div>
+  </div>
+
+  <!-- Page Transition Overlay -->
+  <div class="page-transition-overlay" id="pageTransition"></div>
+
+  <!-- Navigation -->
+  <nav class="navbar" id="navbar">
+    <a href="#" class="navbar__logo" data-nav="home" aria-label="Home">
+      <img class="navbar__logo-image" src="assets/images/logo1.png" alt="Logo placeholder">
+    </a>
+    <div class="navbar__links" id="navLinks">
+      <a href="#" class="navbar__link active" data-nav="home">Home</a>
+      <a href="#" class="navbar__link" data-nav="projects-scroll">Projects</a>
+      <a href="#" class="navbar__link" data-nav="contact-scroll">Contact</a>
+    </div>
+    <div class="navbar__toggle" id="navToggle" aria-label="Toggle navigation menu" role="button" tabindex="0">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </nav>
+
+  <!-- ============================================
+       PAGE 1: HOME
+       ============================================ -->
+  <main class="page active" id="page-home">
+
+    <!-- Section 1: Hero -->
+    <section class="hero" id="hero">
+      <div class="hero__container">
+        <div class="hero__content">
+          <span class="hero__label reveal">Developer & Designer</span>
+          <h1 class="hero__title reveal">Vikash<br>Thyadi</h1>
+          <p class="hero__subtitle reveal">Highly motivated and curious engineering student.  </p>
+          <div class="hero__cta-row reveal">
+            <a href="#" class="btn btn--primary" data-nav="projects">View Work</a>
+            <a href="assets/resume/VikashThyadi_Resume.pdf" class="btn btn--secondary" download="Vikash-Thyadi-Resume.pdf">Download Resume</a>
+          </div>
+        </div>
+        <div class="hero__image-wrapper reveal-right">
+          <img src="assets/images/profile.jpeg" alt="Vikash Thyadi — Portrait" class="hero__image" loading="eager">
+          <div class="hero__image-border"></div>
+        </div>
+      </div>
+      <div class="hero__scroll-cue" data-scroll="about" role="button" tabindex="0" aria-label="Scroll to About section">
+        <span>About Me</span>
+        <div class="hero__scroll-arrow">↓</div>
+      </div>
+    </section>
+
+    <!-- Section 2: About -->
+ <section class="about" id="about">
+  <div class="about__container">
+    
+    <div class="about__left reveal-left">
+      <div class="about__image-wrapper">
+        <img src="assets/images/about.jpeg" alt="Vikash working at desk" class="about__image" loading="lazy">
+      </div>
+      <p class="about__bio">
+    I'm a developer and designer who believes great software should feel inevitable intuitive, precise, and expressive. I approach every project with the discipline of an engineer and the curiosity of a craftsman, turning complex problems into clean, purposeful interfaces.
+      </p>
+    </div>
+
+    <div class="about__right reveal-right">
+      <span class="section-label">Background</span>
+      <h2 class="about__heading">Education &<br>Experience</h2>
+
+      <div class="about__education-list stagger-children">
+
+        <!-- Education -->
+        <div class="education-item reveal">
+          <div class="education-item__year">2023 — Present</div>
+          <div class="education-item__title">B.Tech in Computer Science & Engineering (Data Science)</div>
+          <div class="education-item__detail">
+            Aditya Institute of Technology and Management, Tekkali, Andhra Pradesh<br>
+            CGPA: 8.04<br>
+            Focus Areas: Web Development, Data Analysis, Data Engineering, Artificial Intelligence, Machine Learning
+          </div>
+        </div>
+
+        <!-- Achievements -->
+        <div class="education-item reveal">
+          <div class="education-item__year">Achievements</div>
+          <div class="education-item__title">Hackathons & Competitive Work</div>
+          <div class="education-item__detail">
+            Secured 2nd place in a 24-hour hackathon conducted by AITAM, building under time pressure with real constraints.<br>
+            Awarded a medal at a 7-hour hackathon conducted by V Cube Software Solutions.
+          </div>
+        </div>
+
+        <!-- Experience / Ongoing -->
+        <div class="education-item reveal">
+          <div class="education-item__year">Ongoing</div>
+          <div class="education-item__title">Continuous Learning & Project Building</div>
+          <div class="education-item__detail">
+            Actively working on real-world projects across web development and AI-driven applications, focusing on performance, usability, and practical impact.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+    <!-- Section 3: Projects Preview -->
+    <section class="projects-preview" id="projects-preview">
+      <div class="projects-preview__container">
+        <div class="projects-preview__header reveal">
+          <div>
+            <span class="section-label">Selected Work</span>
+            <h2 class="projects-preview__title">Featured<br>Projects</h2>
+          </div>
+          <a href="#" class="btn btn--primary" data-nav="projects">See All Projects</a>
+        </div>
+        <div class="projects-preview__grid stagger-children" id="featuredGrid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Skills / Resume -->
+    <section class="skills" id="skills">
+      <div class="skills__container">
+        <span class="section-label reveal">Capabilities</span>
+        <h2 class="skills__heading reveal">Tools & Technologies<br>I Work With</h2>
+        <div class="skills__marquee-container reveal">
+          <div class="skills__marquee" id="skillsMarquee">
+            <!-- Duplicated by JS for infinite loop -->
+          </div>
+        </div>
+        <div class="skills__resume-row reveal">
+          <a href="assets/resume/VikashThyadi_Resume.pdf" class="btn btn--resume" download="Vikash-Thyadi-Resume.pdf">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M8 2v9M4 8l4 4 4-4M2 14h12"/>
+            </svg>
+            Download Resume
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Contact -->
+    <section class="contact" id="contact">
+      <div class="contact__container">
+        <div class="contact__left reveal">
+          <span class="section-label">Get In Touch</span>
+          <h2 class="contact__heading">Let's Work<br>Together</h2>
+          <p class="contact__subtext">Have a project in mind, or just want to say hello? I'm always open to discussing new ideas and opportunities.</p>
+          <div class="contact__links">
+            <a href="https://www.instagram.com/vikash.thyadi/" target="_blank" rel="noopener noreferrer" class="contact__link">Instagram →</a>
+            <a href="https://github.com/vikash11004" target="_blank" rel="noopener noreferrer" class="contact__link">GitHub →</a>
+            <a href="https://www.linkedin.com/in/vikashthyadi/" target="_blank" rel="noopener noreferrer" class="contact__link">LinkedIn →</a>
+          </div>
+        </div>
+
+        <form class="contact__form reveal-right" id="contactForm" novalidate>
+          <label class="contact__label" for="contactName">Name</label>
+          <input class="contact__input" id="contactName" name="name" type="text" autocomplete="name" required>
+
+          <label class="contact__label" for="contactEmail">Email</label>
+          <input class="contact__input" id="contactEmail" name="email" type="email" autocomplete="email" required>
+
+          <label class="contact__label" for="contactMessage">Message</label>
+          <textarea class="contact__textarea" id="contactMessage" name="message" rows="6" required></textarea>
+
+          <input type="text" name="_honey" tabindex="-1" autocomplete="off" class="contact__honey" aria-hidden="true">
+
+          <button type="submit" class="btn btn--primary contact__submit">Send Message</button>
+          <p class="contact__form-status" id="contactFormStatus" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="footer__container">
+        <span class="footer__copy">© 2026 Vikash Thyadi. All rights reserved.</span>
+        <button class="footer__back-top" data-scroll="hero" aria-label="Back to top">↑ Back to Top</button>
+      </div>
+    </footer>
+  </main>
+
+  <!-- ============================================
+       PAGE 2: PROJECTS
+       ============================================ -->
+  <main class="page" id="page-projects">
+    <div class="projects-page">
+      <div class="projects-page__container">
+        <div class="projects-page__header reveal">
+          <span class="section-label">Archive</span>
+          <h1 class="projects-page__title">All<br>Projects</h1>
+          <p class="projects-page__subtitle">A collection of work spanning web applications, design systems, creative coding, and open-source contributions.</p>
+        </div>
+        <div class="projects-filter reveal" id="projectsFilter">
+          <button class="filter-tab active" data-filter="all">All</button>
+          <button class="filter-tab" data-filter="web">Web App</button>
+          <button class="filter-tab" data-filter="design">Design</button>
+          <button class="filter-tab" data-filter="oss">Open Source</button>
+          <button class="filter-tab" data-filter="software">Software</button>
+        </div>
+        <div class="projects-grid stagger-children" id="projectsGrid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer" style="background: var(--ivory); border-top: var(--border-light);">
+      <div class="footer__container">
+        <span class="footer__copy" style="color: var(--dark-gray);">© 2026 Vikash Thyadi. All rights reserved.</span>
+        <button class="footer__back-top" style="color: var(--charcoal);" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑ Back to Top</button>
+      </div>
+    </footer>
+  </main>
+
+  <!-- ============================================
+       PAGE 3: PROJECT DETAIL
+       ============================================ -->
+  <main class="page" id="page-detail">
+    <div class="project-detail">
+      <div class="project-detail__hero">
+        <div class="project-detail__hero-container">
+          <button class="project-detail__back" id="detailBack" aria-label="Back to Projects">← Back to Projects</button>
+          <h1 class="project-detail__title reveal" id="detailTitle"></h1>
+          <div class="project-detail__meta reveal" id="detailMeta">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+      <div class="project-detail__hero-image reveal">
+        <img id="detailHeroImage" src="" alt="" loading="lazy">
+      </div>
+      <div class="project-detail__content">
+        <div class="project-detail__content-container">
+          <div class="project-detail__description reveal" id="detailDescription">
+            <!-- Populated by JS -->
+          </div>
+          <aside class="project-detail__sidebar reveal-right">
+            <div class="project-detail__tech-label">Tech Stack</div>
+            <div class="project-detail__tech-tags" id="detailTechTags">
+              <!-- Populated by JS -->
+            </div>
+            <div class="project-detail__links" id="detailLinks">
+              <!-- Populated by JS -->
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <div class="project-detail__gallery" id="detailGallery">
+        <div class="project-detail__gallery-container">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <nav class="project-nav">
+        <div class="project-nav__container">
+          <div class="project-nav__link project-nav__link--prev" id="prevProject" role="button" tabindex="0">
+            <span class="project-nav__link-label">← Previous</span>
+            <span class="project-nav__link-title" id="prevProjectTitle"></span>
+          </div>
+          <div class="project-nav__link project-nav__link--next" id="nextProject" role="button" tabindex="0">
+            <span class="project-nav__link-label">Next →</span>
+            <span class="project-nav__link-title" id="nextProjectTitle"></span>
+          </div>
+        </div>
+      </nav>
+    </div>
+
+    <footer class="footer" style="background: var(--ivory); border-top: var(--border-light);">
+      <div class="footer__container">
+        <span class="footer__copy" style="color: var(--dark-gray);">© 2026 Vikash Thyadi. All rights reserved.</span>
+        <button class="footer__back-top" style="color: var(--charcoal);" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑ Back to Top</button>
+      </div>
+    </footer>
+  </main>
+
+  <script src="config.local.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="script.js"></script>
+</body>
+</html>

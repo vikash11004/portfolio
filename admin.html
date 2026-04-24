@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Owner-only admin for managing portfolio projects.">
+  <meta name="theme-color" content="#2A2529">
+  <title>Admin — Vikash Thyadi</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="admin-page">
+    <div class="admin-page__container">
+      <div class="admin-page__header reveal visible">
+        <span class="section-label">Owner Console</span>
+        <h1 class="admin-page__title">Project Admin</h1>
+        <p class="admin-page__subtitle">Manage projects, edit details, delete old entries, and choose what to feature on the landing page.</p>
+        <a href="index.html" class="btn btn--secondary">Back to Portfolio</a>
+      </div>
+
+      <div class="admin-auth reveal visible" id="adminAuth">
+        <div class="admin-auth__status" id="adminAuthStatus">Sign in as the owner to manage projects.</div>
+        <form class="admin-auth__form" id="adminLoginForm" autocomplete="on">
+          <input type="email" id="adminEmail" placeholder="Owner Email" required>
+          <input type="password" id="adminPassword" placeholder="Password" required>
+          <button type="submit" class="btn btn--primary">Sign In</button>
+          <button type="button" class="btn btn--secondary" id="adminSignOutBtn">Sign Out</button>
+        </form>
+      </div>
+
+      <div class="admin-disabled reveal visible" id="adminDisabled" hidden>
+        <h2>Supabase Setup Required</h2>
+        <p>Add your Supabase URL, anon key, and owner email in config.local.js.</p>
+      </div>
+
+      <section class="admin-panel" id="adminPanel" hidden>
+        <div class="admin-editor reveal visible">
+          <h2 class="admin-panel__heading">Project Editor</h2>
+          <div class="admin-edit-state" id="adminEditState" hidden>
+            Editing <strong id="adminEditingTitle"></strong>
+          </div>
+          <form id="projectForm" class="project-form">
+            <input type="hidden" id="projectRowId">
+
+            <div class="project-form__grid">
+              <label>Title
+                <input type="text" id="projectTitle" required>
+              </label>
+              <label>Slug
+                <input type="text" id="projectSlug" placeholder="my-awesome-project" required>
+              </label>
+              <label>Categories
+                <div class="project-form__checks" id="projectCategories">
+                  <label class="project-form__check"><input type="checkbox" value="web"> Web App</label>
+                  <label class="project-form__check"><input type="checkbox" value="design"> Design</label>
+                  <label class="project-form__check"><input type="checkbox" value="oss"> Open Source</label>
+                  <label class="project-form__check"><input type="checkbox" value="software"> Software</label>
+                </div>
+              </label>
+              <label>Year
+                <input type="number" id="projectYear" min="2000" max="2100" required>
+              </label>
+              <label>Role
+                <input type="text" id="projectRole" required>
+              </label>
+              <label>Thumbnail URL
+                <input type="text" id="projectThumbnail" placeholder="assets/images/project-1.png">
+              </label>
+              <label>Project Screenshots (one URL per line)
+                <textarea id="projectScreenshots" rows="4" placeholder="https://.../screen-1.png&#10;https://.../screen-2.png"></textarea>
+              </label>
+              <label>Live URL
+                <input type="url" id="projectLiveUrl" placeholder="https://...">
+              </label>
+              <label>GitHub URL
+                <input type="url" id="projectGithubUrl" placeholder="https://github.com/...">
+              </label>
+              <label>Sort Order
+                <input type="number" id="projectSortOrder" min="0" value="0">
+              </label>
+              <label>Featured on Landing Page
+                <select id="projectFeatured">
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </label>
+            </div>
+
+            <label>Tech Stack (comma separated)
+              <input type="text" id="projectTech" placeholder="React, TypeScript, Node.js" required>
+            </label>
+
+            <label>Description HTML
+              <textarea id="projectDescription" rows="10" required></textarea>
+            </label>
+
+            <div class="project-form__actions">
+              <button type="submit" class="btn btn--primary" id="saveProjectBtn">Save Project</button>
+              <button type="button" class="btn btn--secondary" id="clearProjectForm">Clear</button>
+            </div>
+            <p class="project-form__message" id="projectFormMessage"></p>
+          </form>
+        </div>
+
+        <div class="admin-list reveal visible">
+          <h2 class="admin-panel__heading">Your Projects</h2>
+          <div class="admin-list__items" id="adminProjectList"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="config.local.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

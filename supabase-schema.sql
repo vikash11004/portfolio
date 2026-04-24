@@ -21,7 +21,8 @@ create table if not exists public.projects (
   updated_at timestamptz not null default now()
 );
 
-grant select, insert, update, delete on public.projects to authenticated;
+grant select on public.projects to anon, authenticated;
+grant insert, update, delete on public.projects to authenticated;
 
 alter table public.projects
 add column categories jsonb not null default '[]';
@@ -44,10 +45,11 @@ notify pgrst, 'reload schema';
 alter table public.projects enable row level security;
 
 drop policy if exists projects_select_authenticated on public.projects;
-create policy projects_select_authenticated
+drop policy if exists projects_select_public on public.projects;
+create policy projects_select_public
 on public.projects
 for select
-to authenticated
+to anon, authenticated
 using (true);
 
 drop policy if exists projects_insert_owner_only on public.projects;

@@ -437,6 +437,12 @@ function setupNavigation() {
         scrollBtn.click();
       }
     }
+    
+    // Home key brings to top
+    if (e.key === 'Home') {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   });
 
   // Mobile menu toggle

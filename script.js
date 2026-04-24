@@ -56,6 +56,16 @@ let currentPage = 'home';
 let currentProjectId = null;
 
 
+// ─── Keyboard Shortcuts ────────────────────────
+function setupKeyboardShortcuts() {
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Home') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+}
+
+
 // ─── Initialization ─────────────────────────────
 async function init() {
   if (window.__portfolioInitialized) return;
@@ -65,6 +75,7 @@ async function init() {
   setupScrollEffects();
   setupIntersectionObserver();
   setupNavigation();
+  setupKeyboardShortcuts();
   setupFilterTabs();
   setupProjectNavigation();
   setupAdminEvents();
@@ -404,6 +415,13 @@ function setupNavigation() {
         return;
       }
 
+      // If clicking Home while on home page, scroll to top
+      if (target === 'home' && currentPage === 'home') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        closeNav();
+        return;
+      }
+
       if (target !== currentPage) {
         navigateTo(target);
       }
@@ -455,8 +473,19 @@ function closeNav() {
 
 function setActiveNavLink(targetNav) {
   $$('.navbar__link').forEach(link => {
-    link.classList.toggle('active', link.dataset.nav === targetNav);
+    const shouldBeActive = link.dataset.nav === targetNav;
+    if (!shouldBeActive && link.classList.contains('active')) {
+      link.classList.remove('active');
+    }
   });
+  
+  // Add active class to target with a small delay to prevent overlap
+  const targetLink = $$(`.navbar__link[data-nav="${targetNav}"]`)[0];
+  if (targetLink) {
+    requestAnimationFrame(() => {
+      targetLink.classList.add('active');
+    });
+  }
 }
 
 function updateHomeNavActiveState() {

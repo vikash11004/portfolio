@@ -3,6 +3,7 @@ config.local.js
 .env
 .env.*
 !.env.example
+config.js
 
 # OS/editor noise
 .DS_Store

@@ -7,6 +7,7 @@ const FIREBASE_CONFIG = APP_CONFIG.FIREBASE_CONFIG || null;
 const OWNER_EMAIL = APP_CONFIG.OWNER_EMAIL || '';
 const DEFAULT_THUMBNAIL = 'assets/images/project-1.png';
 const SITE_CONTENT_DOC_ID = 'portfolio_site';
+const PROJECT_SEED = Array.isArray(window.PORTFOLIO_PROJECT_SEED) ? window.PORTFOLIO_PROJECT_SEED : [];
 
 const CATEGORY_LABELS = {
   web: 'Web App',
@@ -358,7 +359,7 @@ function mapProjectToViewModel(docId, row) {
 
 async function loadProjects() {
   if (!firebaseReady || !firebaseDb) {
-    projectsState = [];
+    projectsState = PROJECT_SEED.map((project) => mapProjectToViewModel(project.slug, project));
     return;
   }
 
@@ -381,10 +382,10 @@ async function loadProjects() {
       return timeB - timeA;
     });
 
-    projectsState = rows.map((row) => mapProjectToViewModel(row.docId, row));
+    projectsState = rows.length ? rows.map((row) => mapProjectToViewModel(row.docId, row)) : PROJECT_SEED.map((project) => mapProjectToViewModel(project.slug, project));
   } catch (error) {
     setFormMessage(error.message || 'Unable to load projects.', true);
-    projectsState = [];
+    projectsState = PROJECT_SEED.map((project) => mapProjectToViewModel(project.slug, project));
   }
 }
 
@@ -460,6 +461,53 @@ async function refreshProjects() {
   renderAdminProjectsList();
 }
 
+async function ensureSeedProjects() {
+  if (!firebaseReady || !firebaseDb) return;
+  if (!isOwnerLoggedIn()) return;
+  if (!Array.isArray(PROJECT_SEED) || PROJECT_SEED.length === 0) return;
+
+  try {
+    const existing = await firebaseDb.collection('projects').limit(1).get();
+    if (!existing.empty) return; // already has projects
+
+    const ok = window.confirm(`No projects found in Firestore. Seed ${PROJECT_SEED.length} projects from local assets now?`);
+    if (!ok) return;
+
+    setFormMessage('Seeding projects into Firestore...');
+    const batch = firebaseDb.batch();
+
+    PROJECT_SEED.forEach((p) => {
+      const slug = p.slug || makeSlug(p.title || p.name || 'project');
+      const docRef = firebaseDb.collection('projects').doc(slug);
+      const payload = {
+        slug: slug,
+        title: p.title || p.name || slug,
+        categories: Array.isArray(p.categories) ? p.categories : (p.category ? [p.category] : ['web']),
+        year: p.year || null,
+        role: p.role || '',
+        thumbnail_url: p.thumbnail_url || p.thumbnailUrl || p.thumbnail || DEFAULT_THUMBNAIL,
+        screenshot_urls: Array.isArray(p.screenshot_urls) ? p.screenshot_urls : (Array.isArray(p.screenshotUrls) ? p.screenshotUrls : []),
+        description_html: p.description_html || p.descriptionHtml || p.description || '<p>No description provided.</p>',
+        tech_stack: Array.isArray(p.tech_stack) ? p.tech_stack : (Array.isArray(p.techStack) ? p.techStack : []),
+        live_url: p.live_url || p.liveUrl || null,
+        github_url: p.github_url || p.githubUrl || null,
+        featured: !!p.featured,
+        sort_order: Number.isFinite(p.sort_order) ? p.sort_order : (Number.isFinite(p.sortOrder) ? p.sortOrder : 0),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      batch.set(docRef, payload, { merge: true });
+    });
+
+    await batch.commit();
+    setFormMessage('Seeding complete. Refreshing projects...');
+    await refreshProjects();
+  } catch (error) {
+    setFormMessage(error.message || 'Seeding failed.', true);
+  }
+}
+
 async function updateProjectField(rowId, patch) {
   if (!rowId || !firebaseDb) return;
 
@@ -522,6 +570,7 @@ async function handleAdminLogin(event) {
     setAuthStatus('Signed in successfully.');
     setFormMessage('Signed in successfully.');
     await refreshProjects();
+    if (isOwnerLoggedIn()) await ensureSeedProjects();
   } catch (error) {
     setAuthStatus(error.message || 'Sign in failed.');
     setFormMessage(error.message || 'Sign in failed.', true);
@@ -770,6 +819,8 @@ async function loadSiteContent() {
     if (snap.exists) {
       const data = snap.data() || {};
       siteContentState = deepMerge(DEFAULT_SITE_CONTENT, data.content || {});
+    } else {
+      siteContentState = deepMerge(DEFAULT_SITE_CONTENT, {});
     }
     fillSiteContentForm(siteContentState);
     setSiteMessage('Website content loaded.');
@@ -862,6 +913,7 @@ async function initAdmin() {
   if (firebaseReady) {
     await restoreAuthSession();
     await refreshProjects();
+    if (isOwnerLoggedIn()) await ensureSeedProjects();
   }
 }
 

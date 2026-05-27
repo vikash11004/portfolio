@@ -19,6 +19,7 @@ const CATEGORY_LABELS = {
 };
 
 const SITE_CONTENT_ROW_ID = 'portfolio_site';
+const SITE_CONTENT_SYNC_KEY = 'portfolio-site-content-sync';
 
 const DEFAULT_SITE_CONTENT = {
   seo: {
@@ -131,6 +132,23 @@ let siteContentState = deepMerge(DEFAULT_SITE_CONTENT, {});
 let projectsUnsubscribe = null;
 let siteContentUnsubscribe = null;
 
+function applySyncedSiteContent(rawValue) {
+  if (!rawValue) return false;
+
+  try {
+    const parsed = JSON.parse(rawValue);
+    if (!parsed || typeof parsed !== 'object') return false;
+
+    const content = parsed.content || parsed;
+    siteContentState = deepMerge(DEFAULT_SITE_CONTENT, content || {});
+    applySiteContent();
+    setupContactForm();
+    return true;
+  } catch (_error) {
+    return false;
+  }
+}
+
 
 // ─── DOM References ─────────────────────────────
 const $ = (sel) => document.querySelector(sel);
@@ -212,7 +230,22 @@ async function init() {
     startLiveSync();
   }
 
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', (event) => {
+      if (event.key !== SITE_CONTENT_SYNC_KEY || !event.newValue) return;
+      if (!applySyncedSiteContent(event.newValue)) {
+        loadSiteContent().then(applySiteContent).catch(console.error);
+      }
+    });
+  }
+
   await loadSiteContent();
+  try {
+    const cachedSync = localStorage.getItem(SITE_CONTENT_SYNC_KEY);
+    if (cachedSync) applySyncedSiteContent(cachedSync);
+  } catch (_error) {
+    // Ignore storage access errors; Firestore load still runs.
+  }
   applySiteContent();
   setupContactForm();
 

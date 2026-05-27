@@ -7,6 +7,7 @@ const FIREBASE_CONFIG = APP_CONFIG.FIREBASE_CONFIG || null;
 const OWNER_EMAIL = APP_CONFIG.OWNER_EMAIL || '';
 const DEFAULT_THUMBNAIL = 'assets/images/project-1.png';
 const SITE_CONTENT_DOC_ID = 'portfolio_site';
+const SITE_CONTENT_SYNC_KEY = 'portfolio-site-content-sync';
 const PROJECT_SEED = Array.isArray(window.PORTFOLIO_PROJECT_SEED) ? window.PORTFOLIO_PROJECT_SEED : [];
 
 const CATEGORY_LABELS = {
@@ -860,6 +861,14 @@ async function handleSiteContentSave(event) {
 
     siteContentState = payload;
     fillSiteContentForm(siteContentState);
+    try {
+      localStorage.setItem(SITE_CONTENT_SYNC_KEY, JSON.stringify({
+        updatedAt: new Date().toISOString(),
+        content: payload
+      }));
+    } catch (_error) {
+      // Ignore storage sync failures; Firestore remains the source of truth.
+    }
     setSiteMessage('Website content saved. Changes are live on your portfolio.');
   } catch (error) {
     setSiteMessage(error.message || 'Unable to save site content.', true);

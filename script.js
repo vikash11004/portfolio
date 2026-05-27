@@ -546,7 +546,7 @@ function updateAdminAvailability() {
 
 async function loadProjects() {
   if (!firebaseReady || !firebaseDb) {
-    projectsState = [...FALLBACK_PROJECTS];
+    projectsState = [];
     return;
   }
 
@@ -572,10 +572,10 @@ async function loadProjects() {
       return timeB - timeA;
     });
 
-    projectsState = rows.length ? rows.map(mapDbProjectToViewModel) : [...FALLBACK_PROJECTS];
+    projectsState = rows.length ? rows.map(mapDbProjectToViewModel) : [];
   } catch (error) {
     console.error('Failed loading projects from Firestore:', error.message || error);
-    projectsState = [...FALLBACK_PROJECTS];
+    projectsState = [];
   }
 }
 

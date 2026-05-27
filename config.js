@@ -1,7 +1,14 @@
-// Production/public client config for static hosting (GitHub Pages).
-// Supabase URL and anon key are safe for client-side use.
+// Production/public client config.
+// Replace placeholder Firebase values before deploying.
 window.PORTFOLIO_CONFIG = {
-  SUPABASE_URL: 'https://vmyakfiwppeexakfieve.supabase.co',
-  SUPABASE_ANON_KEY: 'sb_publishable_UdN9XZ7H4eWyKNm9Tn2QNg_C6Pfw9BX',
+  FIREBASE_CONFIG: {
+    apiKey: 'AIzaSyBb3cDqQ8XOETjMuYEBESvqBBoYqbH6vII',
+    authDomain: 'portfolio-d114e.firebaseapp.com',
+    projectId: 'portfolio-d114e',
+    storageBucket: 'portfolio-d114e.firebasestorage.app',
+    messagingSenderId: '168715787606',
+    appId: '1:168715787606:web:466cf4fe9b9b4890c90af7',
+    measurementId: 'G-JDZSFFK8NY'
+  },
   OWNER_EMAIL: 'vikashthyadi1104@gmail.com'
 };

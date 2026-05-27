@@ -6,10 +6,9 @@
 // ─── Project Data ───────────────────────────────
 const FALLBACK_PROJECTS = [];
 
-// ─── Supabase Config ────────────────────────────
+// ─── Firebase Config ────────────────────────────
 const APP_CONFIG = window.PORTFOLIO_CONFIG || {};
-const SUPABASE_URL = APP_CONFIG.SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = APP_CONFIG.SUPABASE_ANON_KEY || '';
+const FIREBASE_CONFIG = APP_CONFIG.FIREBASE_CONFIG || null;
 const OWNER_EMAIL = APP_CONFIG.OWNER_EMAIL || '';
 const DEFAULT_THUMBNAIL = 'assets/images/project-1.png';
 
@@ -20,20 +19,116 @@ const CATEGORY_LABELS = {
   software: 'Software'
 };
 
+const SITE_CONTENT_ROW_ID = 'portfolio_site';
+
+const DEFAULT_SITE_CONTENT = {
+  seo: {
+    homeTitle: 'Vikash Thyadi — Portfolio',
+    projectsTitle: 'Projects — Vikash Thyadi',
+    detailTitleTemplate: '{project} — Vikash Thyadi',
+    description: 'Vikash Thyadi — Developer & Designer. A refined brutalist portfolio showcasing projects, skills, and creative work.',
+    themeColor: '#2A2529',
+    faviconEmoji: '⚡'
+  },
+  brand: {
+    name: 'Vikash Thyadi',
+    logoUrl: 'assets/images/logo1.png',
+    resumeUrl: 'assets/resume/VikashThyadi_Resume.pdf',
+    resumeFileName: 'Vikash-Thyadi-Resume.pdf'
+  },
+  navbar: {
+    homeLabel: 'Home',
+    projectsLabel: 'Projects',
+    contactLabel: 'Contact'
+  },
+  hero: {
+    label: 'Developer & Designer',
+    titleLine1: 'Vikash',
+    titleLine2: 'Thyadi',
+    subtitle: 'Highly motivated and curious engineering student.',
+    primaryButtonText: 'View Work',
+    secondaryButtonText: 'Download Resume',
+    scrollCueText: 'About Me',
+    imageUrl: 'assets/images/profile.jpeg',
+    imageAlt: 'Vikash Thyadi — Portrait'
+  },
+  about: {
+    sectionLabel: 'Background',
+    headingLine1: 'Education &',
+    headingLine2: 'Experience',
+    bio: "I'm a developer and designer who believes great software should feel inevitable intuitive, precise, and expressive. I approach every project with the discipline of an engineer and the curiosity of a craftsman, turning complex problems into clean, purposeful interfaces.",
+    imageUrl: 'assets/images/about.jpeg',
+    imageAlt: 'Vikash working at desk',
+    educationItems: [
+      {
+        year: '2023 — Present',
+        title: 'B.Tech in Computer Science & Engineering (Data Science)',
+        detail: 'Aditya Institute of Technology and Management, Tekkali, Andhra Pradesh<br>CGPA: 8.04<br>Focus Areas: Web Development, Data Analysis, Data Engineering, Artificial Intelligence, Machine Learning'
+      },
+      {
+        year: 'Achievements',
+        title: 'Hackathons & Competitive Work',
+        detail: 'Secured 2nd place in a 24-hour hackathon conducted by AITAM, building under time pressure with real constraints.<br>Awarded a medal at a 7-hour hackathon conducted by V Cube Software Solutions.'
+      },
+      {
+        year: 'Ongoing',
+        title: 'Continuous Learning & Project Building',
+        detail: 'Actively working on real-world projects across web development and AI-driven applications, focusing on performance, usability, and practical impact.'
+      }
+    ]
+  },
+  projectsPreview: {
+    sectionLabel: 'Selected Work',
+    titleLine1: 'Featured',
+    titleLine2: 'Projects',
+    ctaText: 'See All Projects'
+  },
+  skills: {
+    sectionLabel: 'Capabilities',
+    headingLine1: 'Tools & Technologies',
+    headingLine2: 'I Work With',
+    resumeButtonText: 'Download Resume',
+    items: [
+      'JavaScript', 'TypeScript', 'React', 'Next.js', 'Node.js',
+      'Python', 'C++', 'HTML', 'CSS', 'Bootstrap',
+      'PHP', 'Pandas', 'Power BI', 'MySQL', 'NoSQL',
+      'PostgreSQL', 'MongoDB', 'Git', 'Figma', 'GraphQL',
+      'REST APIs', 'TailwindCSS', 'AWS', 'Firebase', 'Vercel', 'Linux'
+    ]
+  },
+  contact: {
+    sectionLabel: 'Get In Touch',
+    headingLine1: "Let's Work",
+    headingLine2: 'Together',
+    subtext: "Have a project in mind, or just want to say hello? I'm always open to discussing new ideas and opportunities.",
+    instagramText: 'Instagram →',
+    instagramUrl: 'https://www.instagram.com/vikash.thyadi/',
+    githubText: 'GitHub →',
+    githubUrl: 'https://github.com/vikash11004',
+    linkedinText: 'LinkedIn →',
+    linkedinUrl: 'https://www.linkedin.com/in/vikashthyadi/',
+    recipientEmail: ''
+  },
+  projectsPage: {
+    sectionLabel: 'Archive',
+    titleLine1: 'All',
+    titleLine2: 'Projects',
+    subtitle: 'A collection of work spanning web applications, design systems, creative coding, and open-source contributions.'
+  },
+  footer: {
+    copyright: '© 2026 Vikash Thyadi. All rights reserved.',
+    backToTopLabel: '↑ Back to Top'
+  }
+};
+
 let projectsState = [...FALLBACK_PROJECTS];
-let supabaseClient = null;
-let supabaseReady = false;
+let firebaseApp = null;
+let firebaseDb = null;
+let firebaseAuth = null;
+let firebaseReady = false;
 let currentUser = null;
 let adminSessionChecked = false;
-
-// ─── Skills Data ────────────────────────────────
-const SKILLS = [
-  'JavaScript', 'TypeScript', 'React', 'Next.js', 'Node.js',
-  'Python', 'C++', 'HTML', 'CSS', 'Bootstrap',
-  'PHP', 'Pandas', 'Power BI', 'MySQL', 'NoSQL',
-  'PostgreSQL', 'MongoDB', 'Git', 'Figma', 'GraphQL',
-  'REST APIs', 'TailwindCSS', 'AWS', 'Firebase', 'Vercel', 'Linux'
-];
+let siteContentState = deepMerge(DEFAULT_SITE_CONTENT, {});
 
 
 // ─── DOM References ─────────────────────────────
@@ -65,27 +160,59 @@ function setupKeyboardShortcuts() {
   });
 }
 
+function deepMerge(base, override) {
+  if (Array.isArray(base)) {
+    return Array.isArray(override) ? [...override] : [...base];
+  }
+
+  if (!base || typeof base !== 'object') {
+    return override !== undefined ? override : base;
+  }
+
+  const result = { ...base };
+  const source = override && typeof override === 'object' ? override : {};
+
+  Object.keys(source).forEach((key) => {
+    const baseValue = result[key];
+    const overrideValue = source[key];
+
+    if (Array.isArray(baseValue)) {
+      result[key] = Array.isArray(overrideValue) ? [...overrideValue] : [...baseValue];
+      return;
+    }
+
+    if (baseValue && typeof baseValue === 'object') {
+      result[key] = deepMerge(baseValue, overrideValue);
+      return;
+    }
+
+    result[key] = overrideValue;
+  });
+
+  return result;
+}
+
 
 // ─── Initialization ─────────────────────────────
 async function init() {
   if (window.__portfolioInitialized) return;
   window.__portfolioInitialized = true;
 
-  setupSupabase();
+  setupFirebase();
   setupScrollEffects();
   setupIntersectionObserver();
   setupNavigation();
   setupKeyboardShortcuts();
   setupFilterTabs();
   setupProjectNavigation();
-  setupAdminEvents();
-  setupContactForm();
 
-  if (supabaseReady) {
+  if (firebaseReady) {
     await restoreAuthSession();
-  } else {
-    updateAdminAvailability();
   }
+
+  await loadSiteContent();
+  applySiteContent();
+  setupContactForm();
 
   await loadProjects();
 
@@ -95,7 +222,6 @@ async function init() {
   populateFeaturedProjects();
   populateProjectsGrid();
   populateSkillsMarquee();
-  renderAdminProjectsList();
 
   // Hide loader after a short delay for effect
   requestAnimationFrame(() => {
@@ -145,45 +271,168 @@ function triggerInitialReveals() {
 })();
 
 
-// ─── Supabase / Auth / Data ─────────────────────
-function setupSupabase() {
+// ─── Firebase / Auth / Data ─────────────────────
+function setupFirebase() {
   const hasConfig =
-    SUPABASE_URL &&
-    SUPABASE_ANON_KEY &&
+    FIREBASE_CONFIG &&
+    FIREBASE_CONFIG.apiKey &&
+    FIREBASE_CONFIG.authDomain &&
+    FIREBASE_CONFIG.projectId &&
     OWNER_EMAIL &&
-    !SUPABASE_URL.includes('YOUR_SUPABASE') &&
-    !SUPABASE_ANON_KEY.includes('YOUR_SUPABASE') &&
+    !String(FIREBASE_CONFIG.apiKey).includes('YOUR_') &&
+    !String(FIREBASE_CONFIG.projectId).includes('YOUR_') &&
     !OWNER_EMAIL.includes('your-email');
 
-  if (!hasConfig || !window.supabase || !window.supabase.createClient) {
-    supabaseReady = false;
+  if (!hasConfig || !window.firebase || !window.firebase.initializeApp) {
+    firebaseReady = false;
     return;
   }
 
-  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  supabaseReady = true;
+  firebaseApp = window.firebase.apps.length
+    ? window.firebase.app()
+    : window.firebase.initializeApp(FIREBASE_CONFIG);
+  firebaseDb = firebaseApp.firestore();
+  firebaseAuth = firebaseApp.auth();
+  firebaseReady = true;
 
-  supabaseClient.auth.onAuthStateChange((_event, session) => {
-    currentUser = session ? session.user : null;
+  firebaseAuth.onAuthStateChanged((user) => {
+    currentUser = user || null;
     adminSessionChecked = true;
-    updateAdminVisibility();
-    updateAdminAvailability();
-    renderAdminProjectsList();
   });
 }
 
 async function restoreAuthSession() {
-  if (!supabaseReady) return;
+  if (!firebaseReady || !firebaseAuth) return;
 
-  const { data, error } = await supabaseClient.auth.getSession();
-  if (error) {
-    console.error('Unable to restore session:', error.message);
+  currentUser = firebaseAuth.currentUser || null;
+  adminSessionChecked = true;
+}
+
+async function loadSiteContent() {
+  siteContentState = deepMerge(DEFAULT_SITE_CONTENT, {});
+
+  if (!firebaseReady || !firebaseDb) {
+    return;
   }
 
-  currentUser = data && data.session ? data.session.user : null;
-  adminSessionChecked = true;
-  updateAdminVisibility();
-  updateAdminAvailability();
+  try {
+    const snap = await firebaseDb.collection('site_content').doc(SITE_CONTENT_ROW_ID).get();
+    if (!snap.exists) return;
+    const data = snap.data() || {};
+    siteContentState = deepMerge(DEFAULT_SITE_CONTENT, data.content || {});
+  } catch (error) {
+    console.warn('Site content unavailable:', error.message || error);
+  }
+}
+
+function setText(sel, value) {
+  const el = $(sel);
+  if (el && value !== undefined && value !== null) {
+    el.textContent = String(value);
+  }
+}
+
+function setAttr(sel, attr, value) {
+  const el = $(sel);
+  if (el && value !== undefined && value !== null && value !== '') {
+    el.setAttribute(attr, String(value));
+  }
+}
+
+function setAllText(sel, value) {
+  if (value === undefined || value === null) return;
+  $$(sel).forEach((el) => {
+    el.textContent = String(value);
+  });
+}
+
+function renderAboutEducationItems(items) {
+  const list = $('#aboutEducationList');
+  if (!list) return;
+
+  const safeItems = Array.isArray(items) && items.length
+    ? items
+    : DEFAULT_SITE_CONTENT.about.educationItems;
+
+  list.innerHTML = safeItems.map(item => `
+    <div class="education-item reveal">
+      <div class="education-item__year">${item.year || ''}</div>
+      <div class="education-item__title">${item.title || ''}</div>
+      <div class="education-item__detail">${item.detail || ''}</div>
+    </div>
+  `).join('');
+
+  if (observer) {
+    list.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => observer.observe(el));
+  }
+}
+
+function applySiteContent() {
+  const content = deepMerge(DEFAULT_SITE_CONTENT, siteContentState);
+
+  setAttr('#metaDescription', 'content', content.seo.description);
+  setAttr('meta[name="theme-color"]', 'content', content.seo.themeColor);
+  const icon = $('#siteFavicon');
+  if (icon) {
+    icon.setAttribute('href', `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>${encodeURIComponent(content.seo.faviconEmoji || '⚡')}</text></svg>`);
+  }
+
+  setAttr('#siteLogoImage', 'src', content.brand.logoUrl);
+  setAttr('#heroSecondaryBtn', 'href', content.brand.resumeUrl);
+  setAttr('#heroSecondaryBtn', 'download', content.brand.resumeFileName);
+  setAttr('#skillsResumeBtn', 'href', content.brand.resumeUrl);
+  setAttr('#skillsResumeBtn', 'download', content.brand.resumeFileName);
+
+  setText('#navHomeLabel', content.navbar.homeLabel);
+  setText('#navProjectsLabel', content.navbar.projectsLabel);
+  setText('#navContactLabel', content.navbar.contactLabel);
+
+  setText('#heroLabel', content.hero.label);
+  setText('#heroTitleLine1', content.hero.titleLine1);
+  setText('#heroTitleLine2', content.hero.titleLine2);
+  setText('#heroSubtitle', content.hero.subtitle);
+  setText('#heroPrimaryBtn', content.hero.primaryButtonText);
+  setText('#heroSecondaryBtn', content.hero.secondaryButtonText);
+  setText('#heroScrollCueLabel', content.hero.scrollCueText);
+  setAttr('#heroImage', 'src', content.hero.imageUrl);
+  setAttr('#heroImage', 'alt', content.hero.imageAlt);
+
+  setText('#aboutSectionLabel', content.about.sectionLabel);
+  setText('#aboutHeadingLine1', content.about.headingLine1);
+  setText('#aboutHeadingLine2', content.about.headingLine2);
+  setText('#aboutBio', content.about.bio);
+  setAttr('#aboutImage', 'src', content.about.imageUrl);
+  setAttr('#aboutImage', 'alt', content.about.imageAlt);
+  renderAboutEducationItems(content.about.educationItems);
+
+  setText('#featuredSectionLabel', content.projectsPreview.sectionLabel);
+  setText('#featuredTitleLine1', content.projectsPreview.titleLine1);
+  setText('#featuredTitleLine2', content.projectsPreview.titleLine2);
+  setText('#featuredCtaText', content.projectsPreview.ctaText);
+
+  setText('#skillsSectionLabel', content.skills.sectionLabel);
+  setText('#skillsHeadingLine1', content.skills.headingLine1);
+  setText('#skillsHeadingLine2', content.skills.headingLine2);
+  setText('#skillsResumeBtnText', content.skills.resumeButtonText);
+
+  setText('#contactSectionLabel', content.contact.sectionLabel);
+  setText('#contactHeadingLine1', content.contact.headingLine1);
+  setText('#contactHeadingLine2', content.contact.headingLine2);
+  setText('#contactSubtext', content.contact.subtext);
+  setText('#contactInstagramLink', content.contact.instagramText);
+  setAttr('#contactInstagramLink', 'href', content.contact.instagramUrl);
+  setText('#contactGithubLink', content.contact.githubText);
+  setAttr('#contactGithubLink', 'href', content.contact.githubUrl);
+  setText('#contactLinkedinLink', content.contact.linkedinText);
+  setAttr('#contactLinkedinLink', 'href', content.contact.linkedinUrl);
+
+  setText('#archiveSectionLabel', content.projectsPage.sectionLabel);
+  setText('#archiveTitleLine1', content.projectsPage.titleLine1);
+  setText('#archiveTitleLine2', content.projectsPage.titleLine2);
+  setText('#archiveSubtitle', content.projectsPage.subtitle);
+
+  setAllText('#footerCopyHome, #footerCopyProjects, #footerCopyDetail', content.footer.copyright);
+  setAllText('#footerBackTopHome, #footerBackTopProjects, #footerBackTopDetail', content.footer.backToTopLabel);
 }
 
 function isOwnerLoggedIn() {
@@ -201,10 +450,10 @@ function updateAdminAvailability() {
 
   if (!disabledBox || !panel || !authStatus) return;
 
-  if (!supabaseReady) {
+  if (!firebaseReady) {
     disabledBox.hidden = false;
     panel.hidden = true;
-    authStatus.textContent = 'Admin disabled until Supabase configuration is added in script.js.';
+    authStatus.textContent = 'Admin disabled until Firebase configuration is added in config.js.';
     return;
   }
 
@@ -223,47 +472,63 @@ function updateAdminAvailability() {
 }
 
 async function loadProjects() {
-  if (!supabaseReady) {
+  if (!firebaseReady || !firebaseDb) {
     projectsState = [...FALLBACK_PROJECTS];
     return;
   }
 
-  const { data, error } = await supabaseClient
-    .from('projects')
-    .select('*')
-    .order('sort_order', { ascending: true, nullsFirst: false })
-    .order('created_at', { ascending: false });
+  try {
+    const snap = await firebaseDb.collection('projects').get();
+    const rows = snap.docs.map((docSnap) => ({
+      docId: docSnap.id,
+      ...docSnap.data()
+    }));
 
-  if (error) {
-    console.error('Failed loading projects from Supabase:', error.message);
+    rows.sort((a, b) => {
+      const orderA = Number.isFinite(a.sort_order) ? a.sort_order : Number.isFinite(a.sortOrder) ? a.sortOrder : 0;
+      const orderB = Number.isFinite(b.sort_order) ? b.sort_order : Number.isFinite(b.sortOrder) ? b.sortOrder : 0;
+      if (orderA !== orderB) return orderA - orderB;
+
+      const timeA = a.created_at && typeof a.created_at.toMillis === 'function'
+        ? a.created_at.toMillis()
+        : Date.parse(a.created_at || 0) || 0;
+      const timeB = b.created_at && typeof b.created_at.toMillis === 'function'
+        ? b.created_at.toMillis()
+        : Date.parse(b.created_at || 0) || 0;
+
+      return timeB - timeA;
+    });
+
+    projectsState = rows.map(mapDbProjectToViewModel);
+  } catch (error) {
+    console.error('Failed loading projects from Firestore:', error.message || error);
     projectsState = [...FALLBACK_PROJECTS];
-    return;
   }
-
-  projectsState = (data || []).map(mapDbProjectToViewModel);
 }
 
 function mapDbProjectToViewModel(row) {
-  const screenshotUrls = parseUrlList(row.screenshot_urls, []);
+  const screenshotUrls = parseUrlList(row.screenshot_urls || row.screenshotUrls, []);
   const categories = parseCategoryList(row.categories, row.category ? [row.category] : []);
+  const techStack = Array.isArray(row.tech_stack) ? row.tech_stack : Array.isArray(row.techStack) ? row.techStack : [];
+  const slug = row.slug || row.id || row.docId || '';
 
   return {
-    rowId: row.id,
-    id: row.slug,
+    rowId: row.docId || row.id || slug,
+    id: slug,
     title: row.title,
     category: categories[0] || row.category || 'web',
     categories,
     categoryLabel: formatCategoryLabel(categories),
     year: String(row.year || ''),
     role: row.role,
-    thumbnail: row.thumbnail_url || DEFAULT_THUMBNAIL,
+    thumbnail: row.thumbnail_url || row.thumbnailUrl || DEFAULT_THUMBNAIL,
     screenshotUrls,
-    description: row.description_html || '<p>No description provided.</p>',
-    tech: Array.isArray(row.tech_stack) ? row.tech_stack : [],
-    liveUrl: row.live_url,
-    githubUrl: row.github_url,
+    description: row.description_html || row.descriptionHtml || '<p>No description provided.</p>',
+    tech: techStack,
+    liveUrl: row.live_url || row.liveUrl || null,
+    githubUrl: row.github_url || row.githubUrl || null,
     featured: !!row.featured,
-    sortOrder: row.sort_order || 0
+    sortOrder: row.sort_order || row.sortOrder || 0
   };
 }
 
@@ -388,8 +653,11 @@ function getProjectExcerpt(project) {
 // ─── Populate Skills Marquee ────────────────────
 function populateSkillsMarquee() {
   const marquee = $('#skillsMarquee');
+  const skills = Array.isArray(siteContentState.skills?.items) && siteContentState.skills.items.length
+    ? siteContentState.skills.items
+    : DEFAULT_SITE_CONTENT.skills.items;
   // Duplicate skills for seamless infinite scroll
-  const allSkills = [...SKILLS, ...SKILLS];
+  const allSkills = [...skills, ...skills];
   marquee.innerHTML = allSkills.map(skill => `<span class="skill-tag">${skill}</span>`).join('');
 }
 
@@ -597,7 +865,8 @@ function navigateToProject(projectId) {
     // Update nav
     setActiveNavLink('projects-scroll');
 
-    document.title = `${project.title} — Vikash Thyadi`;
+    const detailTemplate = siteContentState.seo?.detailTitleTemplate || DEFAULT_SITE_CONTENT.seo.detailTitleTemplate;
+    document.title = detailTemplate.replace('{project}', project.title);
 
     refreshObserver();
 
@@ -700,10 +969,10 @@ document.addEventListener('click', (e) => {
 
 function updatePageTitle(page) {
   const titles = {
-    home: 'Vikash Thyadi — Portfolio',
-    projects: 'Projects — Vikash Thyadi',
-    detail: 'Project — Vikash Thyadi',
-    admin: 'Admin — Vikash Thyadi'
+    home: siteContentState.seo?.homeTitle || DEFAULT_SITE_CONTENT.seo.homeTitle,
+    projects: siteContentState.seo?.projectsTitle || DEFAULT_SITE_CONTENT.seo.projectsTitle,
+    detail: siteContentState.seo?.detailTitleTemplate?.replace('{project}', 'Project') || DEFAULT_SITE_CONTENT.seo.detailTitleTemplate.replace('{project}', 'Project'),
+    admin: `Admin — ${siteContentState.brand?.name || DEFAULT_SITE_CONTENT.brand.name}`
   };
   document.title = titles[page] || titles.home;
 }
@@ -798,7 +1067,9 @@ function setupContactForm() {
   const statusEl = $('#contactFormStatus');
   if (!form || !statusEl) return;
 
-  if (!OWNER_EMAIL) {
+  const recipientEmail = siteContentState.contact?.recipientEmail || OWNER_EMAIL;
+
+  if (!recipientEmail) {
     setContactFormStatus('Contact form is not configured yet.', true);
     return;
   }
@@ -835,7 +1106,7 @@ function setupContactForm() {
     formData.set('_template', 'table');
 
     try {
-      const response = await fetch(`https://formsubmit.co/ajax/${OWNER_EMAIL}`, {
+      const response = await fetch(`https://formsubmit.co/ajax/${recipientEmail}`, {
         method: 'POST',
         headers: {
           Accept: 'application/json'
@@ -868,285 +1139,4 @@ function setContactFormStatus(message, isError = false, isSuccess = false) {
   statusEl.textContent = message;
   statusEl.classList.toggle('is-error', !!isError);
   statusEl.classList.toggle('is-success', !!isSuccess);
-}
-
-
-// ─── Admin Panel ────────────────────────────────
-function setupAdminEvents() {
-  const loginForm = $('#adminLoginForm');
-  const signOutBtn = $('#adminSignOutBtn');
-  const projectForm = $('#projectForm');
-  const clearBtn = $('#clearProjectForm');
-
-  if (loginForm) {
-    loginForm.addEventListener('submit', handleAdminLogin);
-  }
-
-  if (signOutBtn) {
-    signOutBtn.addEventListener('click', handleAdminSignOut);
-  }
-
-  if (projectForm) {
-    projectForm.addEventListener('submit', handleProjectSave);
-  }
-
-  if (clearBtn) {
-    clearBtn.addEventListener('click', clearProjectForm);
-  }
-
-  const titleField = $('#projectTitle');
-  const slugField = $('#projectSlug');
-  if (titleField && slugField) {
-    titleField.addEventListener('input', () => {
-      if (!slugField.dataset.manual) {
-        slugField.value = makeSlug(titleField.value);
-      }
-    });
-
-    slugField.addEventListener('input', () => {
-      slugField.dataset.manual = slugField.value ? '1' : '';
-      slugField.value = makeSlug(slugField.value);
-    });
-  }
-}
-
-async function handleAdminLogin(event) {
-  event.preventDefault();
-  if (!supabaseReady) return;
-
-  const email = ($('#adminEmail') || {}).value || '';
-  const password = ($('#adminPassword') || {}).value || '';
-
-  if (email.trim() !== OWNER_EMAIL) {
-    setAuthStatus('Only the configured owner email can access admin.');
-    setFormMessage('Only the configured owner email can access admin.', true);
-    return;
-  }
-
-  const { error } = await supabaseClient.auth.signInWithPassword({
-    email: email.trim(),
-    password
-  });
-
-  if (error) {
-    setAuthStatus(error.message);
-    setFormMessage(error.message, true);
-    return;
-  }
-
-  setAuthStatus('Signed in successfully.');
-  setFormMessage('Signed in successfully.');
-  updateAdminAvailability();
-  renderAdminProjectsList();
-}
-
-async function handleAdminSignOut() {
-  if (!supabaseReady) return;
-  await supabaseClient.auth.signOut();
-  clearProjectForm();
-  updateAdminAvailability();
-}
-
-function setFormMessage(message, isError = false) {
-  const el = $('#projectFormMessage');
-  if (!el) return;
-  el.textContent = message;
-  el.style.color = isError ? '#d94000' : '#2a2529';
-}
-
-function setAuthStatus(message) {
-  const el = $('#adminAuthStatus');
-  if (!el) return;
-  el.textContent = message;
-}
-
-function clearProjectForm() {
-  const form = $('#projectForm');
-  if (!form) return;
-
-  form.reset();
-  const rowId = $('#projectRowId');
-  const slugField = $('#projectSlug');
-  if (rowId) rowId.value = '';
-  if (slugField) slugField.dataset.manual = '';
-  setFormMessage('');
-}
-
-function getProjectPayloadFromForm() {
-  const title = ($('#projectTitle') || {}).value || '';
-  const slug = makeSlug((($('#projectSlug') || {}).value || title));
-  const category = ($('#projectCategory') || {}).value || 'web';
-  const year = Number((($('#projectYear') || {}).value || 0));
-  const role = ($('#projectRole') || {}).value || '';
-  const thumbnail = ($('#projectThumbnail') || {}).value || '';
-  const screenshotsInput = ($('#projectScreenshots') || {}).value || '';
-  const liveUrl = ($('#projectLiveUrl') || {}).value || null;
-  const githubUrl = ($('#projectGithubUrl') || {}).value || null;
-  const sortOrder = Number((($('#projectSortOrder') || {}).value || 0));
-  const featured = ((($('#projectFeatured') || {}).value || 'false') === 'true');
-  const techInput = ($('#projectTech') || {}).value || '';
-  const descriptionHtml = ($('#projectDescription') || {}).value || '';
-
-  return {
-    title: title.trim(),
-    slug,
-    category,
-    year: Number.isFinite(year) ? year : null,
-    role: role.trim(),
-    thumbnail_url: thumbnail.trim() || DEFAULT_THUMBNAIL,
-    screenshot_urls: parseUrlList(screenshotsInput, []),
-    description_html: descriptionHtml,
-    tech_stack: techInput.split(',').map(item => item.trim()).filter(Boolean),
-    live_url: liveUrl && liveUrl.trim() ? liveUrl.trim() : null,
-    github_url: githubUrl && githubUrl.trim() ? githubUrl.trim() : null,
-    featured,
-    sort_order: Number.isFinite(sortOrder) ? sortOrder : 0
-  };
-}
-
-async function handleProjectSave(event) {
-  event.preventDefault();
-  if (!supabaseReady || !isOwnerLoggedIn()) {
-    setFormMessage('You must be signed in as owner.', true);
-    return;
-  }
-
-  const rowId = ($('#projectRowId') || {}).value || '';
-  const payload = getProjectPayloadFromForm();
-
-  if (!payload.title || !payload.slug || !payload.description_html) {
-    setFormMessage('Title, slug, and description are required.', true);
-    return;
-  }
-
-  let error = null;
-
-  if (rowId) {
-    ({ error } = await supabaseClient.from('projects').update(payload).eq('id', rowId));
-  } else {
-    ({ error } = await supabaseClient.from('projects').insert(payload));
-  }
-
-  if (error) {
-    setFormMessage(error.message, true);
-    return;
-  }
-
-  setFormMessage('Project saved.');
-  clearProjectForm();
-  await refreshProjectsEverywhere();
-}
-
-async function refreshProjectsEverywhere() {
-  await loadProjects();
-  populateFeaturedProjects();
-  populateProjectsGrid(getCurrentFilter());
-  renderAdminProjectsList();
-
-  if (currentPage === 'detail' && currentProjectId) {
-    const freshProject = projectsState.find(p => p.id === currentProjectId);
-    if (freshProject) {
-      populateProjectDetail(freshProject);
-    }
-  }
-}
-
-function getCurrentFilter() {
-  const activeTab = document.querySelector('.filter-tab.active');
-  return activeTab ? activeTab.dataset.filter : 'all';
-}
-
-function renderAdminProjectsList() {
-  const list = $('#adminProjectList');
-  if (!list) return;
-
-  if (!supabaseReady) {
-    list.innerHTML = '';
-    return;
-  }
-
-  if (!isOwnerLoggedIn()) {
-    list.innerHTML = '<p class="admin-list__empty">Sign in to view and manage projects.</p>';
-    return;
-  }
-
-  if (!projectsState.length) {
-    list.innerHTML = '<p class="admin-list__empty">No projects found. Add your first project.</p>';
-    return;
-  }
-
-  list.innerHTML = projectsState.map(project => `
-    <article class="admin-project-item" data-row-id="${project.rowId || ''}">
-      <div>
-        <h3>${project.title}</h3>
-        <p>${project.categoryLabel} · ${project.year || 'N/A'} · Featured: ${project.featured ? 'Yes' : 'No'}</p>
-      </div>
-      <div class="admin-project-item__actions">
-        <button class="btn btn--secondary" data-action="edit" data-id="${project.id}">Edit</button>
-        <button class="btn btn--secondary" data-action="feature" data-id="${project.id}">${project.featured ? 'Unfeature' : 'Feature'}</button>
-        <button class="btn btn--secondary" data-action="delete" data-id="${project.id}">Delete</button>
-      </div>
-    </article>
-  `).join('');
-
-  list.querySelectorAll('button[data-action]').forEach(button => {
-    button.addEventListener('click', handleAdminListAction);
-  });
-}
-
-async function handleAdminListAction(event) {
-  const action = event.currentTarget.dataset.action;
-  const projectId = event.currentTarget.dataset.id;
-  const project = projectsState.find(item => item.id === projectId);
-
-  if (!project) return;
-
-  if (action === 'edit') {
-    fillProjectForm(project);
-    navigateTo('admin');
-    return;
-  }
-
-  if (action === 'feature') {
-    await updateProjectField(project.rowId, { featured: !project.featured });
-    return;
-  }
-
-  if (action === 'delete') {
-    const ok = window.confirm(`Delete ${project.title}? This cannot be undone.`);
-    if (!ok) return;
-    const { error } = await supabaseClient.from('projects').delete().eq('id', project.rowId);
-    if (error) {
-      setFormMessage(error.message, true);
-      return;
-    }
-    await refreshProjectsEverywhere();
-  }
-}
-
-function fillProjectForm(project) {
-  ($('#projectRowId') || {}).value = project.rowId || '';
-  ($('#projectTitle') || {}).value = project.title || '';
-  ($('#projectSlug') || {}).value = project.id || '';
-  ($('#projectCategory') || {}).value = project.category || 'web';
-  ($('#projectYear') || {}).value = project.year || '';
-  ($('#projectRole') || {}).value = project.role || '';
-  ($('#projectThumbnail') || {}).value = project.thumbnail || '';
-  ($('#projectScreenshots') || {}).value = Array.isArray(project.screenshotUrls) ? project.screenshotUrls.join('\n') : '';
-  ($('#projectLiveUrl') || {}).value = project.liveUrl || '';
-  ($('#projectGithubUrl') || {}).value = project.githubUrl || '';
-  ($('#projectSortOrder') || {}).value = Number.isFinite(project.sortOrder) ? project.sortOrder : 0;
-  ($('#projectFeatured') || {}).value = project.featured ? 'true' : 'false';
-  ($('#projectTech') || {}).value = Array.isArray(project.tech) ? project.tech.join(', ') : '';
-  ($('#projectDescription') || {}).value = project.description || '';
-}
-
-async function updateProjectField(rowId, patch) {
-  if (!rowId) return;
-  const { error } = await supabaseClient.from('projects').update(patch).eq('id', rowId);
-  if (error) {
-    setFormMessage(error.message, true);
-    return;
-  }
-  await refreshProjectsEverywhere();
 }

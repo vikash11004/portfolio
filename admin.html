@@ -14,12 +14,12 @@
       <div class="admin-page__header reveal visible">
         <span class="section-label">Owner Console</span>
         <h1 class="admin-page__title">Project Admin</h1>
-        <p class="admin-page__subtitle">Manage projects, edit details, delete old entries, and choose what to feature on the landing page.</p>
+        <p class="admin-page__subtitle">Manage projects, edit details, delete old entries, and choose what to feature on the landing page. Sign in with the admin user account from Firebase Authentication.</p>
         <a href="index.html" class="btn btn--secondary">Back to Portfolio</a>
       </div>
 
       <div class="admin-auth reveal visible" id="adminAuth">
-        <div class="admin-auth__status" id="adminAuthStatus">Sign in as the owner to manage projects.</div>
+        <div class="admin-auth__status" id="adminAuthStatus">Sign in with the admin user account to manage projects.</div>
         <form class="admin-auth__form" id="adminLoginForm" autocomplete="on">
           <input type="email" id="adminEmail" placeholder="Owner Email" required>
           <input type="password" id="adminPassword" placeholder="Password" required>
@@ -29,8 +29,8 @@
       </div>
 
       <div class="admin-disabled reveal visible" id="adminDisabled" hidden>
-        <h2>Supabase Setup Required</h2>
-        <p>Add your Supabase URL, anon key, and owner email in config.local.js.</p>
+        <h2>Firebase Setup Required</h2>
+        <p>Add your Firebase config and owner email in config.local.js.</p>
       </div>
 
       <section class="admin-panel" id="adminPanel" hidden>
@@ -106,12 +106,222 @@
           <h2 class="admin-panel__heading">Your Projects</h2>
           <div class="admin-list__items" id="adminProjectList"></div>
         </div>
+
+        <div class="admin-editor admin-editor--wide reveal visible">
+          <h2 class="admin-panel__heading">Website Content Editor</h2>
+          <form id="siteContentForm" class="project-form">
+            <div class="project-form__grid">
+              <label>Site Name
+                <input type="text" id="siteName" required>
+              </label>
+              <label>Logo URL
+                <input type="text" id="siteLogoUrl" placeholder="assets/images/logo1.png">
+              </label>
+              <label>SEO Home Title
+                <input type="text" id="seoHomeTitle" required>
+              </label>
+              <label>SEO Projects Title
+                <input type="text" id="seoProjectsTitle" required>
+              </label>
+              <label>SEO Detail Title Template
+                <input type="text" id="seoDetailTitleTemplate" placeholder="{project} — Your Name" required>
+              </label>
+              <label>Theme Color
+                <input type="text" id="seoThemeColor" placeholder="#2A2529">
+              </label>
+              <label>Favicon Emoji
+                <input type="text" id="seoFaviconEmoji" maxlength="2" placeholder="⚡">
+              </label>
+              <label>Resume URL
+                <input type="text" id="brandResumeUrl" placeholder="assets/resume/Resume.pdf">
+              </label>
+              <label>Resume File Name
+                <input type="text" id="brandResumeFileName" placeholder="Vikash-Thyadi-Resume.pdf">
+              </label>
+              <label>Contact Recipient Email
+                <input type="email" id="contactRecipientEmail" placeholder="owner@example.com">
+              </label>
+            </div>
+
+            <label>SEO Description
+              <textarea id="seoDescription" rows="3" required></textarea>
+            </label>
+
+            <div class="project-form__grid">
+              <label>Nav Home Label
+                <input type="text" id="navHomeText" required>
+              </label>
+              <label>Nav Projects Label
+                <input type="text" id="navProjectsText" required>
+              </label>
+              <label>Nav Contact Label
+                <input type="text" id="navContactText" required>
+              </label>
+              <label>Hero Section Label
+                <input type="text" id="heroLabelInput" required>
+              </label>
+              <label>Hero Title Line 1
+                <input type="text" id="heroTitleLine1Input" required>
+              </label>
+              <label>Hero Title Line 2
+                <input type="text" id="heroTitleLine2Input" required>
+              </label>
+              <label>Hero Primary Button Text
+                <input type="text" id="heroPrimaryButtonText" required>
+              </label>
+              <label>Hero Secondary Button Text
+                <input type="text" id="heroSecondaryButtonText" required>
+              </label>
+              <label>Hero Scroll Cue Label
+                <input type="text" id="heroScrollCueText" required>
+              </label>
+              <label>Hero Image URL
+                <input type="text" id="heroImageUrl" placeholder="assets/images/profile.jpeg">
+              </label>
+              <label>Hero Image Alt
+                <input type="text" id="heroImageAlt">
+              </label>
+            </div>
+
+            <label>Hero Subtitle
+              <textarea id="heroSubtitleInput" rows="3" required></textarea>
+            </label>
+
+            <div class="project-form__grid">
+              <label>About Section Label
+                <input type="text" id="aboutSectionLabelInput" required>
+              </label>
+              <label>About Heading Line 1
+                <input type="text" id="aboutHeadingLine1Input" required>
+              </label>
+              <label>About Heading Line 2
+                <input type="text" id="aboutHeadingLine2Input" required>
+              </label>
+              <label>About Image URL
+                <input type="text" id="aboutImageUrl" placeholder="assets/images/about.jpeg">
+              </label>
+              <label>About Image Alt
+                <input type="text" id="aboutImageAlt">
+              </label>
+            </div>
+
+            <label>About Bio
+              <textarea id="aboutBioInput" rows="4" required></textarea>
+            </label>
+
+            <label>Education / Experience Items (one JSON object per line)
+              <textarea id="aboutEducationItems" rows="6" placeholder='{"year":"2023 — Present","title":"B.Tech...","detail":"Details..."}'></textarea>
+            </label>
+
+            <div class="project-form__grid">
+              <label>Featured Projects Label
+                <input type="text" id="featuredSectionLabelInput" required>
+              </label>
+              <label>Featured Title Line 1
+                <input type="text" id="featuredTitleLine1Input" required>
+              </label>
+              <label>Featured Title Line 2
+                <input type="text" id="featuredTitleLine2Input" required>
+              </label>
+              <label>Featured CTA Text
+                <input type="text" id="featuredCtaTextInput" required>
+              </label>
+              <label>Skills Section Label
+                <input type="text" id="skillsSectionLabelInput" required>
+              </label>
+              <label>Skills Heading Line 1
+                <input type="text" id="skillsHeadingLine1Input" required>
+              </label>
+              <label>Skills Heading Line 2
+                <input type="text" id="skillsHeadingLine2Input" required>
+              </label>
+              <label>Resume Button Text
+                <input type="text" id="skillsResumeButtonText" required>
+              </label>
+            </div>
+
+            <label>Skills Items (comma separated)
+              <textarea id="skillsItems" rows="3"></textarea>
+            </label>
+
+            <div class="project-form__grid">
+              <label>Contact Section Label
+                <input type="text" id="contactSectionLabelInput" required>
+              </label>
+              <label>Contact Heading Line 1
+                <input type="text" id="contactHeadingLine1Input" required>
+              </label>
+              <label>Contact Heading Line 2
+                <input type="text" id="contactHeadingLine2Input" required>
+              </label>
+              <label>Instagram Link Text
+                <input type="text" id="contactInstagramText" required>
+              </label>
+              <label>Instagram URL
+                <input type="url" id="contactInstagramUrl" placeholder="https://instagram.com/...">
+              </label>
+              <label>GitHub Link Text
+                <input type="text" id="contactGithubText" required>
+              </label>
+              <label>GitHub URL
+                <input type="url" id="contactGithubUrl" placeholder="https://github.com/...">
+              </label>
+              <label>LinkedIn Link Text
+                <input type="text" id="contactLinkedinText" required>
+              </label>
+              <label>LinkedIn URL
+                <input type="url" id="contactLinkedinUrl" placeholder="https://linkedin.com/in/...">
+              </label>
+            </div>
+
+            <label>Contact Subtext
+              <textarea id="contactSubtextInput" rows="3" required></textarea>
+            </label>
+
+            <div class="project-form__grid">
+              <label>Projects Archive Label
+                <input type="text" id="archiveSectionLabelInput" required>
+              </label>
+              <label>Projects Archive Title Line 1
+                <input type="text" id="archiveTitleLine1Input" required>
+              </label>
+              <label>Projects Archive Title Line 2
+                <input type="text" id="archiveTitleLine2Input" required>
+              </label>
+              <label>Footer Back-To-Top Text
+                <input type="text" id="footerBackToTopText" required>
+              </label>
+            </div>
+
+            <label>Projects Archive Subtitle
+              <textarea id="archiveSubtitleInput" rows="3" required></textarea>
+            </label>
+
+            <label>Footer Copyright
+              <input type="text" id="footerCopyright" required>
+            </label>
+
+            <label>Advanced Content JSON (optional override)
+              <textarea id="siteRawJson" rows="12" placeholder="{\n  \"hero\": { \"subtitle\": \"...\" }\n}"></textarea>
+            </label>
+
+            <p class="project-form__hint">If Advanced Content JSON is provided, it will be deep-merged over the values above.</p>
+
+            <div class="project-form__actions">
+              <button type="submit" class="btn btn--primary" id="saveSiteContentBtn">Save Website Content</button>
+              <button type="button" class="btn btn--secondary" id="reloadSiteContentBtn">Reload from Database</button>
+            </div>
+            <p class="project-form__message" id="siteFormMessage"></p>
+          </form>
+        </div>
       </section>
     </div>
   </main>
 
   <script src="config.js?v=1"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="admin.js?v=1"></script>
 </body>
 </html>

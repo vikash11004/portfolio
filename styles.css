@@ -1316,6 +1316,10 @@ ul, ol {
   padding: 1.25rem;
 }
 
+.admin-editor--wide {
+  grid-column: 1 / -1;
+}
+
 .admin-panel__heading {
   font-family: var(--font-display);
   font-size: 1.5rem;
@@ -1390,6 +1394,11 @@ ul, ol {
   min-height: 1.25rem;
   font-family: var(--font-mono);
   font-size: var(--xs-size);
+  color: var(--dark-gray);
+}
+
+.project-form__hint {
+  font-size: var(--small-size);
   color: var(--dark-gray);
 }
 

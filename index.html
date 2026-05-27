@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Vikash Thyadi — Developer & Designer. A refined brutalist portfolio showcasing projects, skills, and creative work.">
+  <meta name="description" content="Vikash Thyadi — Developer & Designer. A refined brutalist portfolio showcasing projects, skills, and creative work." id="metaDescription">
   <meta name="theme-color" content="#2A2529">
   <title>Vikash Thyadi — Portfolio</title>
   <link rel="stylesheet" href="styles.css?v=1">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link rel="icon" id="siteFavicon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 </head>
 <body>
 
@@ -22,12 +22,12 @@
   <!-- Navigation -->
   <nav class="navbar" id="navbar">
     <a href="#" class="navbar__logo" data-nav="home" aria-label="Home">
-      <img class="navbar__logo-image" src="assets/images/logo1.png" alt="Logo placeholder">
+      <img class="navbar__logo-image" id="siteLogoImage" src="assets/images/logo1.png" alt="Logo placeholder">
     </a>
     <div class="navbar__links" id="navLinks">
-      <a href="#" class="navbar__link active" data-nav="home">Home</a>
-      <a href="#" class="navbar__link" data-nav="projects-scroll">Projects</a>
-      <a href="#" class="navbar__link" data-nav="contact-scroll">Contact</a>
+      <a href="#" class="navbar__link active" data-nav="home" id="navHomeLabel">Home</a>
+      <a href="#" class="navbar__link" data-nav="projects-scroll" id="navProjectsLabel">Projects</a>
+      <a href="#" class="navbar__link" data-nav="contact-scroll" id="navContactLabel">Contact</a>
     </div>
     <div class="navbar__toggle" id="navToggle" aria-label="Toggle navigation menu" role="button" tabindex="0">
       <span></span>
@@ -45,21 +45,21 @@
     <section class="hero" id="hero">
       <div class="hero__container">
         <div class="hero__content">
-          <span class="hero__label reveal">Developer & Designer</span>
-          <h1 class="hero__title reveal">Vikash<br>Thyadi</h1>
-          <p class="hero__subtitle reveal">Highly motivated and curious engineering student.  </p>
+          <span class="hero__label reveal" id="heroLabel">Developer & Designer</span>
+          <h1 class="hero__title reveal"><span id="heroTitleLine1">Vikash</span><br><span id="heroTitleLine2">Thyadi</span></h1>
+          <p class="hero__subtitle reveal" id="heroSubtitle">Highly motivated and curious engineering student.  </p>
           <div class="hero__cta-row reveal">
-            <a href="#" class="btn btn--primary" data-nav="projects">View Work</a>
-            <a href="assets/resume/VikashThyadi_Resume.pdf" class="btn btn--secondary" download="Vikash-Thyadi-Resume.pdf">Download Resume</a>
+            <a href="#" class="btn btn--primary" data-nav="projects" id="heroPrimaryBtn">View Work</a>
+            <a href="assets/resume/VikashThyadi_Resume.pdf" class="btn btn--secondary" id="heroSecondaryBtn" download="Vikash-Thyadi-Resume.pdf">Download Resume</a>
           </div>
         </div>
         <div class="hero__image-wrapper reveal-right">
-          <img src="assets/images/profile.jpeg" alt="Vikash Thyadi — Portrait" class="hero__image" loading="eager">
+          <img src="assets/images/profile.jpeg" alt="Vikash Thyadi — Portrait" class="hero__image" id="heroImage" loading="eager">
           <div class="hero__image-border"></div>
         </div>
       </div>
       <div class="hero__scroll-cue" data-scroll="about" role="button" tabindex="0" aria-label="Scroll to About section">
-        <span>About Me</span>
+        <span id="heroScrollCueLabel">About Me</span>
         <div class="hero__scroll-arrow">↓</div>
       </div>
     </section>
@@ -70,49 +70,18 @@
     
     <div class="about__left reveal-left">
       <div class="about__image-wrapper">
-        <img src="assets/images/about.jpeg" alt="Vikash working at desk" class="about__image" loading="lazy">
+        <img src="assets/images/about.jpeg" alt="Vikash working at desk" class="about__image" id="aboutImage" loading="lazy">
       </div>
-      <p class="about__bio">
+      <p class="about__bio" id="aboutBio">
     I'm a developer and designer who believes great software should feel inevitable intuitive, precise, and expressive. I approach every project with the discipline of an engineer and the curiosity of a craftsman, turning complex problems into clean, purposeful interfaces.
       </p>
     </div>
 
     <div class="about__right reveal-right">
-      <span class="section-label">Background</span>
-      <h2 class="about__heading">Education &<br>Experience</h2>
+      <span class="section-label" id="aboutSectionLabel">Background</span>
+      <h2 class="about__heading"><span id="aboutHeadingLine1">Education &</span><br><span id="aboutHeadingLine2">Experience</span></h2>
 
-      <div class="about__education-list stagger-children">
-
-        <!-- Education -->
-        <div class="education-item reveal">
-          <div class="education-item__year">2023 — Present</div>
-          <div class="education-item__title">B.Tech in Computer Science & Engineering (Data Science)</div>
-          <div class="education-item__detail">
-            Aditya Institute of Technology and Management, Tekkali, Andhra Pradesh<br>
-            CGPA: 8.04<br>
-            Focus Areas: Web Development, Data Analysis, Data Engineering, Artificial Intelligence, Machine Learning
-          </div>
-        </div>
-
-        <!-- Achievements -->
-        <div class="education-item reveal">
-          <div class="education-item__year">Achievements</div>
-          <div class="education-item__title">Hackathons & Competitive Work</div>
-          <div class="education-item__detail">
-            Secured 2nd place in a 24-hour hackathon conducted by AITAM, building under time pressure with real constraints.<br>
-            Awarded a medal at a 7-hour hackathon conducted by V Cube Software Solutions.
-          </div>
-        </div>
-
-        <!-- Experience / Ongoing -->
-        <div class="education-item reveal">
-          <div class="education-item__year">Ongoing</div>
-          <div class="education-item__title">Continuous Learning & Project Building</div>
-          <div class="education-item__detail">
-            Actively working on real-world projects across web development and AI-driven applications, focusing on performance, usability, and practical impact.
-          </div>
-        </div>
-
+      <div class="about__education-list stagger-children" id="aboutEducationList">
       </div>
     </div>
 
@@ -124,10 +93,10 @@
       <div class="projects-preview__container">
         <div class="projects-preview__header reveal">
           <div>
-            <span class="section-label">Selected Work</span>
-            <h2 class="projects-preview__title">Featured<br>Projects</h2>
+            <span class="section-label" id="featuredSectionLabel">Selected Work</span>
+            <h2 class="projects-preview__title"><span id="featuredTitleLine1">Featured</span><br><span id="featuredTitleLine2">Projects</span></h2>
           </div>
-          <a href="#" class="btn btn--primary" data-nav="projects">See All Projects</a>
+          <a href="#" class="btn btn--primary" data-nav="projects" id="featuredCtaText">See All Projects</a>
         </div>
         <div class="projects-preview__grid stagger-children" id="featuredGrid">
           <!-- Populated by JS -->
@@ -138,19 +107,19 @@
     <!-- Section 4: Skills / Resume -->
     <section class="skills" id="skills">
       <div class="skills__container">
-        <span class="section-label reveal">Capabilities</span>
-        <h2 class="skills__heading reveal">Tools & Technologies<br>I Work With</h2>
+        <span class="section-label reveal" id="skillsSectionLabel">Capabilities</span>
+        <h2 class="skills__heading reveal"><span id="skillsHeadingLine1">Tools & Technologies</span><br><span id="skillsHeadingLine2">I Work With</span></h2>
         <div class="skills__marquee-container reveal">
           <div class="skills__marquee" id="skillsMarquee">
             <!-- Duplicated by JS for infinite loop -->
           </div>
         </div>
         <div class="skills__resume-row reveal">
-          <a href="assets/resume/VikashThyadi_Resume.pdf" class="btn btn--resume" download="Vikash-Thyadi-Resume.pdf">
+          <a href="assets/resume/VikashThyadi_Resume.pdf" class="btn btn--resume" id="skillsResumeBtn" download="Vikash-Thyadi-Resume.pdf">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <path d="M8 2v9M4 8l4 4 4-4M2 14h12"/>
             </svg>
-            Download Resume
+            <span id="skillsResumeBtnText">Download Resume</span>
           </a>
         </div>
       </div>
@@ -160,13 +129,13 @@
     <section class="contact" id="contact">
       <div class="contact__container">
         <div class="contact__left reveal">
-          <span class="section-label">Get In Touch</span>
-          <h2 class="contact__heading">Let's Work<br>Together</h2>
-          <p class="contact__subtext">Have a project in mind, or just want to say hello? I'm always open to discussing new ideas and opportunities.</p>
+          <span class="section-label" id="contactSectionLabel">Get In Touch</span>
+          <h2 class="contact__heading"><span id="contactHeadingLine1">Let's Work</span><br><span id="contactHeadingLine2">Together</span></h2>
+          <p class="contact__subtext" id="contactSubtext">Have a project in mind, or just want to say hello? I'm always open to discussing new ideas and opportunities.</p>
           <div class="contact__links">
-            <a href="https://www.instagram.com/vikash.thyadi/" target="_blank" rel="noopener noreferrer" class="contact__link">Instagram →</a>
-            <a href="https://github.com/vikash11004" target="_blank" rel="noopener noreferrer" class="contact__link">GitHub →</a>
-            <a href="https://www.linkedin.com/in/vikashthyadi/" target="_blank" rel="noopener noreferrer" class="contact__link">LinkedIn →</a>
+            <a href="https://www.instagram.com/vikash.thyadi/" target="_blank" rel="noopener noreferrer" class="contact__link" id="contactInstagramLink">Instagram →</a>
+            <a href="https://github.com/vikash11004" target="_blank" rel="noopener noreferrer" class="contact__link" id="contactGithubLink">GitHub →</a>
+            <a href="https://www.linkedin.com/in/vikashthyadi/" target="_blank" rel="noopener noreferrer" class="contact__link" id="contactLinkedinLink">LinkedIn →</a>
           </div>
         </div>
 
@@ -190,8 +159,8 @@
 
     <footer class="footer">
       <div class="footer__container">
-        <span class="footer__copy">© 2026 Vikash Thyadi. All rights reserved.</span>
-        <button class="footer__back-top" data-scroll="hero" aria-label="Back to top">↑ Back to Top</button>
+        <span class="footer__copy" id="footerCopyHome">© 2026 Vikash Thyadi. All rights reserved.</span>
+        <button class="footer__back-top" data-scroll="hero" aria-label="Back to top" id="footerBackTopHome">↑ Back to Top</button>
       </div>
     </footer>
   </main>
@@ -203,9 +172,9 @@
     <div class="projects-page">
       <div class="projects-page__container">
         <div class="projects-page__header reveal">
-          <span class="section-label">Archive</span>
-          <h1 class="projects-page__title">All<br>Projects</h1>
-          <p class="projects-page__subtitle">A collection of work spanning web applications, design systems, creative coding, and open-source contributions.</p>
+          <span class="section-label" id="archiveSectionLabel">Archive</span>
+          <h1 class="projects-page__title"><span id="archiveTitleLine1">All</span><br><span id="archiveTitleLine2">Projects</span></h1>
+          <p class="projects-page__subtitle" id="archiveSubtitle">A collection of work spanning web applications, design systems, creative coding, and open-source contributions.</p>
         </div>
         <div class="projects-filter reveal" id="projectsFilter">
           <button class="filter-tab active" data-filter="all">All</button>
@@ -222,8 +191,8 @@
 
     <footer class="footer" style="background: var(--ivory); border-top: var(--border-light);">
       <div class="footer__container">
-        <span class="footer__copy" style="color: var(--dark-gray);">© 2026 Vikash Thyadi. All rights reserved.</span>
-        <button class="footer__back-top" style="color: var(--charcoal);" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑ Back to Top</button>
+        <span class="footer__copy" style="color: var(--dark-gray);" id="footerCopyProjects">© 2026 Vikash Thyadi. All rights reserved.</span>
+        <button class="footer__back-top" style="color: var(--charcoal);" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top" id="footerBackTopProjects">↑ Back to Top</button>
       </div>
     </footer>
   </main>
@@ -284,14 +253,16 @@
 
     <footer class="footer" style="background: var(--ivory); border-top: var(--border-light);">
       <div class="footer__container">
-        <span class="footer__copy" style="color: var(--dark-gray);">© 2026 Vikash Thyadi. All rights reserved.</span>
-        <button class="footer__back-top" style="color: var(--charcoal);" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑ Back to Top</button>
+        <span class="footer__copy" style="color: var(--dark-gray);" id="footerCopyDetail">© 2026 Vikash Thyadi. All rights reserved.</span>
+        <button class="footer__back-top" style="color: var(--charcoal);" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top" id="footerBackTopDetail">↑ Back to Top</button>
       </div>
     </footer>
   </main>
 
   <script src="config.js?v=1"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="script.js?v=1"></script>
 </body>
 </html>

@@ -866,6 +866,36 @@ async function handleSiteContentSave(event) {
   }
 }
 
+async function seedDatabaseWithProjects() {
+  console.log('Seeding database with projects...');
+  if (!db) {
+    console.error('Firestore database is not initialized.');
+    return;
+  }
+  if (!PROJECT_SEED || PROJECT_SEED.length === 0) {
+    console.error('No projects found in PROJECT_SEED.');
+    return;
+  }
+
+  const projectsCollection = collection(db, 'projects');
+  const promises = PROJECT_SEED.map(project => {
+    const docRef = doc(projectsCollection, project.slug);
+    return setDoc(docRef, project);
+  });
+
+  try {
+    await Promise.all(promises);
+    console.log('All projects have been seeded successfully.');
+    alert('Successfully seeded database with local project data.');
+  } catch (error) {
+    console.error('Error seeding projects: ', error);
+    alert('Error seeding projects. Check the console for details.');
+  }
+}
+
+// Make the function globally accessible for manual triggering
+window.seedDatabaseWithProjects = seedDatabaseWithProjects;
+
 function setupEvents() {
   const loginForm = $('#adminLoginForm');
   const signOutBtn = $('#adminSignOutBtn');

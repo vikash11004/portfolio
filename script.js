@@ -4,11 +4,6 @@
    ============================================ */
 
 // ─── Project Data ───────────────────────────────
-const PROJECT_SEED = Array.isArray(window.PORTFOLIO_PROJECT_SEED) ? window.PORTFOLIO_PROJECT_SEED : [];
-const FALLBACK_PROJECTS = PROJECT_SEED.map((project) => mapDbProjectToViewModel({
-  docId: project.slug,
-  ...project
-}));
 
 // ─── Firebase Config ────────────────────────────
 const APP_CONFIG = window.PORTFOLIO_CONFIG || {};
@@ -125,7 +120,7 @@ const DEFAULT_SITE_CONTENT = {
   }
 };
 
-let projectsState = [...FALLBACK_PROJECTS];
+let projectsState = [];
 let firebaseApp = null;
 let firebaseDb = null;
 let firebaseAuth = null;
@@ -339,7 +334,7 @@ function startLiveSync() {
     const rows = snap.docs.map((docSnap) => ({ docId: docSnap.id, ...docSnap.data() }));
 
     if (!rows.length) {
-      projectsState = [...FALLBACK_PROJECTS];
+      console.warn('No projects loaded from Firebase.');
     } else {
       rows.sort((a, b) => {
         const orderA = Number.isFinite(a.sort_order) ? a.sort_order : Number.isFinite(a.sortOrder) ? a.sortOrder : 0;
@@ -370,7 +365,7 @@ function startLiveSync() {
     }
   }, (error) => {
     console.error('Live project sync failed:', error.message || error);
-    projectsState = [...FALLBACK_PROJECTS];
+    projectsState = [];
     populateFeaturedProjects();
     populateProjectsGrid(getCurrentFilter());
   });

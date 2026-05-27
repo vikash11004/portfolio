@@ -4,7 +4,11 @@
    ============================================ */
 
 // ─── Project Data ───────────────────────────────
-const FALLBACK_PROJECTS = [];
+const PROJECT_SEED = Array.isArray(window.PORTFOLIO_PROJECT_SEED) ? window.PORTFOLIO_PROJECT_SEED : [];
+const FALLBACK_PROJECTS = PROJECT_SEED.map((project) => mapDbProjectToViewModel({
+  docId: project.slug,
+  ...project
+}));
 
 // ─── Firebase Config ────────────────────────────
 const APP_CONFIG = window.PORTFOLIO_CONFIG || {};
@@ -129,6 +133,8 @@ let firebaseReady = false;
 let currentUser = null;
 let adminSessionChecked = false;
 let siteContentState = deepMerge(DEFAULT_SITE_CONTENT, {});
+let projectsUnsubscribe = null;
+let siteContentUnsubscribe = null;
 
 
 // ─── DOM References ─────────────────────────────
@@ -208,6 +214,7 @@ async function init() {
 
   if (firebaseReady) {
     await restoreAuthSession();
+    startLiveSync();
   }
 
   await loadSiteContent();
@@ -301,6 +308,74 @@ function setupFirebase() {
   });
 }
 
+function startLiveSync() {
+  if (!firebaseReady || !firebaseDb) return;
+
+  if (typeof siteContentUnsubscribe === 'function') {
+    siteContentUnsubscribe();
+    siteContentUnsubscribe = null;
+  }
+
+  if (typeof projectsUnsubscribe === 'function') {
+    projectsUnsubscribe();
+    projectsUnsubscribe = null;
+  }
+
+  siteContentUnsubscribe = firebaseDb.collection('site_content').doc(SITE_CONTENT_ROW_ID)
+    .onSnapshot((snap) => {
+      if (snap.exists) {
+        const data = snap.data() || {};
+        siteContentState = deepMerge(DEFAULT_SITE_CONTENT, data.content || {});
+      } else {
+        siteContentState = deepMerge(DEFAULT_SITE_CONTENT, {});
+      }
+      applySiteContent();
+      setupContactForm();
+    }, (error) => {
+      console.error('Live site content sync failed:', error.message || error);
+    });
+
+  projectsUnsubscribe = firebaseDb.collection('projects').onSnapshot((snap) => {
+    const rows = snap.docs.map((docSnap) => ({ docId: docSnap.id, ...docSnap.data() }));
+
+    if (!rows.length) {
+      projectsState = [...FALLBACK_PROJECTS];
+    } else {
+      rows.sort((a, b) => {
+        const orderA = Number.isFinite(a.sort_order) ? a.sort_order : Number.isFinite(a.sortOrder) ? a.sortOrder : 0;
+        const orderB = Number.isFinite(b.sort_order) ? b.sort_order : Number.isFinite(b.sortOrder) ? b.sortOrder : 0;
+        if (orderA !== orderB) return orderA - orderB;
+
+        const timeA = a.created_at && typeof a.created_at.toMillis === 'function'
+          ? a.created_at.toMillis()
+          : Date.parse(a.created_at || 0) || 0;
+        const timeB = b.created_at && typeof b.created_at.toMillis === 'function'
+          ? b.created_at.toMillis()
+          : Date.parse(b.created_at || 0) || 0;
+
+        return timeB - timeA;
+      });
+
+      projectsState = rows.map(mapDbProjectToViewModel);
+    }
+
+    populateFeaturedProjects();
+    populateProjectsGrid(getCurrentFilter());
+
+    if (currentPage === 'detail' && currentProjectId) {
+      const project = projectsState.find((item) => item.id === currentProjectId);
+      if (project) {
+        populateProjectDetail(project);
+      }
+    }
+  }, (error) => {
+    console.error('Live project sync failed:', error.message || error);
+    projectsState = [...FALLBACK_PROJECTS];
+    populateFeaturedProjects();
+    populateProjectsGrid(getCurrentFilter());
+  });
+}
+
 async function restoreAuthSession() {
   if (!firebaseReady || !firebaseAuth) return;
 
@@ -317,9 +392,12 @@ async function loadSiteContent() {
 
   try {
     const snap = await firebaseDb.collection('site_content').doc(SITE_CONTENT_ROW_ID).get();
-    if (!snap.exists) return;
-    const data = snap.data() || {};
-    siteContentState = deepMerge(DEFAULT_SITE_CONTENT, data.content || {});
+    if (snap.exists) {
+      const data = snap.data() || {};
+      siteContentState = deepMerge(DEFAULT_SITE_CONTENT, data.content || {});
+    } else {
+      siteContentState = deepMerge(DEFAULT_SITE_CONTENT, {});
+    }
   } catch (error) {
     console.warn('Site content unavailable:', error.message || error);
   }
@@ -499,7 +577,7 @@ async function loadProjects() {
       return timeB - timeA;
     });
 
-    projectsState = rows.map(mapDbProjectToViewModel);
+    projectsState = rows.length ? rows.map(mapDbProjectToViewModel) : [...FALLBACK_PROJECTS];
   } catch (error) {
     console.error('Failed loading projects from Firestore:', error.message || error);
     projectsState = [...FALLBACK_PROJECTS];
@@ -625,13 +703,14 @@ function populateProjectsGrid(filter = 'all') {
 
 // ─── Create Project Card HTML ───────────────────
 function createProjectCard(project) {
+  const metaText = [project.categoryLabel, project.year].filter(Boolean).join(' · ');
   return `
     <div class="project-card reveal" data-project-id="${project.id}" role="button" tabindex="0" aria-label="View ${project.title}">
       <div class="project-card__image-wrapper">
         <img src="${project.thumbnail}" alt="${project.title}" class="project-card__image" loading="lazy">
       </div>
       <div class="project-card__content">
-        <div class="project-card__category">${project.categoryLabel} · ${project.year}</div>
+        <div class="project-card__category">${metaText}</div>
         <div class="project-card__title">${project.title}</div>
         <div class="project-card__desc">${getProjectExcerpt(project)}</div>
       </div>

@@ -493,6 +493,7 @@ function mapProjectToViewModel(docId, row) {
     thumbnail: row.thumbnail_url || row.thumbnailUrl || DEFAULT_THUMBNAIL,
     screenshotUrls,
     description: row.description_html || row.descriptionHtml || '<p>No description provided.</p>',
+    shortDescription: row.short_description || row.shortDescription || row.excerpt || '',
     tech: Array.isArray(row.tech_stack) ? row.tech_stack : Array.isArray(row.techStack) ? row.techStack : [],
     liveUrl: row.live_url || row.liveUrl || null,
     githubUrl: row.github_url || row.githubUrl || null,
@@ -561,6 +562,7 @@ function fillProjectForm(project) {
   ($('#projectSortOrder') || {}).value = Number.isFinite(project.sortOrder) ? project.sortOrder : 0;
   ($('#projectFeatured') || {}).value = project.featured ? 'true' : 'false';
   ($('#projectTech') || {}).value = Array.isArray(project.tech) ? project.tech.join(', ') : '';
+  ($('#projectShortDescription') || {}).value = project.shortDescription || '';
   ($('#projectDescription') || {}).value = project.description || '';
   setEditState(project);
   $('#projectForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -580,6 +582,7 @@ function getProjectPayloadFromForm() {
   const featured = ((($('#projectFeatured') || {}).value || 'false') === 'true');
   const techInput = ($('#projectTech') || {}).value || '';
   const descriptionHtml = ($('#projectDescription') || {}).value || '';
+  const shortDescription = ($('#projectShortDescription') || {}).value || '';
 
   return {
     slug,
@@ -591,6 +594,7 @@ function getProjectPayloadFromForm() {
     thumbnail_url: thumbnail.trim() || DEFAULT_THUMBNAIL,
     screenshot_urls: parseUrlList(screenshotsInput, []),
     description_html: descriptionHtml,
+    short_description: shortDescription.trim() || null,
     tech_stack: techInput.split(',').map(item => item.trim()).filter(Boolean),
     live_url: liveUrl && liveUrl.trim() ? liveUrl.trim() : null,
     github_url: githubUrl && githubUrl.trim() ? githubUrl.trim() : null,

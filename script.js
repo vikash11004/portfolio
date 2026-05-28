@@ -706,6 +706,15 @@ function sanitizeMarkdownUrl(value) {
   return '';
 }
 
+function splitMarkdownCells(line) {
+  return String(line || '')
+    .trim()
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split('|')
+    .map(cell => cell.trim());
+}
+
 function formatMarkdownInline(value) {
   let output = escapeHtml(String(value || ''));
 
@@ -721,6 +730,7 @@ function formatMarkdownInline(value) {
     return `<a href="${escapeAttribute(url)}" target="_blank" rel="noopener noreferrer">${text}</a>`;
   });
 
+  output = output.replace(/~~([^~]+)~~/g, '<del>$1</del>');
   output = output.replace(/`([^`]+)`/g, '<code>$1</code>');
   output = output.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   output = output.replace(/__([^_]+)__/g, '<strong>$1</strong>');
@@ -733,15 +743,15 @@ function formatMarkdownInline(value) {
 function renderMarkdownTable(lines) {
   if (lines.length < 2) return '';
 
-  const headers = lines[0].split('|').map(cell => cell.trim()).filter(Boolean);
-  const separator = lines[1].split('|').map(cell => cell.trim()).filter(Boolean);
+  const headers = splitMarkdownCells(lines[0]);
+  const separator = splitMarkdownCells(lines[1]);
 
   if (!headers.length || separator.length !== headers.length || !separator.every(cell => /^:?-{3,}:?$/.test(cell))) {
     return '';
   }
 
   const bodyRows = lines.slice(2).map((line) => {
-    const cells = line.split('|').map(cell => cell.trim()).filter(Boolean);
+    const cells = splitMarkdownCells(line);
     return `<tr>${cells.map(cell => `<td>${formatMarkdownInline(cell)}</td>`).join('')}</tr>`;
   });
 
@@ -819,18 +829,28 @@ function renderMarkdownBlocks(source) {
       continue;
     }
 
-    const tableLines = [trimmed];
-    let lookahead = index + 1;
-    while (lookahead < lines.length && lines[lookahead].includes('|') && lines[lookahead].trim()) {
-      tableLines.push(lines[lookahead].trim());
-      lookahead += 1;
-      if (tableLines.length >= 8) break;
+    const nextLine = index + 1 < lines.length ? lines[index + 1].trim() : '';
+    const isTableSeparator = /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(nextLine);
+    const currentLooksLikeTable = trimmed.includes('|') && isTableSeparator;
+    let tableHtml = '';
+    let tableLinesCount = 0;
+
+    if (currentLooksLikeTable) {
+      const tableLines = [trimmed, nextLine];
+      let lookahead = index + 2;
+      while (lookahead < lines.length && lines[lookahead].includes('|') && lines[lookahead].trim()) {
+        tableLines.push(lines[lookahead].trim());
+        lookahead += 1;
+        if (tableLines.length >= 12) break;
+      }
+
+      tableHtml = renderMarkdownTable(tableLines);
+      tableLinesCount = tableLines.length;
     }
 
-    const tableHtml = renderMarkdownTable(tableLines);
     if (tableHtml) {
       blocks.push(tableHtml);
-      index += tableLines.length;
+      index += tableLinesCount;
       continue;
     }
 
@@ -858,6 +878,23 @@ function renderProjectDescriptionHtml(value) {
 
   if (looksLikeHtml(source)) {
     return source;
+  }
+
+  if (window.marked && typeof window.marked.parse === 'function') {
+    const rendered = window.marked.parse(source, {
+      gfm: true,
+      breaks: false,
+      mangle: false,
+      headerIds: false
+    });
+
+    if (window.DOMPurify && typeof window.DOMPurify.sanitize === 'function') {
+      return window.DOMPurify.sanitize(rendered, {
+        USE_PROFILES: { html: true }
+      });
+    }
+
+    return rendered;
   }
 
   return renderMarkdownBlocks(source);
@@ -923,6 +960,10 @@ function populateProjectsGrid(filter = 'all') {
 // ─── Create Project Card HTML ───────────────────
 function createProjectCard(project) {
   const metaText = [project.categoryLabel, project.year].filter(Boolean).join(' · ');
+  const cardDesc = project.shortDescription && String(project.shortDescription).trim()
+    ? escapeHtml(String(project.shortDescription).trim())
+    : getProjectExcerpt(project);
+
   return `
     <div class="project-card reveal" data-project-id="${project.id}" role="button" tabindex="0" aria-label="View ${project.title}">
       <div class="project-card__image-wrapper">
@@ -931,7 +972,7 @@ function createProjectCard(project) {
       <div class="project-card__content">
         <div class="project-card__category">${metaText}</div>
         <div class="project-card__title">${project.title}</div>
-        <div class="project-card__desc">${getProjectExcerpt(project)}</div>
+        <div class="project-card__desc">${cardDesc}</div>
       </div>
     </div>
   `;

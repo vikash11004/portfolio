@@ -691,6 +691,167 @@ function looksLikeHtml(value) {
   return /<\/?[a-z][\s\S]*>/i.test(String(value || ''));
 }
 
+function escapeAttribute(value) {
+  return escapeHtml(value).replace(/`/g, '&#96;');
+}
+
+function sanitizeMarkdownUrl(value) {
+  const url = String(value || '').trim();
+  if (!url) return '';
+
+  if (/^(https?:|mailto:|tel:|\/|\.\/|\.\.\/|#)/i.test(url)) {
+    return url;
+  }
+
+  return '';
+}
+
+function formatMarkdownInline(value) {
+  let output = escapeHtml(String(value || ''));
+
+  output = output.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_match, alt, rawUrl) => {
+    const url = sanitizeMarkdownUrl(rawUrl);
+    if (!url) return escapeHtml(_match);
+    return `<img src="${escapeAttribute(url)}" alt="${escapeHtml(alt)}">`;
+  });
+
+  output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, text, rawUrl) => {
+    const url = sanitizeMarkdownUrl(rawUrl);
+    if (!url) return escapeHtml(_match);
+    return `<a href="${escapeAttribute(url)}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+  });
+
+  output = output.replace(/`([^`]+)`/g, '<code>$1</code>');
+  output = output.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  output = output.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+  output = output.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+  output = output.replace(/(^|[^_])_([^_\n]+)_(?!_)/g, '$1<em>$2</em>');
+
+  return output;
+}
+
+function renderMarkdownTable(lines) {
+  if (lines.length < 2) return '';
+
+  const headers = lines[0].split('|').map(cell => cell.trim()).filter(Boolean);
+  const separator = lines[1].split('|').map(cell => cell.trim()).filter(Boolean);
+
+  if (!headers.length || separator.length !== headers.length || !separator.every(cell => /^:?-{3,}:?$/.test(cell))) {
+    return '';
+  }
+
+  const bodyRows = lines.slice(2).map((line) => {
+    const cells = line.split('|').map(cell => cell.trim()).filter(Boolean);
+    return `<tr>${cells.map(cell => `<td>${formatMarkdownInline(cell)}</td>`).join('')}</tr>`;
+  });
+
+  return `
+    <table>
+      <thead><tr>${headers.map(header => `<th>${formatMarkdownInline(header)}</th>`).join('')}</tr></thead>
+      <tbody>${bodyRows.join('')}</tbody>
+    </table>
+  `;
+}
+
+function renderMarkdownBlocks(source) {
+  const lines = String(source || '').replace(/\r\n/g, '\n').split('\n');
+  const blocks = [];
+  let index = 0;
+
+  while (index < lines.length) {
+    const line = lines[index];
+    const trimmed = line.trim();
+
+    if (!trimmed) {
+      index += 1;
+      continue;
+    }
+
+    if (/^```/.test(trimmed)) {
+      const codeLines = [];
+      index += 1;
+      while (index < lines.length && !/^```/.test(lines[index].trim())) {
+        codeLines.push(lines[index]);
+        index += 1;
+      }
+      if (index < lines.length) index += 1;
+      blocks.push(`<pre><code>${escapeHtml(codeLines.join('\n'))}</code></pre>`);
+      continue;
+    }
+
+    if (/^#{1,6}\s+/.test(trimmed)) {
+      const level = trimmed.match(/^#{1,6}/)[0].length;
+      const text = trimmed.replace(/^#{1,6}\s+/, '');
+      blocks.push(`<h${level}>${formatMarkdownInline(text)}</h${level}>`);
+      index += 1;
+      continue;
+    }
+
+    if (/^(-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
+      blocks.push('<hr>');
+      index += 1;
+      continue;
+    }
+
+    if (/^>\s?/.test(trimmed)) {
+      const quoteLines = [];
+      while (index < lines.length && /^>\s?/.test(lines[index].trim())) {
+        quoteLines.push(lines[index].trim().replace(/^>\s?/, ''));
+        index += 1;
+      }
+      blocks.push(`<blockquote><p>${formatMarkdownInline(quoteLines.join(' '))}</p></blockquote>`);
+      continue;
+    }
+
+    if (/^(\*|-|\+)\s+/.test(trimmed) || /^\d+\.\s+/.test(trimmed)) {
+      const ordered = /^\d+\.\s+/.test(trimmed);
+      const items = [];
+
+      while (index < lines.length) {
+        const current = lines[index].trim();
+        if (!(ordered ? /^\d+\.\s+/.test(current) : /^(\*|-|\+)\s+/.test(current))) break;
+        items.push(current.replace(ordered ? /^\d+\.\s+/ : /^(\*|-|\+)\s+/, ''));
+        index += 1;
+      }
+
+      const tag = ordered ? 'ol' : 'ul';
+      blocks.push(`<${tag}>${items.map(item => `<li>${formatMarkdownInline(item)}</li>`).join('')}</${tag}>`);
+      continue;
+    }
+
+    const tableLines = [trimmed];
+    let lookahead = index + 1;
+    while (lookahead < lines.length && lines[lookahead].includes('|') && lines[lookahead].trim()) {
+      tableLines.push(lines[lookahead].trim());
+      lookahead += 1;
+      if (tableLines.length >= 8) break;
+    }
+
+    const tableHtml = renderMarkdownTable(tableLines);
+    if (tableHtml) {
+      blocks.push(tableHtml);
+      index += tableLines.length;
+      continue;
+    }
+
+    const paragraphLines = [trimmed];
+    index += 1;
+    while (index < lines.length) {
+      const next = lines[index].trim();
+      if (!next) break;
+      if (/^#{1,6}\s+/.test(next) || /^>\s?/.test(next) || /^(\*|-|\+)\s+/.test(next) || /^\d+\.\s+/.test(next) || /^```/.test(next) || /^(-{3,}|\*{3,}|_{3,})$/.test(next)) {
+        break;
+      }
+      paragraphLines.push(next);
+      index += 1;
+    }
+
+    blocks.push(`<p>${formatMarkdownInline(paragraphLines.join(' '))}</p>`);
+  }
+
+  return blocks.join('');
+}
+
 function renderProjectDescriptionHtml(value) {
   const source = String(value || '').trim();
   if (!source) return '<p>No description provided.</p>';
@@ -699,22 +860,7 @@ function renderProjectDescriptionHtml(value) {
     return source;
   }
 
-  if (window.marked && typeof window.marked.parse === 'function') {
-    const rendered = window.marked.parse(source, {
-      gfm: true,
-      breaks: true
-    });
-
-    if (window.DOMPurify && typeof window.DOMPurify.sanitize === 'function') {
-      return window.DOMPurify.sanitize(rendered, {
-        USE_PROFILES: { html: true }
-      });
-    }
-
-    return rendered;
-  }
-
-  return `<p>${escapeHtml(source).replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>')}</p>`;
+  return renderMarkdownBlocks(source);
 }
 
 function extractTextFromDescription(value) {

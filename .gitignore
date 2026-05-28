@@ -4,11 +4,16 @@ config.local.js
 .env.*
 !.env.example
 node_modules/
+.vscode/
 
 # OS/editor noise
 .DS_Store
 Thumbs.db
 *.log
+*.tmp
 
 # Firebase local cache
 .firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

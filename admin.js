@@ -126,6 +126,7 @@ let firebaseReady = false;
 let currentUser = null;
 let projectsState = [];
 let siteContentState = deepMerge(DEFAULT_SITE_CONTENT, {});
+let siteRawJsonBaseline = '';
 
 function deepMerge(base, override) {
   if (Array.isArray(base)) {
@@ -656,6 +657,7 @@ function renderAdminProjectsList() {
 
 function fillSiteContentForm(content) {
   const safe = deepMerge(DEFAULT_SITE_CONTENT, content || {});
+  const serializedSafe = JSON.stringify(safe, null, 2);
 
   ($('#siteName') || {}).value = safe.brand.name || '';
   ($('#siteLogoUrl') || {}).value = safe.brand.logoUrl || '';
@@ -721,7 +723,8 @@ function fillSiteContentForm(content) {
   ($('#footerCopyright') || {}).value = safe.footer.copyright || '';
   ($('#footerBackToTopText') || {}).value = safe.footer.backToTopLabel || '';
 
-  ($('#siteRawJson') || {}).value = JSON.stringify(safe, null, 2);
+  ($('#siteRawJson') || {}).value = serializedSafe;
+  siteRawJsonBaseline = serializedSafe;
 }
 
 function getSiteContentFromForm() {
@@ -842,8 +845,9 @@ async function handleSiteContentSave(event) {
   const basePayload = getSiteContentFromForm();
   const raw = String((($('#siteRawJson') || {}).value || '')).trim();
   let payload = deepMerge(DEFAULT_SITE_CONTENT, basePayload);
+  const hasRawOverride = raw && raw !== siteRawJsonBaseline.trim();
 
-  if (raw) {
+  if (hasRawOverride) {
     try {
       const rawPayload = JSON.parse(raw);
       payload = deepMerge(payload, rawPayload);

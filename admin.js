@@ -6,6 +6,7 @@ const APP_CONFIG = window.PORTFOLIO_CONFIG || {};
 const FIREBASE_CONFIG = APP_CONFIG.FIREBASE_CONFIG || null;
 const OWNER_EMAIL = APP_CONFIG.OWNER_EMAIL || '';
 const DEFAULT_THUMBNAIL = 'assets/images/project-1.png';
+const PROJECT_ASSET_ROOT = 'project-assets';
 const SITE_CONTENT_DOC_ID = 'portfolio_site';
 const SITE_CONTENT_SYNC_KEY = 'portfolio-site-content-sync';
 const PROJECT_SEED = Array.isArray(window.PORTFOLIO_PROJECT_SEED) ? window.PORTFOLIO_PROJECT_SEED : [];
@@ -122,6 +123,7 @@ const $ = (sel) => document.querySelector(sel);
 let firebaseApp = null;
 let firebaseDb = null;
 let firebaseAuth = null;
+let firebaseStorage = null;
 let firebaseReady = false;
 let currentUser = null;
 let projectsState = [];
@@ -167,6 +169,145 @@ function makeSlug(value) {
     .replace(/[^a-z0-9\s-]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-');
+}
+
+function sanitizeAssetFileName(fileName) {
+  const base = String(fileName || 'asset')
+    .toLowerCase()
+    .replace(/\.[^.]+$/, '')
+    .replace(/[^a-z0-9-_]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  return base || 'asset';
+}
+
+function getProjectAssetFolder() {
+  const slugField = $('#projectSlug');
+  const titleField = $('#projectTitle');
+  const slug = makeSlug((slugField && slugField.value) || (titleField && titleField.value) || 'project');
+  return `${PROJECT_ASSET_ROOT}/${slug}`;
+}
+
+function getAssetPath(file, kind) {
+  const folder = getProjectAssetFolder();
+  const safeName = sanitizeAssetFileName(file && file.name ? file.name : 'asset');
+  const extension = file && file.name && file.name.includes('.')
+    ? `.${String(file.name).split('.').pop().toLowerCase()}`
+    : '';
+  const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const segment = kind === 'thumbnail' ? 'thumbnail' : 'screenshots';
+
+  return `${folder}/${segment}/${uniqueId}-${safeName}${extension}`;
+}
+
+function isImageFile(file) {
+  return !!file && typeof file.type === 'string' && file.type.startsWith('image/');
+}
+
+async function uploadProjectAsset(file, kind) {
+  if (!firebaseStorage) {
+    throw new Error('Firebase Storage is not available. Add the storage SDK and config first.');
+  }
+
+  if (!isImageFile(file)) {
+    throw new Error(`Only image files can be dropped for ${kind}.`);
+  }
+
+  const path = getAssetPath(file, kind);
+  const ref = firebaseStorage.ref().child(path);
+  const snapshot = await ref.put(file, { contentType: file.type });
+  return snapshot.ref.getDownloadURL();
+}
+
+function appendUrlsToTextarea(textarea, urls) {
+  if (!textarea || !Array.isArray(urls) || !urls.length) return;
+
+  const existing = String(textarea.value || '').trim();
+  const additions = urls.filter(Boolean).join('\n');
+  textarea.value = existing ? `${existing}\n${additions}` : additions;
+}
+
+function setAssetDropState(target, isActive) {
+  if (!target) return;
+  target.classList.toggle('is-dragover', !!isActive);
+}
+
+function getFilesFromDropEvent(event) {
+  const items = Array.from(event.dataTransfer?.items || []);
+  const filesFromItems = items
+    .filter(item => item.kind === 'file')
+    .map(item => item.getAsFile())
+    .filter(Boolean);
+
+  if (filesFromItems.length) return filesFromItems;
+
+  return Array.from(event.dataTransfer?.files || []).filter(Boolean);
+}
+
+async function handleAssetDrop(event, kind) {
+  const target = event.currentTarget;
+  const files = getFilesFromDropEvent(event);
+
+  if (!files.length) return false;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  try {
+    if (kind === 'thumbnail') {
+      const [firstFile] = files;
+      const uploadedUrl = await uploadProjectAsset(firstFile, kind);
+      const input = $('#projectThumbnail');
+      if (input) input.value = uploadedUrl;
+      setFormMessage('Thumbnail uploaded to Storage and added to the form.');
+      return true;
+    }
+
+    const textarea = $('#projectScreenshots');
+    const uploadedUrls = [];
+
+    for (const file of files) {
+      uploadedUrls.push(await uploadProjectAsset(file, kind));
+    }
+
+    appendUrlsToTextarea(textarea, uploadedUrls);
+    setFormMessage(`Uploaded ${uploadedUrls.length} screenshot${uploadedUrls.length === 1 ? '' : 's'} to Storage and added them to the form.`);
+    return true;
+  } catch (error) {
+    setFormMessage(error.message || 'Unable to upload dropped file.', true);
+    return false;
+  } finally {
+    setAssetDropState(target, false);
+  }
+}
+
+function setupAssetDropTarget(selector, kind) {
+  const field = $(selector);
+  if (!field) return;
+
+  field.addEventListener('dragenter', (event) => {
+    if ((event.dataTransfer?.types || []).includes('Files')) {
+      event.preventDefault();
+      setAssetDropState(field, true);
+    }
+  });
+
+  field.addEventListener('dragover', (event) => {
+    if ((event.dataTransfer?.types || []).includes('Files')) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'copy';
+      setAssetDropState(field, true);
+    }
+  });
+
+  field.addEventListener('dragleave', () => {
+    setAssetDropState(field, false);
+  });
+
+  field.addEventListener('drop', (event) => {
+    handleAssetDrop(event, kind);
+  });
 }
 
 function parseUrlList(value, fallback = []) {
@@ -316,6 +457,7 @@ function setupFirebase() {
     : window.firebase.initializeApp(FIREBASE_CONFIG);
   firebaseDb = firebaseApp.firestore();
   firebaseAuth = firebaseApp.auth();
+  firebaseStorage = window.firebase.storage ? firebaseApp.storage() : null;
   firebaseReady = true;
 
   firebaseAuth.onAuthStateChanged((user) => {
@@ -946,6 +1088,9 @@ function setupEvents() {
       slugField.value = makeSlug(slugField.value);
     });
   }
+
+  setupAssetDropTarget('#projectThumbnail', 'thumbnail');
+  setupAssetDropTarget('#projectScreenshots', 'screenshots');
 }
 
 async function initAdmin() {

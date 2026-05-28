@@ -6,7 +6,7 @@
   <meta name="description" content="Owner-only admin for managing portfolio projects.">
   <meta name="theme-color" content="#2A2529">
   <title>Admin — Vikash Thyadi</title>
-  <link rel="stylesheet" href="styles.css?v=1">
+  <link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
   <main class="admin-page">
@@ -63,11 +63,13 @@
               <label>Role
                 <input type="text" id="projectRole" required>
               </label>
-              <label>Thumbnail URL
+              <label class="project-form__asset-field" data-asset-dropzone="thumbnail">Thumbnail URL
                 <input type="text" id="projectThumbnail" placeholder="assets/images/project-1.png">
+                <span class="project-form__asset-hint">Drop one image here to upload it to Storage, or paste a URL as before.</span>
               </label>
-              <label>Project Screenshots (one URL per line)
+              <label class="project-form__asset-field" data-asset-dropzone="screenshots">Project Screenshots (one URL per line)
                 <textarea id="projectScreenshots" rows="4" placeholder="https://.../screen-1.png&#10;https://.../screen-2.png"></textarea>
+                <span class="project-form__asset-hint">Drop one or more image files here to upload them and append the URLs.</span>
               </label>
               <label>Live URL
                 <input type="url" id="projectLiveUrl" placeholder="https://...">
@@ -90,8 +92,9 @@
               <input type="text" id="projectTech" placeholder="React, TypeScript, Node.js" required>
             </label>
 
-            <label>Description HTML
+            <label>Description HTML / README Markdown
               <textarea id="projectDescription" rows="10" required></textarea>
+              <span class="project-form__hint">Paste a README.md here in Markdown, or keep using HTML if you prefer. The project page will render either format.</span>
             </label>
 
             <div class="project-form__actions">
@@ -323,6 +326,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-  <script src="admin.js?v=2"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
+  <script src="admin.js?v=3"></script>
 </body>
 </html>

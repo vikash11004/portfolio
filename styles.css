@@ -1094,11 +1094,133 @@ ul, ol {
   margin-top: 0;
 }
 
-.project-detail__description p {
+.project-detail__description h1,
+.project-detail__description h2,
+.project-detail__description h3,
+.project-detail__description h4,
+.project-detail__description h5,
+.project-detail__description h6 {
+  font-family: var(--font-display);
+  color: var(--charcoal);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 2.25rem 0 1rem;
+}
+
+.project-detail__description h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.project-detail__description h2 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.project-detail__description h3 {
+  font-size: clamp(1.25rem, 2vw, 1.5rem);
+}
+
+.project-detail__description p,
+.project-detail__description li {
   color: var(--dark-gray);
-  max-width: 65ch;
   line-height: 1.75;
   margin-bottom: 1.5rem;
+}
+
+.project-detail__description ul,
+.project-detail__description ol {
+  margin: 0 0 1.5rem 1.5rem;
+  padding-left: 1rem;
+}
+
+.project-detail__description ul {
+  list-style: disc;
+}
+
+.project-detail__description ol {
+  list-style: decimal;
+}
+
+.project-detail__description li {
+  margin-bottom: 0.75rem;
+}
+
+.project-detail__description blockquote {
+  margin: 0 0 1.5rem;
+  padding: 1rem 1.25rem;
+  border-left: 3px solid var(--orange);
+  background: rgba(242, 86, 35, 0.06);
+  color: var(--charcoal);
+}
+
+.project-detail__description code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: rgba(42, 37, 41, 0.08);
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+}
+
+.project-detail__description pre {
+  margin: 0 0 1.5rem;
+  padding: 1rem 1.25rem;
+  background: #151515;
+  color: #f3f0e7;
+  overflow-x: auto;
+  border-radius: 8px;
+}
+
+.project-detail__description pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  white-space: pre;
+}
+
+.project-detail__description table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 1.5rem;
+  overflow-x: auto;
+}
+
+.project-detail__description th,
+.project-detail__description td {
+  border: 1px solid rgba(42, 37, 41, 0.15);
+  padding: 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.project-detail__description th {
+  background: rgba(42, 37, 41, 0.04);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: var(--xs-size);
+}
+
+.project-detail__description img {
+  max-width: 100%;
+  height: auto;
+  margin: 1rem 0 1.5rem;
+  border: var(--border-light);
+}
+
+.project-detail__description hr {
+  border: 0;
+  border-top: 1px solid rgba(42, 37, 41, 0.15);
+  margin: 2rem 0;
+}
+
+.project-detail__description a {
+  color: var(--orange);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.project-detail__description > :first-child {
+  margin-top: 0;
 }
 
 .project-detail__sidebar {
@@ -1356,6 +1478,26 @@ ul, ol {
 
 .project-form textarea {
   resize: vertical;
+}
+
+.project-form__asset-field {
+  position: relative;
+}
+
+.project-form__asset-hint {
+  font-family: var(--font-body);
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 0.8rem;
+  color: var(--dark-gray);
+  line-height: 1.45;
+}
+
+.project-form__asset-field.is-dragover input,
+.project-form__asset-field.is-dragover textarea {
+  border-color: var(--orange);
+  background: rgba(242, 86, 35, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(242, 86, 35, 0.2);
 }
 
 .project-form__checks {

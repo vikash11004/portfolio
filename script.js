@@ -678,6 +678,51 @@ function formatCategoryLabel(categories) {
   return parseCategoryList(categories).map(category => CATEGORY_LABELS[category] || category).join(', ');
 }
 
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function looksLikeHtml(value) {
+  return /<\/?[a-z][\s\S]*>/i.test(String(value || ''));
+}
+
+function renderProjectDescriptionHtml(value) {
+  const source = String(value || '').trim();
+  if (!source) return '<p>No description provided.</p>';
+
+  if (looksLikeHtml(source)) {
+    return source;
+  }
+
+  if (window.marked && typeof window.marked.parse === 'function') {
+    const rendered = window.marked.parse(source, {
+      gfm: true,
+      breaks: true
+    });
+
+    if (window.DOMPurify && typeof window.DOMPurify.sanitize === 'function') {
+      return window.DOMPurify.sanitize(rendered, {
+        USE_PROFILES: { html: true }
+      });
+    }
+
+    return rendered;
+  }
+
+  return `<p>${escapeHtml(source).replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>')}</p>`;
+}
+
+function extractTextFromDescription(value) {
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = renderProjectDescriptionHtml(value);
+  return (wrapper.textContent || wrapper.innerText || '').replace(/\s+/g, ' ').trim();
+}
+
 
 // ─── Populate Featured Projects ─────────────────
 function populateFeaturedProjects() {
@@ -748,11 +793,8 @@ function createProjectCard(project) {
 
 
 function getProjectExcerpt(project) {
-  const div = document.createElement('div');
-  div.innerHTML = project.description;
-  const firstP = div.querySelector('p');
-  if (!firstP) return '';
-  const text = firstP.textContent;
+  const text = extractTextFromDescription(project.description);
+  if (!text) return '';
   return text.length > 120 ? text.substring(0, 120) + '…' : text;
 }
 
@@ -1009,7 +1051,7 @@ function populateProjectDetail(project) {
   heroImg.alt = project.title;
 
   // Description
-  $('#detailDescription').innerHTML = project.description;
+  $('#detailDescription').innerHTML = renderProjectDescriptionHtml(project.description);
 
   // Tech tags
   $('#detailTechTags').innerHTML = project.tech.map(t => `<span class="tech-tag">${t}</span>`).join('');

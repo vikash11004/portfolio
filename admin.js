@@ -541,10 +541,12 @@ async function handleProjectSave(event) {
 
   try {
     const docId = rowId || payload.slug;
-    await firebaseDb.collection('projects').doc(docId).set({
+    const docPayload = {
       ...payload,
-      created_at: rowId ? undefined : new Date().toISOString()
-    }, { merge: true });
+      ...(rowId ? {} : { created_at: new Date().toISOString() })
+    };
+
+    await firebaseDb.collection('projects').doc(docId).set(docPayload, { merge: true });
 
     setFormMessage('Project saved.');
     clearProjectForm();

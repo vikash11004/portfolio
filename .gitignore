@@ -1,5 +1,4 @@
 # Local app credentials and overrides
-config.js
 config.local.js
 .env
 .env.*

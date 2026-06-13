@@ -228,6 +228,14 @@ function appendUrlsToTextarea(textarea, urls) {
   textarea.value = existing ? `${existing}\n${additions}` : additions;
 }
 
+function normalizeProjectDescriptionInput(value) {
+  return String(value || '')
+    .replace(/\\r\\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(/\\r/g, '\n')
+    .trim();
+}
+
 function setAssetDropState(target, isActive) {
   if (!target) return;
   target.classList.toggle('is-dragover', !!isActive);
@@ -606,7 +614,7 @@ function getProjectPayloadFromForm() {
   const sortOrder = Number((($('#projectSortOrder') || {}).value || 0));
   const featured = ((($('#projectFeatured') || {}).value || 'false') === 'true');
   const techInput = ($('#projectTech') || {}).value || '';
-  const descriptionHtml = ($('#projectDescription') || {}).value || '';
+  const descriptionHtml = normalizeProjectDescriptionInput(($('#projectDescription') || {}).value || '');
   const shortDescription = ($('#projectShortDescription') || {}).value || '';
 
   return {

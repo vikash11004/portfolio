@@ -699,6 +699,36 @@ function looksLikeHtml(value) {
   return /<\/?[a-z][\s\S]*>/i.test(String(value || ''));
 }
 
+function looksLikeMarkdown(value) {
+  const source = String(value || '');
+  return /(^|\n)\s{0,3}(#{1,6}\s+|```|[-*+]\s+|\d+\.\s+|>\s?|\|.+\|)/.test(source)
+    || /\*\*[^*]+\*\*/.test(source)
+    || /`[^`]+`/.test(source)
+    || /\[[^\]]+\]\([^)]+\)/.test(source);
+}
+
+function normalizeMarkdownSource(value) {
+  let source = String(value || '')
+    .replace(/\\r\\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(/\\r/g, '\n')
+    .trim();
+
+  const realLineCount = source.split('\n').length;
+  const flattenedHeadingCount = (source.match(/\s#{1,6}\s+/g) || []).length;
+
+  if (realLineCount <= 3 && flattenedHeadingCount) {
+    source = source
+      .replace(/\s+(#{1,6}\s+)/g, '\n$1')
+      .replace(/\s+(```[a-zA-Z0-9_-]*)\s*/g, '\n$1\n')
+      .replace(/\s+```/g, '\n```')
+      .replace(/\s+([-*+]\s+)(?=\S)/g, '\n$1')
+      .replace(/\s+(\d+\.\s+)(?=\S)/g, '\n$1');
+  }
+
+  return source;
+}
+
 function looksLikeMarkdownFileSource(value) {
   const source = String(value || '').trim();
   return /\.md(?:[?#].*)?$/i.test(source);
@@ -931,10 +961,10 @@ function renderMarkdownBlocks(source) {
 }
 
 function renderProjectDescriptionHtml(value) {
-  const source = String(value || '').trim();
+  const source = normalizeMarkdownSource(value);
   if (!source) return '<p>No description provided.</p>';
 
-  if (looksLikeHtml(source)) {
+  if (looksLikeHtml(source) && !looksLikeMarkdown(source)) {
     return source;
   }
 
@@ -959,10 +989,10 @@ function renderProjectDescriptionHtml(value) {
 }
 
 async function renderProjectDescriptionHtmlAsync(value) {
-  const source = String(value || '').trim();
+  const source = normalizeMarkdownSource(value);
   if (!source) return '<p>No description provided.</p>';
 
-  if (looksLikeHtml(source)) {
+  if (looksLikeHtml(source) && !looksLikeMarkdown(source)) {
     return source;
   }
 

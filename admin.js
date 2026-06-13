@@ -493,7 +493,6 @@ function mapProjectToViewModel(docId, row) {
     thumbnail: row.thumbnail_url || row.thumbnailUrl || DEFAULT_THUMBNAIL,
     screenshotUrls,
     description: row.description_html || row.descriptionHtml || '<p>No description provided.</p>',
-    shortDescription: row.short_description || row.shortDescription || row.excerpt || '',
     tech: Array.isArray(row.tech_stack) ? row.tech_stack : Array.isArray(row.techStack) ? row.techStack : [],
     liveUrl: row.live_url || row.liveUrl || null,
     githubUrl: row.github_url || row.githubUrl || null,
@@ -805,7 +804,6 @@ function renderAdminProjectsList() {
 
 function fillSiteContentForm(content) {
   const safe = deepMerge(DEFAULT_SITE_CONTENT, content || {});
-  const serializedSafe = JSON.stringify(safe, null, 2);
 
   ($('#siteName') || {}).value = safe.brand.name || '';
   ($('#siteLogoUrl') || {}).value = safe.brand.logoUrl || '';
@@ -871,8 +869,8 @@ function fillSiteContentForm(content) {
   ($('#footerCopyright') || {}).value = safe.footer.copyright || '';
   ($('#footerBackToTopText') || {}).value = safe.footer.backToTopLabel || '';
 
-  ($('#siteRawJson') || {}).value = serializedSafe;
-  siteRawJsonBaseline = serializedSafe;
+  ($('#siteRawJson') || {}).value = '';
+  siteRawJsonBaseline = '';
 }
 
 function getSiteContentFromForm() {
@@ -993,7 +991,7 @@ async function handleSiteContentSave(event) {
   const basePayload = getSiteContentFromForm();
   const raw = String((($('#siteRawJson') || {}).value || '')).trim();
   let payload = deepMerge(DEFAULT_SITE_CONTENT, basePayload);
-  const hasRawOverride = raw && raw !== siteRawJsonBaseline.trim();
+  const hasRawOverride = !!raw && raw !== siteRawJsonBaseline.trim();
 
   if (hasRawOverride) {
     try {

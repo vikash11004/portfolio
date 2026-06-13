@@ -168,6 +168,8 @@ const pages = {
 
 let currentPage = 'home';
 let currentProjectId = null;
+let projectDescriptionRequestId = 0;
+const markdownSourceCache = new Map();
 
 
 // ─── Keyboard Shortcuts ────────────────────────
@@ -387,6 +389,8 @@ function startLiveSync() {
       projectsState = rows.map(mapDbProjectToViewModel);
     }
 
+    prefetchMarkdownDescriptions(projectsState);
+
     populateFeaturedProjects();
     populateProjectsGrid(getCurrentFilter());
 
@@ -539,6 +543,8 @@ function applySiteContent() {
 
   setAllText('#footerCopyHome, #footerCopyProjects, #footerCopyDetail', content.footer.copyright);
   setAllText('#footerBackTopHome, #footerBackTopProjects, #footerBackTopDetail', content.footer.backToTopLabel);
+
+  populateSkillsMarquee();
 }
 
 function isOwnerLoggedIn() {
@@ -606,6 +612,7 @@ async function loadProjects() {
     });
 
     projectsState = rows.length ? rows.map(mapDbProjectToViewModel) : [];
+    prefetchMarkdownDescriptions(projectsState);
   } catch (error) {
     console.error('Failed loading projects from Firestore:', error.message || error);
     projectsState = [];
@@ -689,6 +696,56 @@ function escapeHtml(value) {
 
 function looksLikeHtml(value) {
   return /<\/?[a-z][\s\S]*>/i.test(String(value || ''));
+}
+
+function looksLikeMarkdownFileSource(value) {
+  const source = String(value || '').trim();
+  return /\.md(?:[?#].*)?$/i.test(source);
+}
+
+async function loadMarkdownSource(value) {
+  const source = String(value || '').trim();
+  if (!source) return '';
+
+  if (markdownSourceCache.has(source)) {
+    return markdownSourceCache.get(source);
+  }
+
+  const loadPromise = fetch(source, { cache: 'force-cache' })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`Failed to load markdown (${response.status})`);
+      }
+
+      return response.text();
+    })
+    .catch(() => source);
+
+  markdownSourceCache.set(source, loadPromise);
+  return loadPromise;
+}
+
+function prefetchMarkdownDescriptions(projects) {
+  if (!Array.isArray(projects) || !projects.length) return;
+
+  const sources = projects
+    .map(project => String(project && project.description ? project.description : '').trim())
+    .filter(looksLikeMarkdownFileSource);
+
+  if (!sources.length) return;
+
+  const run = () => {
+    sources.forEach((source) => {
+      void loadMarkdownSource(source);
+    });
+  };
+
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(run, { timeout: 1000 });
+    return;
+  }
+
+  setTimeout(run, 0);
 }
 
 function escapeAttribute(value) {
@@ -900,6 +957,21 @@ function renderProjectDescriptionHtml(value) {
   return renderMarkdownBlocks(source);
 }
 
+async function renderProjectDescriptionHtmlAsync(value) {
+  const source = String(value || '').trim();
+  if (!source) return '<p>No description provided.</p>';
+
+  if (looksLikeHtml(source)) {
+    return source;
+  }
+
+  const markdownSource = looksLikeMarkdownFileSource(source)
+    ? await loadMarkdownSource(source)
+    : source;
+
+  return renderProjectDescriptionHtml(markdownSource);
+}
+
 function extractTextFromDescription(value) {
   const wrapper = document.createElement('div');
   wrapper.innerHTML = renderProjectDescriptionHtml(value);
@@ -960,9 +1032,7 @@ function populateProjectsGrid(filter = 'all') {
 // ─── Create Project Card HTML ───────────────────
 function createProjectCard(project) {
   const metaText = [project.categoryLabel, project.year].filter(Boolean).join(' · ');
-  const cardDesc = project.shortDescription && String(project.shortDescription).trim()
-    ? escapeHtml(String(project.shortDescription).trim())
-    : getProjectExcerpt(project);
+  const cardDesc = getProjectExcerpt(project);
 
   return `
     <div class="project-card reveal" data-project-id="${project.id}" role="button" tabindex="0" aria-label="View ${project.title}">
@@ -1213,7 +1283,9 @@ function navigateToProject(projectId) {
 }
 
 
-function populateProjectDetail(project) {
+async function populateProjectDetail(project) {
+  const requestId = ++projectDescriptionRequestId;
+
   $('#detailTitle').textContent = project.title;
 
   // Meta
@@ -1238,7 +1310,15 @@ function populateProjectDetail(project) {
   heroImg.alt = project.title;
 
   // Description
-  $('#detailDescription').innerHTML = renderProjectDescriptionHtml(project.description);
+  const detailDescription = $('#detailDescription');
+  if (detailDescription) {
+    detailDescription.innerHTML = '<p>Loading project description...</p>';
+  }
+
+  const renderedDescription = await renderProjectDescriptionHtmlAsync(project.description);
+  if (requestId === projectDescriptionRequestId && detailDescription) {
+    detailDescription.innerHTML = renderedDescription;
+  }
 
   // Tech tags
   $('#detailTechTags').innerHTML = project.tech.map(t => `<span class="tech-tag">${t}</span>`).join('');

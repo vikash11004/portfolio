@@ -1126,6 +1126,20 @@ ul, ol {
   margin-bottom: 1.5rem;
 }
 
+.project-detail__description strong {
+  font-weight: 700;
+  color: var(--charcoal);
+}
+
+.project-detail__description em {
+  font-style: italic;
+  color: var(--charcoal);
+}
+
+.project-detail__description del {
+  opacity: 0.7;
+}
+
 .project-detail__description ul,
 .project-detail__description ol {
   margin: 0 0 1.5rem 1.5rem;
@@ -1158,6 +1172,11 @@ ul, ol {
   background: rgba(42, 37, 41, 0.08);
   padding: 0.15rem 0.35rem;
   border-radius: 4px;
+}
+
+.project-detail__description a strong,
+.project-detail__description a em {
+  color: inherit;
 }
 
 .project-detail__description pre {

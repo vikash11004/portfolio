@@ -38,6 +38,9 @@
   --max-width: 1280px;
   --section-pad-y: clamp(4rem, 10vh, 8rem);
   --section-pad-x: clamp(1.5rem, 5vw, 4rem);
+  --navbar-height: 5rem;
+  --navbar-logo-width: clamp(8.5rem, 10vw, 11rem);
+  --navbar-logo-height: 3.25rem;
 
   /* Easing */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -158,7 +161,8 @@ ul, ol {
   left: 0;
   right: 0;
   z-index: 1000;
-  padding: 1.25rem var(--section-pad-x);
+  height: var(--navbar-height);
+  padding: 0 var(--section-pad-x);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -190,12 +194,17 @@ ul, ol {
   letter-spacing: -0.02em;
   display: inline-flex;
   align-items: center;
+  flex: 0 0 auto;
+  height: var(--navbar-height);
+  overflow: visible;
 }
 
 .navbar__logo-image {
-  width: 72px;
-  height: 40px;
+  width: var(--navbar-logo-width);
+  height: var(--navbar-logo-height);
   object-fit: contain;
+  object-position: left center;
+  max-width: none;
 }
 
 .navbar__links {
@@ -1751,6 +1760,11 @@ ul, ol {
 }
 
 @media (max-width: 768px) {
+  :root {
+    --navbar-logo-width: 7.75rem;
+    --navbar-logo-height: 2.75rem;
+  }
+
   .navbar__links {
     position: fixed;
     top: 0;

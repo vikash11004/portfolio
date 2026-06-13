@@ -637,6 +637,7 @@ function mapDbProjectToViewModel(row) {
     thumbnail: row.thumbnail_url || row.thumbnailUrl || DEFAULT_THUMBNAIL,
     screenshotUrls,
     description: row.description_html || row.descriptionHtml || '<p>No description provided.</p>',
+    shortDescription: row.short_description || row.shortDescription || row.excerpt || '',
     tech: techStack,
     liveUrl: row.live_url || row.liveUrl || null,
     githubUrl: row.github_url || row.githubUrl || null,
@@ -1032,7 +1033,9 @@ function populateProjectsGrid(filter = 'all') {
 // ─── Create Project Card HTML ───────────────────
 function createProjectCard(project) {
   const metaText = [project.categoryLabel, project.year].filter(Boolean).join(' · ');
-  const cardDesc = getProjectExcerpt(project);
+  const cardDesc = project.shortDescription && String(project.shortDescription).trim()
+    ? escapeHtml(String(project.shortDescription).trim())
+    : getProjectExcerpt(project);
 
   return `
     <div class="project-card reveal" data-project-id="${project.id}" role="button" tabindex="0" aria-label="View ${project.title}">

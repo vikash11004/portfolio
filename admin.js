@@ -325,24 +325,49 @@ function parseUrlList(value, fallback = []) {
   return fallback;
 }
 
+function normalizeEducationItem(item, index = 0) {
+  if (!item || typeof item !== 'object' || Array.isArray(item)) {
+    throw new Error(`Education item ${index + 1} must be a JSON object.`);
+  }
+
+  const normalized = {
+    year: String(item.year || '').trim(),
+    title: String(item.title || '').trim(),
+    detail: String(item.detail || '').trim()
+  };
+
+  if (!normalized.year || !normalized.title) {
+    throw new Error(`Education item ${index + 1} needs at least "year" and "title".`);
+  }
+
+  return normalized;
+}
+
 function parseEducationItems(value) {
-  return String(value || '')
+  const input = String(value || '').trim();
+  if (!input) return [];
+
+  try {
+    const parsed = JSON.parse(input);
+    const items = Array.isArray(parsed) ? parsed : [parsed];
+    return items.map((item, index) => normalizeEducationItem(item, index));
+  } catch (error) {
+    if (input.startsWith('[') || input.startsWith('{')) {
+      throw new Error(`Education / Experience Items JSON is not valid: ${error.message}`);
+    }
+  }
+
+  return input
     .split(/\r?\n/)
     .map(line => line.trim())
     .filter(Boolean)
-    .map((line) => {
+    .map((line, index) => {
       try {
-        const parsed = JSON.parse(line);
-        return {
-          year: String(parsed.year || '').trim(),
-          title: String(parsed.title || '').trim(),
-          detail: String(parsed.detail || '').trim()
-        };
-      } catch (_error) {
-        return null;
+        return normalizeEducationItem(JSON.parse(line), index);
+      } catch (error) {
+        throw new Error(`Education / Experience line ${index + 1} is not valid JSON: ${error.message}`);
       }
-    })
-    .filter(item => item && item.year && item.title);
+    });
 }
 
 function serializeEducationItems(items) {
@@ -988,7 +1013,14 @@ async function handleSiteContentSave(event) {
     return;
   }
 
-  const basePayload = getSiteContentFromForm();
+  let basePayload;
+  try {
+    basePayload = getSiteContentFromForm();
+  } catch (error) {
+    setSiteMessage(error.message || 'Website content has invalid values.', true);
+    return;
+  }
+
   const raw = String((($('#siteRawJson') || {}).value || '')).trim();
   let payload = deepMerge(DEFAULT_SITE_CONTENT, basePayload);
   const hasRawOverride = !!raw && raw !== siteRawJsonBaseline.trim();

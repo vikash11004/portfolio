@@ -1,0 +1,93 @@
+[
+  {
+    "id": "bio-overview",
+    "category": "about",
+    "title": "Professional Overview & Bio",
+    "keywords": ["bio", "about", "who is vikash", "background", "overview", "introduction", "philosophy"],
+    "content": "Vikash Thyadi is a Developer & Designer and Computer Science & Engineering student specializing in Data Science at AITAM. He believes great software should feel inevitable — intuitive, precise, and expressive. He combines engineering discipline with design craftsmanship, transforming complex technical problems into purposeful, responsive digital experiences."
+  },
+  {
+    "id": "education",
+    "category": "education",
+    "title": "Education & Academic Background",
+    "keywords": ["education", "college", "degree", "university", "cgpa", "btech", "cse", "aitam", "data science"],
+    "content": "Vikash is pursuing his Bachelor of Technology (B.Tech) in Computer Science & Engineering (Data Science) at Aditya Institute of Technology and Management (AITAM) in Tekkali, Andhra Pradesh (2023–Present) with a CGPA around 8.0. His academic curriculum and self-directed study focus on full-stack web engineering, data pipelines, machine learning, and data structures."
+  },
+  {
+    "id": "certifications",
+    "category": "certifications",
+    "title": "Professional Certifications",
+    "keywords": ["certifications", "servicenow", "csa", "cad", "nptel", "python for data science"],
+    "content": "Vikash holds two official ServiceNow certifications: ServiceNow Certified System Administrator (CSA) and ServiceNow Certified Application Developer (CAD), validating platform administration, scripting, and enterprise application development. He has also earned the NPTEL Python for Data Science certification covering Python data analysis and ML fundamentals."
+  },
+  {
+    "id": "achievements-hackathons",
+    "category": "achievements",
+    "title": "Hackathons & Honors",
+    "keywords": ["achievements", "hackathon", "awards", "competition", "winner", "medal", "aitam", "v cube"],
+    "content": "Vikash secured 2nd place in a 24-hour hackathon conducted by AITAM, building and presenting a complete software application under intense constraints. He also won a medal at a 7-hour rapid prototyping hackathon hosted by V Cube Software Solutions."
+  },
+  {
+    "id": "skills-languages-frontend",
+    "category": "skills",
+    "title": "Programming Languages & Frontend Stack",
+    "keywords": ["skills", "languages", "javascript", "typescript", "python", "java", "c++", "react", "nextjs", "css", "tailwind", "figma"],
+    "content": "Programming languages: JavaScript (ES6+), TypeScript, Python, Java, C++, and PHP. Frontend stack: React.js, Next.js, modern CSS3, Tailwind CSS, Bootstrap, HTML5, and responsive design. UI/UX: Figma for full-fidelity design systems and interactive prototypes."
+  },
+  {
+    "id": "skills-ai-backend-databases",
+    "category": "skills",
+    "title": "AI, Backend, Databases & DevOps",
+    "keywords": ["ai", "rag", "langchain", "groq", "llama", "faiss", "backend", "database", "node", "express", "mongodb", "firestore", "firebase"],
+    "content": "AI & RAG: LangChain, Groq Cloud API, Llama 3 & 3.1 70B, FAISS vector search (faiss-cpu), and sentence-transformers. Backend & DBs: Node.js, Express.js, REST APIs, GraphQL, Google Cloud Firestore, MongoDB / Mongoose, MySQL, and PostgreSQL. Cloud & Tools: Firebase (Hosting, Auth, Storage), Vercel, Git/GitHub, Linux, and Power BI."
+  },
+  {
+    "id": "project-finpath",
+    "category": "projects",
+    "title": "Project: FinPath (AI Financial Planning & RAG)",
+    "keywords": ["finpath", "rag", "langchain", "faiss", "groq", "llama 3", "finance", "ai", "streamlit"],
+    "content": "FinPath is an AI-powered financial planning companion built as Project Lead using Python, Streamlit, LangChain, FAISS vector store, sentence-transformers (all-MiniLM-L6-v2), and Llama 3 70B via Groq API. It empowers users to plan goals, query financial guidance, and track milestones. GitHub: https://github.com/vikash11004/finpath"
+  },
+  {
+    "id": "project-xpenso",
+    "category": "projects",
+    "title": "Project: Xpenso (Smart Expense Manager with Llama 3.1)",
+    "keywords": ["xpenso", "expense tracker", "budget", "finance", "groq", "llama 3.1", "charts"],
+    "content": "Xpenso is a smart expense and budget manager built as Project Lead featuring JavaScript, visual charting, category budgets, income analytics, and an integrated AI advisor powered by Llama 3.1 70B via Groq Cloud API. GitHub: https://github.com/vikash11004/xpenso"
+  },
+  {
+    "id": "project-resume-analyzer",
+    "category": "projects",
+    "title": "Project: Resume Analyzer (AI Resume Evaluator)",
+    "keywords": ["resume analyzer", "pdf-parse", "groq", "mongodb", "express", "nodejs", "mammoth"],
+    "content": "Resume Analyzer was built as Group Lead using Node.js, Express.js, MongoDB, Mongoose, Groq SDK, Multer, pdf-parse, and mammoth. It parses uploaded resumes (PDF/DOCX), matches candidates against job descriptions using Groq LLM inference, and produces detailed evaluation reports. GitHub: https://github.com/vikash11004/resume-analyzer"
+  },
+  {
+    "id": "project-bingo-f1",
+    "category": "projects",
+    "title": "Projects: Bingo & F1 Predict (Live Web Apps)",
+    "keywords": ["bingo", "f1 predict", "game", "multiplayer", "firebase", "live demo"],
+    "content": "Bingo is a real-time multiplayer social game built with JavaScript, HTML, CSS, and Firebase Realtime backend featuring lobbies and rematch loops (Live: https://vikash11004.github.io/bingo/ | Repo: https://github.com/vikash11004/bingo). F1 Predict is a Formula 1 racing predictions app (Live: https://vikash11004.github.io/f1/ | Repo: https://github.com/vikash11004/f1)."
+  },
+  {
+    "id": "project-mobile-design",
+    "category": "projects",
+    "title": "Projects: College Companion (Android APK) & FitLife (Figma)",
+    "keywords": ["college companion", "android", "apk", "java", "fitlife", "figma", "ui ux"],
+    "content": "College Companion is an Android campus utility app built with Java and Android Studio for student workflows and notices (v1.0.0 APK: https://github.com/vikash11004/college-companion/releases/download/v1.0.0/college-companion.apk). FitLife is a comprehensive mobile UI/UX design crafted in Figma for workout routines and habit tracking (Figma link on portfolio)."
+  },
+  {
+    "id": "project-flowfin-ipa",
+    "category": "projects",
+    "title": "Projects: FlowFin & IPA",
+    "keywords": ["flowfin", "ipa", "python", "php", "mysql", "fpdf"],
+    "content": "FlowFin is a financial money flow utility built with Python and PowerShell (GitHub: https://github.com/vikash11004/FlowFin). IPA is a web application with dynamic PDF reporting built with JavaScript, PHP, MySQL, and FPDF (GitHub: https://github.com/vikash11004/ipa)."
+  },
+  {
+    "id": "contact-availability",
+    "category": "contact",
+    "title": "Contact Details, Socials & Opportunities",
+    "keywords": ["contact", "email", "hire", "freelance", "internship", "linkedin", "github", "instagram", "availability"],
+    "content": "Vikash is actively open to software engineering internships, developer roles, and freelance collaborations. Contact him via the portfolio form, email at vikashthyadi1104@gmail.com, LinkedIn (https://www.linkedin.com/in/vikashthyadi/), GitHub (https://github.com/vikash11004), or Instagram (@vikash.thyadi). His resume is downloadable on the site."
+  }
+]

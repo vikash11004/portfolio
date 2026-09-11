@@ -6,7 +6,7 @@
   <meta name="description" content="Owner-only admin for managing portfolio projects.">
   <meta name="theme-color" content="#2A2529">
   <title>Admin — Vikash Thyadi</title>
-  <link rel="stylesheet" href="styles.css?v=3">
+  <link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
   <main class="admin-page">
@@ -63,14 +63,34 @@
               <label>Role
                 <input type="text" id="projectRole" required>
               </label>
-              <label class="project-form__asset-field" data-asset-dropzone="thumbnail">Thumbnail URL
+              <div class="project-form__asset-field" data-asset-dropzone="thumbnail">
+                <label for="projectThumbnail">Thumbnail Image</label>
+                <div class="project-dropzone" id="thumbnailDropzone" tabindex="0" role="button" aria-label="Upload thumbnail image">
+                  <input type="file" id="thumbnailFileInput" accept="image/*" class="project-dropzone__file-input" tabindex="-1">
+                  <div class="project-dropzone__content">
+                    <span class="project-dropzone__icon">📷</span>
+                    <span class="project-dropzone__text">Drag & drop image here, or <strong class="project-dropzone__link">browse</strong></span>
+                    <span class="project-dropzone__subtext">PNG, JPG, WEBP up to 10MB</span>
+                  </div>
+                  <div class="project-dropzone__status" id="thumbnailDropzoneStatus"></div>
+                </div>
                 <input type="text" id="projectThumbnail" placeholder="assets/images/project-1.png">
-                <span class="project-form__asset-hint">Drop one image here to upload it to Storage, or paste a URL as before.</span>
-              </label>
-              <label class="project-form__asset-field" data-asset-dropzone="screenshots">Project Screenshots (one URL per line)
-                <textarea id="projectScreenshots" rows="4" placeholder="https://.../screen-1.png&#10;https://.../screen-2.png"></textarea>
-                <span class="project-form__asset-hint">Drop one or more image files here to upload them and append the URLs.</span>
-              </label>
+                <span class="project-form__asset-hint">Drop an image to auto-upload to Storage, or paste a URL directly.</span>
+              </div>
+              <div class="project-form__asset-field" data-asset-dropzone="screenshots">
+                <label for="projectScreenshots">Project Screenshots</label>
+                <div class="project-dropzone" id="screenshotsDropzone" tabindex="0" role="button" aria-label="Upload screenshots">
+                  <input type="file" id="screenshotsFileInput" accept="image/*" multiple class="project-dropzone__file-input" tabindex="-1">
+                  <div class="project-dropzone__content">
+                    <span class="project-dropzone__icon">🖼️</span>
+                    <span class="project-dropzone__text">Drag & drop screenshots here, or <strong class="project-dropzone__link">browse</strong></span>
+                    <span class="project-dropzone__subtext">Multiple images supported</span>
+                  </div>
+                  <div class="project-dropzone__status" id="screenshotsDropzoneStatus"></div>
+                </div>
+                <textarea id="projectScreenshots" rows="3" placeholder="https://.../screen-1.png&#10;https://.../screen-2.png"></textarea>
+                <span class="project-form__asset-hint">One URL per line. Dropped or uploaded images append automatically.</span>
+              </div>
               <label>Live URL
                 <input type="url" id="projectLiveUrl" placeholder="https://...">
               </label>
@@ -332,6 +352,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
-  <script src="admin.js?v=7"></script>
+  <script src="admin.js?v=8"></script>
 </body>
 </html>

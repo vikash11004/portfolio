@@ -22,102 +22,123 @@ const SITE_CONTENT_ROW_ID = 'portfolio_site';
 const SITE_CONTENT_SYNC_KEY = 'portfolio-site-content-sync';
 
 const DEFAULT_SITE_CONTENT = {
-  seo: {
-    homeTitle: 'Vikash Thyadi — Portfolio',
-    projectsTitle: 'Projects — Vikash Thyadi',
-    detailTitleTemplate: '{project} — Vikash Thyadi',
-    description: 'Vikash Thyadi — Developer & Designer. A refined brutalist portfolio showcasing projects, skills, and creative work.',
-    themeColor: '#2A2529',
-    faviconEmoji: '⚡'
+  "projectsPreview": {
+    "titleLine2": "Projects",
+    "titleLine1": "Featured",
+    "ctaText": "See All Projects",
+    "sectionLabel": "Selected Work"
   },
-  brand: {
-    name: 'Vikash Thyadi',
-    logoUrl: 'assets/images/logo1.png',
-    resumeUrl: 'assets/resume/VikashThyadi_Resume.pdf',
-    resumeFileName: 'Vikash-Thyadi-Resume.pdf'
+  "brand": {
+    "resumeFileName": "Vikash-Thyadi-Resume.pdf",
+    "logoUrl": "assets/images/logo1.png",
+    "resumeUrl": "assets/resume/VikashThyadi_Resume.pdf",
+    "name": "Vikash Thyadi"
   },
-  navbar: {
-    homeLabel: 'Home',
-    projectsLabel: 'Projects',
-    contactLabel: 'Contact'
+  "projectsPage": {
+    "subtitle": "A collection of work spanning web applications, design systems, creative coding, and open-source contributions.",
+    "titleLine1": "All",
+    "sectionLabel": "Archive",
+    "titleLine2": "Projects"
   },
-  hero: {
-    label: 'Developer & Designer',
-    titleLine1: 'Vikash',
-    titleLine2: 'Thyadi',
-    subtitle: 'Highly motivated and curious engineering student.',
-    primaryButtonText: 'View Work',
-    secondaryButtonText: 'Download Resume',
-    scrollCueText: 'About Me',
-    imageUrl: 'assets/images/profile.jpeg',
-    imageAlt: 'Vikash Thyadi — Portrait'
+  "seo": {
+    "detailTitleTemplate": "{project} — Vikash Thyadi",
+    "faviconEmoji": "⚡",
+    "description": "Vikash Thyadi — Developer & Designer. A refined brutalist portfolio showcasing projects, skills, and creative work.",
+    "projectsTitle": "Projects — Vikash Thyadi",
+    "homeTitle": "Vikash Thyadi — Portfolio",
+    "themeColor": "#2A2529"
   },
-  about: {
-    sectionLabel: 'Background',
-    headingLine1: 'Education &',
-    headingLine2: 'Experience',
-    bio: "I'm a developer and designer who believes great software should feel inevitable intuitive, precise, and expressive. I approach every project with the discipline of an engineer and the curiosity of a craftsman, turning complex problems into clean, purposeful interfaces.",
-    imageUrl: 'assets/images/about.jpeg',
-    imageAlt: 'Vikash working at desk',
-    educationItems: [
+  "skills": {
+    "sectionLabel": "Capabilities",
+    "items": [
+      "JavaScript",
+      "TypeScript",
+      "React",
+      "Next.js",
+      "Node.js",
+      "Python",
+      "C++",
+      "HTML",
+      "CSS",
+      "Bootstrap",
+      "PHP",
+      "Pandas",
+      "Power BI",
+      "MySQL",
+      "NoSQL",
+      "PostgreSQL",
+      "MongoDB",
+      "Git",
+      "Figma",
+      "GraphQL",
+      "REST APIs",
+      "TailwindCSS",
+      "AWS",
+      "Firebase",
+      "Vercel",
+      "Linux"
+    ],
+    "resumeButtonText": "Download Resume",
+    "headingLine2": "I Work With",
+    "headingLine1": "Tools & Technologies"
+  },
+  "contact": {
+    "subtext": "Have a project in mind, or just want to say hello? I'm always open to discussing new ideas and opportunities.",
+    "recipientEmail": "",
+    "headingLine1": "Let's Work",
+    "linkedinText": "LinkedIn →",
+    "githubText": "GitHub →",
+    "sectionLabel": "Get In Touch",
+    "headingLine2": "Together",
+    "instagramUrl": "https://www.instagram.com/vikash.thyadi/",
+    "githubUrl": "https://github.com/vikash11004",
+    "instagramText": "Instagram →",
+    "linkedinUrl": "https://www.linkedin.com/in/vikashthyadi/"
+  },
+  "about": {
+    "bio": "I'm a developer and designer who believes great software should feel inevitable intuitive, precise, and expressive. I approach every project with the discipline of an engineer and the curiosity of a craftsman, turning complex problems into clean, purposeful interfaces.",
+    "educationItems": [
       {
-        year: '2023 — Present',
-        title: 'B.Tech in Computer Science & Engineering (Data Science)',
-        detail: 'Aditya Institute of Technology and Management, Tekkali, Andhra Pradesh<br>CGPA: 8.04<br>Focus Areas: Web Development, Data Analysis, Data Engineering, Artificial Intelligence, Machine Learning'
+        "year": "2023 — Present",
+        "title": "B.Tech in Computer Science & Engineering (Data Science)",
+        "detail": "Aditya Institute of Technology and Management, Tekkali, Andhra Pradesh<br>CGPA: 7.99<br>Focus Areas: Web Development, Data Analysis, Data Engineering, Artificial Intelligence, Machine Learning"
       },
       {
-        year: 'Achievements',
-        title: 'Hackathons & Competitive Work',
-        detail: 'Secured 2nd place in a 24-hour hackathon conducted by AITAM, building under time pressure with real constraints.<br>Awarded a medal at a 7-hour hackathon conducted by V Cube Software Solutions.'
+        "year": "Achievements",
+        "title": "Hackathons & Competitive Work",
+        "detail": "Secured 2nd place in a 24-hour hackathon conducted by AITAM, building under time pressure with real constraints.<br>Awarded a medal at a 7-hour hackathon conducted by V Cube Software Solutions."
       },
       {
-        year: 'Ongoing',
-        title: 'Continuous Learning & Project Building',
-        detail: 'Actively working on real-world projects across web development and AI-driven applications, focusing on performance, usability, and practical impact.'
+        "year": "Certifications",
+        "title": "Professional Certifications",
+        "detail": "Earned the ServiceNow Certified System Administrator (CSA) and Certified Application Developer (CAD) certifications, validating expertise in platform administration and application development.<br>Successfully completed NPTEL Python for Data Science, strengthening skills in Python, data analysis, and machine learning fundamentals."
       }
-    ]
+    ],
+    "imageAlt": "Vikash working at desk",
+    "headingLine1": "Education &",
+    "sectionLabel": "Background",
+    "imageUrl": "assets/images/about.jpeg",
+    "headingLine2": "Experience"
   },
-  projectsPreview: {
-    sectionLabel: 'Selected Work',
-    titleLine1: 'Featured',
-    titleLine2: 'Projects',
-    ctaText: 'See All Projects'
+  "footer": {
+    "copyright": "© 2026 Vikash Thyadi. All rights reserved.",
+    "backToTopLabel": "↑ Back to Top"
   },
-  skills: {
-    sectionLabel: 'Capabilities',
-    headingLine1: 'Tools & Technologies',
-    headingLine2: 'I Work With',
-    resumeButtonText: 'Download Resume',
-    items: [
-      'JavaScript', 'TypeScript', 'React', 'Next.js', 'Node.js',
-      'Python', 'C++', 'HTML', 'CSS', 'Bootstrap',
-      'PHP', 'Pandas', 'Power BI', 'MySQL', 'NoSQL',
-      'PostgreSQL', 'MongoDB', 'Git', 'Figma', 'GraphQL',
-      'REST APIs', 'TailwindCSS', 'AWS', 'Firebase', 'Vercel', 'Linux'
-    ]
+  "hero": {
+    "primaryButtonText": "View Work",
+    "titleLine1": "Vikash",
+    "secondaryButtonText": "Download Resume",
+    "titleLine2": "Thyadi",
+    "imageAlt": "Vikash Thyadi — Portrait",
+    "scrollCueText": "About Me",
+    "subtitle": "Highly motivated and curious engineering student.",
+    "label": "Developer & Designer",
+    "imageUrl": "assets/images/profile.jpeg"
   },
-  contact: {
-    sectionLabel: 'Get In Touch',
-    headingLine1: "Let's Work",
-    headingLine2: 'Together',
-    subtext: "Have a project in mind, or just want to say hello? I'm always open to discussing new ideas and opportunities.",
-    instagramText: 'Instagram →',
-    instagramUrl: 'https://www.instagram.com/vikash.thyadi/',
-    githubText: 'GitHub →',
-    githubUrl: 'https://github.com/vikash11004',
-    linkedinText: 'LinkedIn →',
-    linkedinUrl: 'https://www.linkedin.com/in/vikashthyadi/',
-    recipientEmail: ''
-  },
-  projectsPage: {
-    sectionLabel: 'Archive',
-    titleLine1: 'All',
-    titleLine2: 'Projects',
-    subtitle: 'A collection of work spanning web applications, design systems, creative coding, and open-source contributions.'
-  },
-  footer: {
-    copyright: '© 2026 Vikash Thyadi. All rights reserved.',
-    backToTopLabel: '↑ Back to Top'
+  "navbar": {
+    "contactLabel": "Contact",
+    "homeLabel": "Home",
+    "projectsLabel": "Projects"
   }
 };
 

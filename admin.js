@@ -207,11 +207,19 @@ function isImageFile(file) {
 
 async function uploadProjectAsset(file, kind) {
   if (!firebaseStorage) {
-    throw new Error('Firebase Storage is not available. Add the storage SDK and config first.');
+    throw new Error('Firebase Storage is not available. Please ensure Firebase configuration includes Storage.');
+  }
+
+  if (!isOwnerLoggedIn()) {
+    throw new Error('You must be signed in as the owner to upload images.');
   }
 
   if (!isImageFile(file)) {
-    throw new Error(`Only image files can be dropped for ${kind}.`);
+    throw new Error(`Only image files (PNG, JPG, WEBP, etc.) can be uploaded for ${kind}.`);
+  }
+
+  if (file.size > 10 * 1024 * 1024) {
+    throw new Error(`File "${file.name}" exceeds the 10MB limit.`);
   }
 
   const path = getAssetPath(file, kind);
@@ -236,85 +244,153 @@ function normalizeProjectDescriptionInput(value) {
     .trim();
 }
 
-function setAssetDropState(target, isActive) {
-  if (!target) return;
-  target.classList.toggle('is-dragover', !!isActive);
-}
-
 function getFilesFromDropEvent(event) {
-  const items = Array.from(event.dataTransfer?.items || []);
-  const filesFromItems = items
-    .filter(item => item.kind === 'file')
-    .map(item => item.getAsFile())
-    .filter(Boolean);
-
-  if (filesFromItems.length) return filesFromItems;
-
-  return Array.from(event.dataTransfer?.files || []).filter(Boolean);
+  if (event.dataTransfer?.files?.length) {
+    return Array.from(event.dataTransfer.files).filter(Boolean);
+  }
+  if (event.dataTransfer?.items?.length) {
+    return Array.from(event.dataTransfer.items)
+      .filter((item) => item.kind === 'file')
+      .map((item) => item.getAsFile())
+      .filter(Boolean);
+  }
+  return [];
 }
 
-async function handleAssetDrop(event, kind) {
-  const target = event.currentTarget;
-  const files = getFilesFromDropEvent(event);
+async function handleFilesUpload(files, kind, dropzoneEl, statusEl) {
+  if (!files || !files.length) return false;
 
-  if (!files.length) return false;
+  if (!firebaseStorage) {
+    setFormMessage('Firebase Storage is not available.', true);
+    return false;
+  }
 
-  event.preventDefault();
-  event.stopPropagation();
+  if (!isOwnerLoggedIn()) {
+    setFormMessage('Please sign in as owner before uploading images.', true);
+    return false;
+  }
+
+  if (dropzoneEl) dropzoneEl.classList.add('is-uploading');
+  if (statusEl) {
+    statusEl.style.display = 'block';
+    statusEl.textContent = `Uploading ${files.length} file${files.length === 1 ? '' : 's'}...`;
+  }
 
   try {
     if (kind === 'thumbnail') {
-      const [firstFile] = files;
+      const firstFile = files[0];
       const uploadedUrl = await uploadProjectAsset(firstFile, kind);
       const input = $('#projectThumbnail');
       if (input) input.value = uploadedUrl;
-      setFormMessage('Thumbnail uploaded to Storage and added to the form.');
+      setFormMessage('Thumbnail uploaded to Firebase Storage and added to form.');
+      if (statusEl) statusEl.textContent = '✓ Thumbnail uploaded!';
       return true;
     }
 
     const textarea = $('#projectScreenshots');
     const uploadedUrls = [];
 
-    for (const file of files) {
-      uploadedUrls.push(await uploadProjectAsset(file, kind));
+    for (let i = 0; i < files.length; i++) {
+      if (statusEl) statusEl.textContent = `Uploading ${i + 1} of ${files.length}...`;
+      uploadedUrls.push(await uploadProjectAsset(files[i], kind));
     }
 
     appendUrlsToTextarea(textarea, uploadedUrls);
-    setFormMessage(`Uploaded ${uploadedUrls.length} screenshot${uploadedUrls.length === 1 ? '' : 's'} to Storage and added them to the form.`);
+    setFormMessage(`Uploaded ${uploadedUrls.length} screenshot${uploadedUrls.length === 1 ? '' : 's'} to Storage.`);
+    if (statusEl) statusEl.textContent = `✓ ${uploadedUrls.length} screenshot${uploadedUrls.length === 1 ? '' : 's'} uploaded!`;
     return true;
   } catch (error) {
-    setFormMessage(error.message || 'Unable to upload dropped file.', true);
+    setFormMessage(error.message || 'Unable to upload file.', true);
+    if (statusEl) statusEl.textContent = `✗ ${error.message || 'Upload failed'}`;
     return false;
   } finally {
-    setAssetDropState(target, false);
+    if (dropzoneEl) dropzoneEl.classList.remove('is-uploading');
+    setTimeout(() => {
+      if (statusEl && (statusEl.textContent.includes('✓') || statusEl.textContent.includes('✗'))) {
+        statusEl.textContent = '';
+        statusEl.style.display = 'none';
+      }
+    }, 4000);
   }
 }
 
-function setupAssetDropTarget(selector, kind) {
-  const field = $(selector);
-  if (!field) return;
+function setupAssetDropTarget(containerSelector, dropzoneSelector, inputSelector, fileInputSelector, statusSelector, kind) {
+  const container = $(containerSelector);
+  const dropzone = $(dropzoneSelector);
+  const textInput = $(inputSelector);
+  const fileInput = $(fileInputSelector);
+  const statusEl = $(statusSelector);
 
-  field.addEventListener('dragenter', (event) => {
-    if ((event.dataTransfer?.types || []).includes('Files')) {
-      event.preventDefault();
-      setAssetDropState(field, true);
+  if (!dropzone) return;
+
+  // Clicking dropzone opens native file dialog
+  dropzone.addEventListener('click', (e) => {
+    if (e.target !== fileInput && fileInput) {
+      fileInput.click();
     }
   });
 
-  field.addEventListener('dragover', (event) => {
-    if ((event.dataTransfer?.types || []).includes('Files')) {
-      event.preventDefault();
-      event.dataTransfer.dropEffect = 'copy';
-      setAssetDropState(field, true);
+  // Keyboard accessibility
+  dropzone.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (fileInput) fileInput.click();
     }
   });
 
-  field.addEventListener('dragleave', () => {
-    setAssetDropState(field, false);
-  });
+  // Native file input change handler
+  if (fileInput) {
+    fileInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      if (files.length) {
+        await handleFilesUpload(files, kind, dropzone, statusEl);
+      }
+      fileInput.value = '';
+    });
+  }
 
-  field.addEventListener('drop', (event) => {
-    handleAssetDrop(event, kind);
+  // Drag and drop event handling
+  let dragCounter = 0;
+  const elementsToListen = [container, dropzone, textInput].filter(Boolean);
+
+  elementsToListen.forEach((el) => {
+    el.addEventListener('dragenter', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounter++;
+      dropzone.classList.add('is-dragover');
+    });
+
+    el.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = 'copy';
+      }
+      dropzone.classList.add('is-dragover');
+    });
+
+    el.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounter--;
+      if (dragCounter <= 0) {
+        dragCounter = 0;
+        dropzone.classList.remove('is-dragover');
+      }
+    });
+
+    el.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounter = 0;
+      dropzone.classList.remove('is-dragover');
+
+      const files = getFilesFromDropEvent(e);
+      if (files.length) {
+        await handleFilesUpload(files, kind, dropzone, statusEl);
+      }
+    });
   });
 }
 
@@ -1133,8 +1209,22 @@ function setupEvents() {
     });
   }
 
-  setupAssetDropTarget('#projectThumbnail', 'thumbnail');
-  setupAssetDropTarget('#projectScreenshots', 'screenshots');
+  setupAssetDropTarget(
+    '[data-asset-dropzone="thumbnail"]',
+    '#thumbnailDropzone',
+    '#projectThumbnail',
+    '#thumbnailFileInput',
+    '#thumbnailDropzoneStatus',
+    'thumbnail'
+  );
+  setupAssetDropTarget(
+    '[data-asset-dropzone="screenshots"]',
+    '#screenshotsDropzone',
+    '#projectScreenshots',
+    '#screenshotsFileInput',
+    '#screenshotsDropzoneStatus',
+    'screenshots'
+  );
 }
 
 async function initAdmin() {
@@ -1158,3 +1248,15 @@ if (document.readyState === 'loading') {
 } else {
   initAdmin().catch(console.error);
 }
+
+// Prevent browser from navigating to dropped file when dropped outside targets
+window.addEventListener('dragover', (e) => {
+  if (e.dataTransfer?.types?.includes('Files')) {
+    e.preventDefault();
+  }
+});
+window.addEventListener('drop', (e) => {
+  if (e.dataTransfer?.types?.includes('Files')) {
+    e.preventDefault();
+  }
+});

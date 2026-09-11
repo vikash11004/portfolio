@@ -1510,6 +1510,107 @@ ul, ol {
 
 .project-form__asset-field {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.project-form__asset-field label {
+  font-family: var(--font-mono);
+  font-size: var(--xs-size);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dark-gray);
+}
+
+.project-dropzone {
+  position: relative;
+  border: 2px dashed rgba(42, 37, 41, 0.25);
+  background: var(--ivory);
+  border-radius: 4px;
+  padding: 1.15rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 85px;
+  user-select: none;
+}
+
+.project-dropzone:hover {
+  border-color: var(--charcoal);
+  background: #f3f0e6;
+}
+
+.project-dropzone:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+.project-dropzone.is-dragover,
+.project-form__asset-field.is-dragover .project-dropzone {
+  border-color: var(--orange);
+  background: rgba(242, 86, 35, 0.12);
+  box-shadow: 0 0 0 3px rgba(242, 86, 35, 0.25);
+  transform: scale(1.01);
+}
+
+.project-dropzone__file-input {
+  display: none !important;
+}
+
+.project-dropzone__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  pointer-events: none;
+}
+
+.project-dropzone__icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.project-dropzone__text {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--charcoal);
+}
+
+.project-dropzone__link {
+  color: var(--orange);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.project-dropzone__subtext {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--dark-gray);
+  letter-spacing: 0.02em;
+}
+
+.project-dropzone__status {
+  margin-top: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: none;
+}
+
+.project-dropzone.is-uploading {
+  pointer-events: none;
+  border-color: var(--orange);
+  background: rgba(242, 86, 35, 0.06);
+}
+
+.project-dropzone.is-uploading .project-dropzone__status {
+  display: block;
+  color: var(--orange);
 }
 
 .project-form__asset-hint {

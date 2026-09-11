@@ -1600,6 +1600,8 @@ ul, ol {
   font-size: 0.75rem;
   font-weight: 600;
   display: none;
+  word-break: break-word;
+  line-height: 1.4;
 }
 
 .project-dropzone.is-uploading {
@@ -1611,6 +1613,119 @@ ul, ol {
 .project-dropzone.is-uploading .project-dropzone__status {
   display: block;
   color: var(--orange);
+}
+
+.project-dropzone.is-success {
+  border-color: #27ae60;
+  background: rgba(39, 174, 96, 0.06);
+}
+
+.project-dropzone.is-success .project-dropzone__status {
+  display: block;
+  color: #1e824c;
+}
+
+.project-dropzone.is-error {
+  border-color: #d94000;
+  background: rgba(217, 64, 0, 0.06);
+}
+
+.project-dropzone.is-error .project-dropzone__status {
+  display: block;
+  color: #d94000;
+}
+
+.project-dropzone__preview {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  background: #ffffff;
+  padding: 0.45rem 0.6rem;
+  border: var(--border-light);
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.project-dropzone__preview img {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 3px;
+  border: 1px solid rgba(42, 37, 41, 0.1);
+  flex-shrink: 0;
+}
+
+.project-dropzone__preview-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  overflow: hidden;
+  flex: 1;
+}
+
+.project-dropzone__preview-name {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--charcoal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.project-dropzone__preview-meta {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--dark-gray);
+}
+
+.project-dropzone__preview-clear {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--dark-gray);
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  transition: color var(--transition-fast);
+}
+
+.project-dropzone__preview-clear:hover {
+  color: #d94000;
+}
+
+.project-dropzone__previews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.project-dropzone__previews img {
+  width: 38px;
+  height: 38px;
+  object-fit: cover;
+  border-radius: 3px;
+  border: 1px solid rgba(42, 37, 41, 0.15);
+}
+
+.project-dropzone__progress-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(42, 37, 41, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.project-dropzone__progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--orange);
+  transition: width 0.2s ease;
 }
 
 .project-form__asset-hint {

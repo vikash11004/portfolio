@@ -6,7 +6,7 @@
   <meta name="description" content="Owner-only admin for managing portfolio projects.">
   <meta name="theme-color" content="#2A2529">
   <title>Admin — Vikash Thyadi</title>
-  <link rel="stylesheet" href="styles.css?v=4">
+  <link rel="stylesheet" href="styles.css?v=5">
 </head>
 <body>
   <main class="admin-page">
@@ -67,12 +67,21 @@
                 <label for="projectThumbnail">Thumbnail Image</label>
                 <div class="project-dropzone" id="thumbnailDropzone" tabindex="0" role="button" aria-label="Upload thumbnail image">
                   <input type="file" id="thumbnailFileInput" accept="image/*" class="project-dropzone__file-input" tabindex="-1">
-                  <div class="project-dropzone__content">
+                  <div class="project-dropzone__content" id="thumbnailDropzoneContent">
                     <span class="project-dropzone__icon">📷</span>
                     <span class="project-dropzone__text">Drag & drop image here, or <strong class="project-dropzone__link">browse</strong></span>
                     <span class="project-dropzone__subtext">PNG, JPG, WEBP up to 10MB</span>
                   </div>
+                  <div class="project-dropzone__preview" id="thumbnailDropzonePreview" style="display:none;">
+                    <img id="thumbnailPreviewImg" src="" alt="Thumbnail preview">
+                    <div class="project-dropzone__preview-info">
+                      <span class="project-dropzone__preview-name" id="thumbnailPreviewName"></span>
+                      <span class="project-dropzone__preview-meta" id="thumbnailPreviewMeta"></span>
+                    </div>
+                    <button type="button" class="project-dropzone__preview-clear" id="thumbnailPreviewClear" title="Remove image">×</button>
+                  </div>
                   <div class="project-dropzone__status" id="thumbnailDropzoneStatus"></div>
+                  <div class="project-dropzone__progress-bar" id="thumbnailProgressBar" style="display:none;"><div class="project-dropzone__progress-fill" id="thumbnailProgressFill"></div></div>
                 </div>
                 <input type="text" id="projectThumbnail" placeholder="assets/images/project-1.png">
                 <span class="project-form__asset-hint">Drop an image to auto-upload to Storage, or paste a URL directly.</span>
@@ -81,12 +90,14 @@
                 <label for="projectScreenshots">Project Screenshots</label>
                 <div class="project-dropzone" id="screenshotsDropzone" tabindex="0" role="button" aria-label="Upload screenshots">
                   <input type="file" id="screenshotsFileInput" accept="image/*" multiple class="project-dropzone__file-input" tabindex="-1">
-                  <div class="project-dropzone__content">
+                  <div class="project-dropzone__content" id="screenshotsDropzoneContent">
                     <span class="project-dropzone__icon">🖼️</span>
                     <span class="project-dropzone__text">Drag & drop screenshots here, or <strong class="project-dropzone__link">browse</strong></span>
                     <span class="project-dropzone__subtext">Multiple images supported</span>
                   </div>
+                  <div class="project-dropzone__previews" id="screenshotsDropzonePreviews" style="display:none;"></div>
                   <div class="project-dropzone__status" id="screenshotsDropzoneStatus"></div>
+                  <div class="project-dropzone__progress-bar" id="screenshotsProgressBar" style="display:none;"><div class="project-dropzone__progress-fill" id="screenshotsProgressFill"></div></div>
                 </div>
                 <textarea id="projectScreenshots" rows="3" placeholder="https://.../screen-1.png&#10;https://.../screen-2.png"></textarea>
                 <span class="project-form__asset-hint">One URL per line. Dropped or uploaded images append automatically.</span>
@@ -352,6 +363,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
-  <script src="admin.js?v=8"></script>
+  <script src="admin.js?v=9"></script>
 </body>
 </html>

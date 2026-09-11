@@ -205,27 +205,106 @@ function isImageFile(file) {
   return !!file && typeof file.type === 'string' && file.type.startsWith('image/');
 }
 
-async function uploadProjectAsset(file, kind) {
-  if (!firebaseStorage) {
-    throw new Error('Firebase Storage is not available. Please ensure Firebase configuration includes Storage.');
-  }
+function updateThumbnailPreview(url, fileName = '', fileSize = 0) {
+  const preview = $('#thumbnailDropzonePreview');
+  const content = $('#thumbnailDropzoneContent');
+  const img = $('#thumbnailPreviewImg');
+  const nameEl = $('#thumbnailPreviewName');
+  const metaEl = $('#thumbnailPreviewMeta');
+  const dropzone = $('#thumbnailDropzone');
 
-  if (!isOwnerLoggedIn()) {
-    throw new Error('You must be signed in as the owner to upload images.');
-  }
+  if (!preview || !content || !img) return;
 
-  if (!isImageFile(file)) {
-    throw new Error(`Only image files (PNG, JPG, WEBP, etc.) can be uploaded for ${kind}.`);
+  const cleanUrl = String(url || '').trim();
+  if (cleanUrl) {
+    img.src = cleanUrl;
+    if (nameEl) nameEl.textContent = fileName || cleanUrl.split('/').pop().split('?')[0] || 'Thumbnail';
+    if (metaEl) metaEl.textContent = fileSize ? `${(fileSize / 1024).toFixed(1)} KB` : (cleanUrl.startsWith('http') ? 'External URL' : 'Local Asset');
+    preview.style.display = 'flex';
+    content.style.display = 'none';
+  } else {
+    img.src = '';
+    preview.style.display = 'none';
+    content.style.display = 'flex';
+    if (dropzone) {
+      dropzone.classList.remove('is-uploading', 'is-success', 'is-error');
+      const statusEl = $('#thumbnailDropzoneStatus');
+      if (statusEl) {
+        statusEl.textContent = '';
+        statusEl.style.display = 'none';
+      }
+    }
   }
+}
 
-  if (file.size > 10 * 1024 * 1024) {
-    throw new Error(`File "${file.name}" exceeds the 10MB limit.`);
-  }
+function uploadProjectAsset(file, kind, onProgress) {
+  return new Promise((resolve, reject) => {
+    if (!firebaseStorage) {
+      return reject(new Error('Firebase Storage SDK not loaded.'));
+    }
 
-  const path = getAssetPath(file, kind);
-  const ref = firebaseStorage.ref().child(path);
-  const snapshot = await ref.put(file, { contentType: file.type });
-  return snapshot.ref.getDownloadURL();
+    if (!isOwnerLoggedIn()) {
+      return reject(new Error('Please sign in as owner before uploading images.'));
+    }
+
+    if (!isImageFile(file)) {
+      return reject(new Error(`Only image files (PNG, JPG, WEBP, etc.) can be uploaded for ${kind}.`));
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      return reject(new Error(`File "${file.name}" exceeds the 10MB limit.`));
+    }
+
+    const path = getAssetPath(file, kind);
+    const ref = firebaseStorage.ref().child(path);
+    const uploadTask = ref.put(file, { contentType: file.type });
+
+    let settled = false;
+    const timeout = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        try { uploadTask.cancel(); } catch (_) {}
+        reject(new Error('Upload timed out (15s). Ensure Firebase Storage is activated in Firebase Console (Build > Storage > Get Started).'));
+      }
+    }, 15000);
+
+    uploadTask.on(
+      'state_changed',
+      (snapshot) => {
+        if (snapshot.totalBytes > 0 && typeof onProgress === 'function') {
+          const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+          onProgress(pct);
+        }
+      },
+      (error) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        const code = error && error.code ? error.code : '';
+        const msg = error && error.message ? error.message : '';
+        if (code === 'storage/bucket-not-found' || msg.includes('404') || msg.includes('does not exist')) {
+          reject(new Error('Firebase Storage bucket not activated yet. Enable it in Firebase Console -> Build -> Storage -> Get Started.'));
+        } else if (code === 'storage/unauthorized') {
+          reject(new Error('Storage permission denied. Ensure you are signed in as owner.'));
+        } else if (code === 'storage/canceled') {
+          reject(new Error('Upload canceled or timed out.'));
+        } else {
+          reject(new Error(msg || 'Upload failed. Check Storage rules or Console setup.'));
+        }
+      },
+      async () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        try {
+          const downloadUrl = await uploadTask.snapshot.ref.getDownloadURL();
+          resolve(downloadUrl);
+        } catch (err) {
+          reject(err);
+        }
+      }
+    );
+  });
 }
 
 function appendUrlsToTextarea(textarea, urls) {
@@ -267,50 +346,108 @@ async function handleFilesUpload(files, kind, dropzoneEl, statusEl) {
 
   if (!isOwnerLoggedIn()) {
     setFormMessage('Please sign in as owner before uploading images.', true);
+    if (dropzoneEl) {
+      dropzoneEl.classList.remove('is-uploading', 'is-success');
+      dropzoneEl.classList.add('is-error');
+    }
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = '✗ Sign in as owner to upload';
+    }
     return false;
   }
 
-  if (dropzoneEl) dropzoneEl.classList.add('is-uploading');
+  const progressBar = dropzoneEl ? dropzoneEl.querySelector('.project-dropzone__progress-bar') : null;
+  const progressFill = dropzoneEl ? dropzoneEl.querySelector('.project-dropzone__progress-fill') : null;
+
+  if (dropzoneEl) {
+    dropzoneEl.classList.remove('is-success', 'is-error');
+    dropzoneEl.classList.add('is-uploading');
+  }
+  if (progressBar) progressBar.style.display = 'block';
+  if (progressFill) progressFill.style.width = '0%';
+
   if (statusEl) {
     statusEl.style.display = 'block';
-    statusEl.textContent = `Uploading ${files.length} file${files.length === 1 ? '' : 's'}...`;
+    statusEl.textContent = `Uploading ${files.length} file${files.length === 1 ? '' : 's'} (0%)...`;
   }
 
   try {
     if (kind === 'thumbnail') {
       const firstFile = files[0];
-      const uploadedUrl = await uploadProjectAsset(firstFile, kind);
+
+      // Instant preview
+      try {
+        const localBlob = URL.createObjectURL(firstFile);
+        updateThumbnailPreview(localBlob, firstFile.name, firstFile.size);
+      } catch (_) {}
+
+      const uploadedUrl = await uploadProjectAsset(firstFile, kind, (pct) => {
+        if (progressFill) progressFill.style.width = `${pct}%`;
+        if (statusEl) statusEl.textContent = `Uploading ${pct}%...`;
+      });
+
       const input = $('#projectThumbnail');
       if (input) input.value = uploadedUrl;
+      updateThumbnailPreview(uploadedUrl, firstFile.name, firstFile.size);
+
+      if (dropzoneEl) {
+        dropzoneEl.classList.remove('is-uploading', 'is-error');
+        dropzoneEl.classList.add('is-success');
+      }
       setFormMessage('Thumbnail uploaded to Firebase Storage and added to form.');
-      if (statusEl) statusEl.textContent = '✓ Thumbnail uploaded!';
+      if (statusEl) statusEl.textContent = '✓ Uploaded to Firebase Storage!';
       return true;
     }
 
     const textarea = $('#projectScreenshots');
+    const previewsContainer = $('#screenshotsDropzonePreviews');
     const uploadedUrls = [];
 
+    // Show instant thumbnail chips for screenshots
+    if (previewsContainer) {
+      previewsContainer.innerHTML = '';
+      previewsContainer.style.display = 'flex';
+      for (const file of files) {
+        try {
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(file);
+          img.title = file.name;
+          previewsContainer.appendChild(img);
+        } catch (_) {}
+      }
+    }
+
     for (let i = 0; i < files.length; i++) {
-      if (statusEl) statusEl.textContent = `Uploading ${i + 1} of ${files.length}...`;
-      uploadedUrls.push(await uploadProjectAsset(files[i], kind));
+      if (statusEl) statusEl.textContent = `Uploading file ${i + 1} of ${files.length}...`;
+      const url = await uploadProjectAsset(files[i], kind, (pct) => {
+        if (progressFill) progressFill.style.width = `${Math.round(((i + pct / 100) / files.length) * 100)}%`;
+      });
+      uploadedUrls.push(url);
     }
 
     appendUrlsToTextarea(textarea, uploadedUrls);
+
+    if (dropzoneEl) {
+      dropzoneEl.classList.remove('is-uploading', 'is-error');
+      dropzoneEl.classList.add('is-success');
+    }
     setFormMessage(`Uploaded ${uploadedUrls.length} screenshot${uploadedUrls.length === 1 ? '' : 's'} to Storage.`);
     if (statusEl) statusEl.textContent = `✓ ${uploadedUrls.length} screenshot${uploadedUrls.length === 1 ? '' : 's'} uploaded!`;
     return true;
   } catch (error) {
+    if (dropzoneEl) {
+      dropzoneEl.classList.remove('is-uploading', 'is-success');
+      dropzoneEl.classList.add('is-error');
+    }
     setFormMessage(error.message || 'Unable to upload file.', true);
-    if (statusEl) statusEl.textContent = `✗ ${error.message || 'Upload failed'}`;
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = `✗ ${error.message || 'Upload failed'}`;
+    }
     return false;
   } finally {
-    if (dropzoneEl) dropzoneEl.classList.remove('is-uploading');
-    setTimeout(() => {
-      if (statusEl && (statusEl.textContent.includes('✓') || statusEl.textContent.includes('✗'))) {
-        statusEl.textContent = '';
-        statusEl.style.display = 'none';
-      }
-    }, 4000);
+    if (progressBar) progressBar.style.display = 'none';
   }
 }
 
@@ -325,10 +462,29 @@ function setupAssetDropTarget(containerSelector, dropzoneSelector, inputSelector
 
   // Clicking dropzone opens native file dialog
   dropzone.addEventListener('click', (e) => {
+    if (e.target.closest('#thumbnailPreviewClear')) return;
     if (e.target !== fileInput && fileInput) {
       fileInput.click();
     }
   });
+
+  // Clear button for thumbnail
+  const clearBtn = $('#thumbnailPreviewClear');
+  if (clearBtn && kind === 'thumbnail') {
+    clearBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (textInput) textInput.value = '';
+      updateThumbnailPreview('');
+      if (fileInput) fileInput.value = '';
+    });
+  }
+
+  // Update preview when typing/pasting directly into URL input
+  if (textInput && kind === 'thumbnail') {
+    textInput.addEventListener('input', (e) => {
+      updateThumbnailPreview(e.target.value);
+    });
+  }
 
   // Keyboard accessibility
   dropzone.addEventListener('keydown', (e) => {
@@ -567,6 +723,12 @@ function setupFirebase() {
   firebaseDb = firebaseApp.firestore();
   firebaseAuth = firebaseApp.auth();
   firebaseStorage = window.firebase.storage ? firebaseApp.storage() : null;
+  if (firebaseStorage) {
+    try {
+      firebaseStorage.setMaxUploadRetryTime(8000);
+      firebaseStorage.setMaxOperationRetryTime(8000);
+    } catch (_) {}
+  }
   firebaseReady = true;
 
   firebaseAuth.onAuthStateChanged((user) => {
@@ -665,6 +827,7 @@ function fillProjectForm(project) {
   ($('#projectYear') || {}).value = project.year || '';
   ($('#projectRole') || {}).value = project.role || '';
   ($('#projectThumbnail') || {}).value = project.thumbnail || '';
+  updateThumbnailPreview(project.thumbnail || '');
   ($('#projectScreenshots') || {}).value = Array.isArray(project.screenshotUrls) ? project.screenshotUrls.join('\n') : '';
   ($('#projectLiveUrl') || {}).value = project.liveUrl || '';
   ($('#projectGithubUrl') || {}).value = project.githubUrl || '';

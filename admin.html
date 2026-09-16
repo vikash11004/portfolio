@@ -7,7 +7,7 @@
   <meta name="description" content="Owner-only admin for managing portfolio projects.">
   <meta name="theme-color" content="#2A2529">
   <title>Admin — Vikash Thyadi</title>
-  <link rel="stylesheet" href="styles.css?v=7">
+  <link rel="stylesheet" href="styles.css?v=8">
 </head>
 
 <body>
@@ -262,13 +262,13 @@
                   </label>
                 </div>
 
-                <!-- Logo & Resume Card -->
+                <!-- Site Logo Card -->
                 <div class="admin-asset-card">
                   <div class="admin-asset-card__header">
-                    <h3 class="admin-asset-card__title">Logo & Resume</h3>
-                    <span class="admin-asset-card__badge">Navbar & CTA</span>
+                    <h3 class="admin-asset-card__title">Site Logo</h3>
+                    <span class="admin-asset-card__badge">Navbar Brand</span>
                   </div>
-                  <p class="admin-asset-card__desc">Navbar brand logo and resume document downloadable by visitors.</p>
+                  <p class="admin-asset-card__desc">Navbar brand logo shown in the navigation bar on every page.</p>
                   <div class="admin-asset-preview-box admin-asset-preview-box--contain" id="logoAssetPreviewBox">
                     <img id="logoAssetPreviewImg" src="assets/images/logo1.png" alt="Site logo preview">
                   </div>
@@ -279,7 +279,7 @@
                     <div class="project-dropzone__content">
                       <span class="project-dropzone__icon">🖼️</span>
                       <span class="project-dropzone__text">Drop new logo or <strong>browse</strong></span>
-                      <span class="project-dropzone__subtext">PNG, SVG, JPG</span>
+                      <span class="project-dropzone__subtext">PNG, SVG, JPG, WEBP</span>
                     </div>
                     <div class="project-dropzone__status" id="logoAssetDropzoneStatus"></div>
                     <div class="project-dropzone__progress-bar" style="display:none;">
@@ -289,6 +289,34 @@
                   <label>Logo URL
                     <input type="text" id="siteLogoUrl" placeholder="assets/images/logo1.png">
                   </label>
+                </div>
+
+                <!-- Resume Document Card -->
+                <div class="admin-asset-card">
+                  <div class="admin-asset-card__header">
+                    <h3 class="admin-asset-card__title">Resume Document (PDF)</h3>
+                    <span class="admin-asset-card__badge">Downloadable CV</span>
+                  </div>
+                  <p class="admin-asset-card__desc">Your CV / Resume file downloaded by visitors from Hero and Skills sections.</p>
+                  <div class="admin-asset-preview-box admin-asset-preview-box--doc" id="resumeDocPreviewBox">
+                    <span class="admin-asset-doc-icon">📄</span>
+                    <span class="admin-asset-doc-name" id="resumeDocPreviewName">VikashThyadi_Resume.pdf</span>
+                    <a href="assets/resume/VikashThyadi_Resume.pdf" target="_blank" rel="noopener" class="admin-asset-doc-link" id="resumeDocPreviewLink">View Current File ↗</a>
+                  </div>
+                  <div class="project-dropzone" id="resumeAssetDropzone" tabindex="0" role="button"
+                    aria-label="Upload resume document">
+                    <input type="file" id="resumeAssetFileInput" accept=".pdf,application/pdf,.doc,.docx" class="project-dropzone__file-input"
+                      tabindex="-1">
+                    <div class="project-dropzone__content">
+                      <span class="project-dropzone__icon">📄</span>
+                      <span class="project-dropzone__text">Drop new Resume PDF or <strong>browse</strong></span>
+                      <span class="project-dropzone__subtext">PDF or DOC up to 25MB</span>
+                    </div>
+                    <div class="project-dropzone__status" id="resumeAssetDropzoneStatus"></div>
+                    <div class="project-dropzone__progress-bar" style="display:none;">
+                      <div class="project-dropzone__progress-fill"></div>
+                    </div>
+                  </div>
                   <label>Resume File URL
                     <input type="text" id="brandResumeUrl" placeholder="assets/resume/VikashThyadi_Resume.pdf">
                   </label>
@@ -601,7 +629,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
-  <script src="admin.js?v=12"></script>
+  <script src="admin.js?v=13"></script>
 </body>
 
 </html>

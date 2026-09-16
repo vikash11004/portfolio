@@ -585,6 +585,17 @@ function applySiteContent() {
   setAttr('#heroImage', 'src', content.hero.imageUrl);
   setAttr('#heroImage', 'alt', content.hero.imageAlt);
 
+  const brandResumeUrl = content.brand?.resumeUrl || DEFAULT_SITE_CONTENT.brand.resumeUrl;
+  const brandResumeFileName = content.brand?.resumeFileName || DEFAULT_SITE_CONTENT.brand.resumeFileName;
+  setAttr('#heroSecondaryBtn', 'href', brandResumeUrl);
+  setAttr('#heroSecondaryBtn', 'download', brandResumeFileName);
+  setAttr('#skillsResumeBtn', 'href', brandResumeUrl);
+  setAttr('#skillsResumeBtn', 'download', brandResumeFileName);
+
+  if (content.brand?.logoUrl) {
+    setAttr('.navbar__logo img', 'src', content.brand.logoUrl);
+  }
+
   setText('#aboutSectionLabel', content.about.sectionLabel);
   setText('#aboutHeadingLine1', content.about.headingLine1);
   setText('#aboutHeadingLine2', content.about.headingLine2);

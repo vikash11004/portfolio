@@ -1617,6 +1617,46 @@ ol {
   padding: 1rem;
 }
 
+.admin-asset-preview-box--doc {
+  flex-direction: column;
+  gap: 0.75rem;
+  background: #f4efe2;
+  padding: 1.5rem 1rem;
+  text-align: center;
+}
+
+.admin-asset-doc-icon {
+  font-size: 2.75rem;
+  line-height: 1;
+}
+
+.admin-asset-doc-name {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--charcoal);
+  max-width: 90%;
+  word-break: break-all;
+}
+
+.admin-asset-doc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--orange);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color var(--transition-fast);
+}
+
+.admin-asset-doc-link:hover {
+  color: var(--charcoal);
+}
+
 /* Experience & Education Item Cards */
 .admin-exp-container {
   display: flex;

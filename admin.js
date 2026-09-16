@@ -307,6 +307,14 @@ function isImageFile(file) {
   return !!file && typeof file.type === 'string' && file.type.startsWith('image/');
 }
 
+function isResumeFile(file) {
+  if (!file) return false;
+  const name = (file.name || '').toLowerCase();
+  const type = (file.type || '').toLowerCase();
+  return type.includes('pdf') || type.includes('word') || type.includes('document') ||
+    name.endsWith('.pdf') || name.endsWith('.doc') || name.endsWith('.docx');
+}
+
 function updateThumbnailPreview(url, fileName = '', fileSize = 0) {
   const preview = $('#thumbnailDropzonePreview');
   const content = $('#thumbnailDropzoneContent');
@@ -346,7 +354,8 @@ function uploadToCloudinary(file, kind, onProgress) {
       return reject(new Error('Cloudinary is not configured. Please enter your Cloud Name and Upload Preset in Media Storage settings above.'));
     }
 
-    if (!isImageFile(file)) {
+    const isDocKind = kind === 'resume' || isResumeFile(file);
+    if (!isDocKind && !isImageFile(file)) {
       return reject(new Error(`Only image files (PNG, JPG, WEBP, etc.) can be uploaded for ${kind}.`));
     }
 
@@ -354,7 +363,8 @@ function uploadToCloudinary(file, kind, onProgress) {
       return reject(new Error(`File "${file.name}" exceeds the 25MB limit.`));
     }
 
-    const endpoint = `https://api.cloudinary.com/v1_1/${encodeURIComponent(config.cloudName)}/image/upload`;
+    const resourceType = isDocKind ? 'auto' : 'image';
+    const endpoint = `https://api.cloudinary.com/v1_1/${encodeURIComponent(config.cloudName)}/${resourceType}/upload`;
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', config.uploadPreset);
@@ -765,13 +775,19 @@ function setupAssetCardDropzone({
   statusSelector,
   inputSelector,
   previewImgSelector,
+  previewDocNameSelector,
+  previewDocLinkSelector,
+  fileNameInputSelector,
   kind
 }) {
   const dropzone = $(dropzoneSelector);
   const fileInput = $(fileInputSelector);
   const statusEl = $(statusSelector);
   const textInput = $(inputSelector);
-  const previewImg = $(previewImgSelector);
+  const previewImg = previewImgSelector ? $(previewImgSelector) : null;
+  const previewDocName = previewDocNameSelector ? $(previewDocNameSelector) : null;
+  const previewDocLink = previewDocLinkSelector ? $(previewDocLinkSelector) : null;
+  const fileNameInput = fileNameInputSelector ? $(fileNameInputSelector) : null;
 
   if (!dropzone) return;
 
@@ -788,10 +804,20 @@ function setupAssetCardDropzone({
     }
   });
 
-  if (textInput && previewImg) {
+  if (textInput) {
     textInput.addEventListener('input', (e) => {
       const val = e.target.value.trim();
-      if (val) previewImg.src = val;
+      if (val) {
+        if (previewImg) previewImg.src = val;
+        if (previewDocLink) {
+          previewDocLink.href = val;
+          previewDocLink.style.display = 'inline-block';
+        }
+        if (previewDocName) {
+          const rawName = val.split('/').pop().split('?')[0];
+          previewDocName.textContent = decodeURIComponent(rawName) || 'Resume File';
+        }
+      }
     });
   }
 
@@ -799,7 +825,7 @@ function setupAssetCardDropzone({
     if (!file) return;
 
     if (!isOwnerLoggedIn()) {
-      setAssetsMessage('Please sign in as owner before uploading images.', true);
+      setAssetsMessage('Please sign in as owner before uploading files.', true);
       dropzone.classList.remove('is-uploading', 'is-success');
       dropzone.classList.add('is-error');
       if (statusEl) {
@@ -821,9 +847,13 @@ function setupAssetCardDropzone({
       return;
     }
 
-    try {
-      if (previewImg) previewImg.src = URL.createObjectURL(file);
-    } catch (_) { }
+    if (kind === 'resume' || isResumeFile(file)) {
+      if (previewDocName) previewDocName.textContent = file.name;
+    } else {
+      try {
+        if (previewImg) previewImg.src = URL.createObjectURL(file);
+      } catch (_) { }
+    }
 
     dropzone.classList.remove('is-success', 'is-error');
     dropzone.classList.add('is-uploading');
@@ -844,6 +874,14 @@ function setupAssetCardDropzone({
 
       if (textInput) textInput.value = uploadedUrl;
       if (previewImg) previewImg.src = uploadedUrl;
+      if (previewDocName) previewDocName.textContent = file.name;
+      if (previewDocLink) {
+        previewDocLink.href = uploadedUrl;
+        previewDocLink.style.display = 'inline-block';
+      }
+      if (fileNameInput && !fileNameInput.value) {
+        fileNameInput.value = file.name;
+      }
 
       dropzone.classList.remove('is-uploading', 'is-error');
       dropzone.classList.add('is-success');
@@ -851,7 +889,7 @@ function setupAssetCardDropzone({
         statusEl.style.display = 'block';
         statusEl.textContent = '✓ Uploaded to Cloudinary!';
       }
-      setAssetsMessage('Photo uploaded! Click "Save Photo & Asset Changes" below to publish.');
+      setAssetsMessage(kind === 'resume' ? 'Resume document uploaded! Click "Save Photo & Asset Changes" below to publish.' : 'Asset uploaded! Click "Save Photo & Asset Changes" below to publish.');
     } catch (err) {
       dropzone.classList.remove('is-uploading', 'is-success');
       dropzone.classList.add('is-error');
@@ -859,7 +897,7 @@ function setupAssetCardDropzone({
         statusEl.style.display = 'block';
         statusEl.textContent = `✗ ${err.message || 'Upload failed'}`;
       }
-      setAssetsMessage(err.message || 'Unable to upload photo.', true);
+      setAssetsMessage(err.message || 'Unable to upload file.', true);
     } finally {
       if (progressBar) progressBar.style.display = 'none';
     }
@@ -1522,6 +1560,15 @@ function fillSiteContentForm(content) {
   const logoImg = $('#logoAssetPreviewImg');
   if (logoImg) logoImg.src = safe.brand.logoUrl || 'assets/images/logo1.png';
 
+  const resumeLink = $('#resumeDocPreviewLink');
+  const resumeName = $('#resumeDocPreviewName');
+  if (resumeLink) {
+    resumeLink.href = safe.brand.resumeUrl || 'assets/resume/VikashThyadi_Resume.pdf';
+  }
+  if (resumeName) {
+    resumeName.textContent = safe.brand.resumeFileName || (safe.brand.resumeUrl ? safe.brand.resumeUrl.split('/').pop().split('?')[0] : 'VikashThyadi_Resume.pdf');
+  }
+
   // TAB 3: Website Content
   ($('#heroLabelInput') || {}).value = safe.hero.label || '';
   ($('#heroTitleLine1Input') || {}).value = safe.hero.titleLine1 || '';
@@ -1917,6 +1964,17 @@ function setupEvents() {
     inputSelector: '#siteLogoUrl',
     previewImgSelector: '#logoAssetPreviewImg',
     kind: 'logo'
+  });
+
+  setupAssetCardDropzone({
+    dropzoneSelector: '#resumeAssetDropzone',
+    fileInputSelector: '#resumeAssetFileInput',
+    statusSelector: '#resumeAssetDropzoneStatus',
+    inputSelector: '#brandResumeUrl',
+    previewDocNameSelector: '#resumeDocPreviewName',
+    previewDocLinkSelector: '#resumeDocPreviewLink',
+    fileNameInputSelector: '#brandResumeFileName',
+    kind: 'resume'
   });
 
   initCloudinaryUI();

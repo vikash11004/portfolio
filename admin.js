@@ -144,7 +144,7 @@ function getCloudinaryConfig() {
         };
       }
     }
-  } catch (_) {}
+  } catch (_) { }
 
   const configObj = window.PORTFOLIO_CONFIG?.CLOUDINARY;
   if (configObj && configObj.cloudName && configObj.uploadPreset) {
@@ -394,7 +394,7 @@ function uploadToCloudinary(file, kind, onProgress) {
               msg += ' — Ensure your upload preset in Cloudinary Settings > Upload is set to "Unsigned".';
             }
           }
-        } catch (_) {}
+        } catch (_) { }
         reject(new Error(msg));
       }
     };
@@ -434,7 +434,7 @@ function uploadToFirebaseStorage(file, kind, onProgress) {
     const timeout = setTimeout(() => {
       if (!settled) {
         settled = true;
-        try { uploadTask.cancel(); } catch (_) {}
+        try { uploadTask.cancel(); } catch (_) { }
         reject(new Error('Upload timed out (15s). Ensure Firebase Storage is activated in Firebase Console.'));
       }
     }, 15000);
@@ -589,7 +589,7 @@ async function handleFilesUpload(files, kind, dropzoneEl, statusEl) {
       try {
         const localBlob = URL.createObjectURL(firstFile);
         updateThumbnailPreview(localBlob, firstFile.name, firstFile.size);
-      } catch (_) {}
+      } catch (_) { }
 
       const uploadedUrl = await uploadProjectAsset(firstFile, kind, (pct) => {
         if (progressFill) progressFill.style.width = `${pct}%`;
@@ -623,7 +623,7 @@ async function handleFilesUpload(files, kind, dropzoneEl, statusEl) {
           img.src = URL.createObjectURL(file);
           img.title = file.name;
           previewsContainer.appendChild(img);
-        } catch (_) {}
+        } catch (_) { }
       }
     }
 
@@ -823,7 +823,7 @@ function setupAssetCardDropzone({
 
     try {
       if (previewImg) previewImg.src = URL.createObjectURL(file);
-    } catch (_) {}
+    } catch (_) { }
 
     dropzone.classList.remove('is-success', 'is-error');
     dropzone.classList.add('is-uploading');
@@ -922,7 +922,7 @@ function parseUrlList(value, fallback = []) {
 
   if (typeof value === 'string') {
     return value
-      .split(/\r?\n|,/) 
+      .split(/\r?\n|,/)
       .map(item => item.trim())
       .filter(Boolean);
   }
@@ -1140,7 +1140,7 @@ function setupFirebase() {
     try {
       firebaseStorage.setMaxUploadRetryTime(8000);
       firebaseStorage.setMaxOperationRetryTime(8000);
-    } catch (_) {}
+    } catch (_) { }
   }
   firebaseReady = true;
 

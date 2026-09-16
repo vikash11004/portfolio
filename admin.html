@@ -1,25 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Owner-only admin for managing portfolio projects.">
   <meta name="theme-color" content="#2A2529">
   <title>Admin — Vikash Thyadi</title>
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=7">
 </head>
+
 <body>
   <main class="admin-page">
     <div class="admin-page__container">
       <div class="admin-page__header reveal visible">
         <span class="section-label">Owner Console</span>
         <h1 class="admin-page__title">Project Admin</h1>
-        <p class="admin-page__subtitle">Manage projects, edit details, delete old entries, and choose what to feature on the landing page. Sign in with the admin user account from Firebase Authentication.</p>
+        <p class="admin-page__subtitle">Manage projects, edit details, delete old entries, and choose what to feature on
+          the landing page. Sign in with the admin user account from Firebase Authentication.</p>
         <a href="index.html" class="btn btn--secondary">Back to Portfolio</a>
       </div>
 
       <div class="admin-auth reveal visible" id="adminAuth">
-        <div class="admin-auth__status" id="adminAuthStatus">Sign in with the admin user account to manage projects.</div>
+        <div class="admin-auth__status" id="adminAuthStatus">Sign in with the admin user account to manage projects.
+        </div>
         <form class="admin-auth__form" id="adminLoginForm" autocomplete="on">
           <input type="email" id="adminEmail" placeholder="Owner Email" required>
           <input type="password" id="adminPassword" placeholder="Password" required>
@@ -78,11 +82,14 @@
                   </label>
                   <div class="project-form__asset-field" data-asset-dropzone="thumbnail">
                     <label for="projectThumbnail">Thumbnail Image</label>
-                    <div class="project-dropzone" id="thumbnailDropzone" tabindex="0" role="button" aria-label="Upload thumbnail image">
-                      <input type="file" id="thumbnailFileInput" accept="image/*" class="project-dropzone__file-input" tabindex="-1">
+                    <div class="project-dropzone" id="thumbnailDropzone" tabindex="0" role="button"
+                      aria-label="Upload thumbnail image">
+                      <input type="file" id="thumbnailFileInput" accept="image/*" class="project-dropzone__file-input"
+                        tabindex="-1">
                       <div class="project-dropzone__content" id="thumbnailDropzoneContent">
                         <span class="project-dropzone__icon">📷</span>
-                        <span class="project-dropzone__text">Drag & drop image here, or <strong class="project-dropzone__link">browse</strong></span>
+                        <span class="project-dropzone__text">Drag & drop image here, or <strong
+                            class="project-dropzone__link">browse</strong></span>
                         <span class="project-dropzone__subtext">PNG, JPG, WEBP up to 10MB</span>
                       </div>
                       <div class="project-dropzone__preview" id="thumbnailDropzonePreview" style="display:none;">
@@ -91,29 +98,42 @@
                           <span class="project-dropzone__preview-name" id="thumbnailPreviewName"></span>
                           <span class="project-dropzone__preview-meta" id="thumbnailPreviewMeta"></span>
                         </div>
-                        <button type="button" class="project-dropzone__preview-clear" id="thumbnailPreviewClear" title="Remove image">×</button>
+                        <button type="button" class="project-dropzone__preview-clear" id="thumbnailPreviewClear"
+                          title="Remove image">×</button>
                       </div>
                       <div class="project-dropzone__status" id="thumbnailDropzoneStatus"></div>
-                      <div class="project-dropzone__progress-bar" id="thumbnailProgressBar" style="display:none;"><div class="project-dropzone__progress-fill" id="thumbnailProgressFill"></div></div>
+                      <div class="project-dropzone__progress-bar" id="thumbnailProgressBar" style="display:none;">
+                        <div class="project-dropzone__progress-fill" id="thumbnailProgressFill"></div>
+                      </div>
                     </div>
-                    <input type="text" id="projectThumbnail" placeholder="https://res.cloudinary.com/... or assets/images/project-1.png">
-                    <span class="project-form__asset-hint">Drop an image to auto-upload via Cloudinary, or paste a URL directly.</span>
+                    <input type="text" id="projectThumbnail"
+                      placeholder="https://res.cloudinary.com/... or assets/images/project-1.png">
+                    <span class="project-form__asset-hint">Drop an image to auto-upload via Cloudinary, or paste a URL
+                      directly.</span>
                   </div>
                   <div class="project-form__asset-field" data-asset-dropzone="screenshots">
                     <label for="projectScreenshots">Project Screenshots</label>
-                    <div class="project-dropzone" id="screenshotsDropzone" tabindex="0" role="button" aria-label="Upload screenshots">
-                      <input type="file" id="screenshotsFileInput" accept="image/*" multiple class="project-dropzone__file-input" tabindex="-1">
+                    <div class="project-dropzone" id="screenshotsDropzone" tabindex="0" role="button"
+                      aria-label="Upload screenshots">
+                      <input type="file" id="screenshotsFileInput" accept="image/*" multiple
+                        class="project-dropzone__file-input" tabindex="-1">
                       <div class="project-dropzone__content" id="screenshotsDropzoneContent">
                         <span class="project-dropzone__icon">🖼️</span>
-                        <span class="project-dropzone__text">Drag & drop screenshots here, or <strong class="project-dropzone__link">browse</strong></span>
+                        <span class="project-dropzone__text">Drag & drop screenshots here, or <strong
+                            class="project-dropzone__link">browse</strong></span>
                         <span class="project-dropzone__subtext">Multiple images supported</span>
                       </div>
-                      <div class="project-dropzone__previews" id="screenshotsDropzonePreviews" style="display:none;"></div>
+                      <div class="project-dropzone__previews" id="screenshotsDropzonePreviews" style="display:none;">
+                      </div>
                       <div class="project-dropzone__status" id="screenshotsDropzoneStatus"></div>
-                      <div class="project-dropzone__progress-bar" id="screenshotsProgressBar" style="display:none;"><div class="project-dropzone__progress-fill" id="screenshotsProgressFill"></div></div>
+                      <div class="project-dropzone__progress-bar" id="screenshotsProgressBar" style="display:none;">
+                        <div class="project-dropzone__progress-fill" id="screenshotsProgressFill"></div>
+                      </div>
                     </div>
-                    <textarea id="projectScreenshots" rows="3" placeholder="https://.../screen-1.png&#10;https://.../screen-2.png"></textarea>
-                    <span class="project-form__asset-hint">One URL per line. Dropped images upload via Cloudinary and append automatically.</span>
+                    <textarea id="projectScreenshots" rows="3"
+                      placeholder="https://.../screen-1.png&#10;https://.../screen-2.png"></textarea>
+                    <span class="project-form__asset-hint">One URL per line. Dropped images upload via Cloudinary and
+                      append automatically.</span>
                   </div>
                   <label>Live URL
                     <input type="url" id="projectLiveUrl" placeholder="https://...">
@@ -137,13 +157,16 @@
                 </label>
 
                 <label>Short Description (for cards)
-                  <input type="text" id="projectShortDescription" maxlength="220" placeholder="One-line summary shown on project cards">
-                  <span class="project-form__hint">A short one-line summary (max 220 characters) shown on project cards. Keep it concise.</span>
+                  <input type="text" id="projectShortDescription" maxlength="220"
+                    placeholder="One-line summary shown on project cards">
+                  <span class="project-form__hint">A short one-line summary (max 220 characters) shown on project cards.
+                    Keep it concise.</span>
                 </label>
 
                 <label>Description HTML / README Markdown
                   <textarea id="projectDescription" rows="10" required></textarea>
-                  <span class="project-form__hint">Paste a README.md here in Markdown, or keep using HTML if you prefer. The project page will render either format.</span>
+                  <span class="project-form__hint">Paste a README.md here in Markdown, or keep using HTML if you prefer.
+                    The project page will render either format.</span>
                 </label>
 
                 <div class="project-form__actions">
@@ -168,7 +191,8 @@
           <div class="admin-editor admin-editor--wide">
             <h2 class="admin-panel__heading">Profile Photos & Site Assets</h2>
             <p class="admin-storage-config__desc" style="margin-bottom: 1.5rem;">
-              Upload your photos directly to Cloudinary. Drag and drop any new photo below to instantly upload and preview it! Click <strong>Save Photo & Asset Changes</strong> when finished.
+              Upload your photos directly to Cloudinary. Drag and drop any new photo below to instantly upload and
+              preview it! Click <strong>Save Photo & Asset Changes</strong> when finished.
             </p>
 
             <form id="siteAssetsForm" class="project-form">
@@ -183,15 +207,19 @@
                   <div class="admin-asset-preview-box" id="heroAssetPreviewBox">
                     <img id="heroAssetPreviewImg" src="assets/images/profile.jpeg" alt="Hero portrait preview">
                   </div>
-                  <div class="project-dropzone" id="heroAssetDropzone" tabindex="0" role="button" aria-label="Upload hero photo">
-                    <input type="file" id="heroAssetFileInput" accept="image/*" class="project-dropzone__file-input" tabindex="-1">
+                  <div class="project-dropzone" id="heroAssetDropzone" tabindex="0" role="button"
+                    aria-label="Upload hero photo">
+                    <input type="file" id="heroAssetFileInput" accept="image/*" class="project-dropzone__file-input"
+                      tabindex="-1">
                     <div class="project-dropzone__content">
                       <span class="project-dropzone__icon">📷</span>
                       <span class="project-dropzone__text">Drop new portrait here or <strong>browse</strong></span>
                       <span class="project-dropzone__subtext">JPG, PNG, WEBP</span>
                     </div>
                     <div class="project-dropzone__status" id="heroAssetDropzoneStatus"></div>
-                    <div class="project-dropzone__progress-bar" style="display:none;"><div class="project-dropzone__progress-fill"></div></div>
+                    <div class="project-dropzone__progress-bar" style="display:none;">
+                      <div class="project-dropzone__progress-fill"></div>
+                    </div>
                   </div>
                   <label>Image URL
                     <input type="text" id="heroImageUrl" placeholder="assets/images/profile.jpeg">
@@ -207,19 +235,24 @@
                     <h3 class="admin-asset-card__title">About Working Photo</h3>
                     <span class="admin-asset-card__badge">About Section</span>
                   </div>
-                  <p class="admin-asset-card__desc">Photo shown in the About section (e.g. working at desk, workspace).</p>
+                  <p class="admin-asset-card__desc">Photo shown in the About section (e.g. working at desk, workspace).
+                  </p>
                   <div class="admin-asset-preview-box" id="aboutAssetPreviewBox">
                     <img id="aboutAssetPreviewImg" src="assets/images/about.jpeg" alt="About photo preview">
                   </div>
-                  <div class="project-dropzone" id="aboutAssetDropzone" tabindex="0" role="button" aria-label="Upload about photo">
-                    <input type="file" id="aboutAssetFileInput" accept="image/*" class="project-dropzone__file-input" tabindex="-1">
+                  <div class="project-dropzone" id="aboutAssetDropzone" tabindex="0" role="button"
+                    aria-label="Upload about photo">
+                    <input type="file" id="aboutAssetFileInput" accept="image/*" class="project-dropzone__file-input"
+                      tabindex="-1">
                     <div class="project-dropzone__content">
                       <span class="project-dropzone__icon">📷</span>
                       <span class="project-dropzone__text">Drop new photo here or <strong>browse</strong></span>
                       <span class="project-dropzone__subtext">JPG, PNG, WEBP</span>
                     </div>
                     <div class="project-dropzone__status" id="aboutAssetDropzoneStatus"></div>
-                    <div class="project-dropzone__progress-bar" style="display:none;"><div class="project-dropzone__progress-fill"></div></div>
+                    <div class="project-dropzone__progress-bar" style="display:none;">
+                      <div class="project-dropzone__progress-fill"></div>
+                    </div>
                   </div>
                   <label>Image URL
                     <input type="text" id="aboutImageUrl" placeholder="assets/images/about.jpeg">
@@ -239,15 +272,19 @@
                   <div class="admin-asset-preview-box admin-asset-preview-box--contain" id="logoAssetPreviewBox">
                     <img id="logoAssetPreviewImg" src="assets/images/logo1.png" alt="Site logo preview">
                   </div>
-                  <div class="project-dropzone" id="logoAssetDropzone" tabindex="0" role="button" aria-label="Upload site logo">
-                    <input type="file" id="logoAssetFileInput" accept="image/*" class="project-dropzone__file-input" tabindex="-1">
+                  <div class="project-dropzone" id="logoAssetDropzone" tabindex="0" role="button"
+                    aria-label="Upload site logo">
+                    <input type="file" id="logoAssetFileInput" accept="image/*" class="project-dropzone__file-input"
+                      tabindex="-1">
                     <div class="project-dropzone__content">
                       <span class="project-dropzone__icon">🖼️</span>
                       <span class="project-dropzone__text">Drop new logo or <strong>browse</strong></span>
                       <span class="project-dropzone__subtext">PNG, SVG, JPG</span>
                     </div>
                     <div class="project-dropzone__status" id="logoAssetDropzoneStatus"></div>
-                    <div class="project-dropzone__progress-bar" style="display:none;"><div class="project-dropzone__progress-fill"></div></div>
+                    <div class="project-dropzone__progress-bar" style="display:none;">
+                      <div class="project-dropzone__progress-fill"></div>
+                    </div>
                   </div>
                   <label>Logo URL
                     <input type="text" id="siteLogoUrl" placeholder="assets/images/logo1.png">
@@ -333,7 +370,8 @@
               <div class="admin-section-divider">
                 <div>
                   <h3>Education & Achievements</h3>
-                  <p>Interactive milestone cards — click "+ Add Milestone" to add one, or delete with the red button. No JSON needed!</p>
+                  <p>Interactive milestone cards — click "+ Add Milestone" to add one, or delete with the red button. No
+                    JSON needed!</p>
                 </div>
                 <button type="button" class="btn btn--secondary" id="addEducationItemBtn">+ Add Milestone</button>
               </div>
@@ -363,7 +401,8 @@
                 </label>
               </div>
               <label>Skills Items (comma separated)
-                <textarea id="skillsItems" rows="3" placeholder="JavaScript, TypeScript, React, Next.js, Python, ..."></textarea>
+                <textarea id="skillsItems" rows="3"
+                  placeholder="JavaScript, TypeScript, React, Next.js, Python, ..."></textarea>
               </label>
 
               <!-- Contact & Socials -->
@@ -494,11 +533,13 @@
                   </label>
                 </div>
                 <div class="admin-storage-config__actions">
-                  <button type="button" class="btn btn--secondary" id="saveCloudinarySettingsBtn">Save Cloudinary Settings</button>
+                  <button type="button" class="btn btn--secondary" id="saveCloudinarySettingsBtn">Save Cloudinary
+                    Settings</button>
                   <span class="admin-storage-config__msg" id="cloudinarySettingsMsg"></span>
                 </div>
                 <div class="admin-storage-config__help">
-                  <small><strong>Quick tip:</strong> When creating a preset in Cloudinary Settings &gt; Upload, make sure Signing Mode is set to <strong>Unsigned</strong>.</small>
+                  <small><strong>Quick tip:</strong> When creating a preset in Cloudinary Settings &gt; Upload, make
+                    sure Signing Mode is set to <strong>Unsigned</strong>.</small>
                 </div>
               </div>
             </div>
@@ -560,6 +601,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
-  <script src="admin.js?v=11"></script>
+  <script src="admin.js?v=12"></script>
 </body>
+
 </html>

@@ -2552,11 +2552,12 @@ ol {
 .ai-chat-widget {
   position: fixed;
   bottom: 1.5rem;
-  right: 1.5rem;
+  left: 1.5rem;
+  right: auto;
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   font-family: var(--font-body);
 }
 
@@ -2571,9 +2572,16 @@ ol {
   border-radius: 9999px;
   cursor: pointer;
   box-shadow: 3px 3px 0 var(--orange);
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow var(--transition-fast), background var(--transition-fast), opacity 0.25s ease;
   position: relative;
   user-select: none;
+  opacity: 1;
+}
+
+.ai-chat-widget.is-scrolling .ai-chat-toggle-btn {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(18px);
 }
 
 .ai-chat-toggle-btn:hover {
@@ -2616,7 +2624,7 @@ ol {
 
 /* Chat Window Modal */
 .ai-chat-window {
-  width: 380px;
+  width: 400px;
   max-width: calc(100vw - 2rem);
   height: 560px;
   max-height: calc(100vh - 5.5rem);
@@ -2646,17 +2654,20 @@ ol {
 .ai-chat-header {
   background: var(--charcoal);
   color: var(--ivory);
-  padding: 0.9rem 1.1rem;
+  padding: 0.85rem 1rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 2px solid var(--charcoal);
+  gap: 0.5rem;
 }
 
 .ai-chat-header__info {
   display: flex;
   align-items: center;
   gap: 0.65rem;
+  min-width: 0;
+  flex: 1;
 }
 
 .ai-chat-avatar {
@@ -2675,21 +2686,25 @@ ol {
 
 .ai-chat-title {
   font-family: var(--font-display);
-  font-size: 1.05rem;
-  line-height: 1.15;
+  font-size: 1.1rem;
+  line-height: 1.1;
   color: var(--ivory);
+  font-weight: 700;
 }
 
 .ai-chat-status {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  color: #a8a09b;
+  font-size: 0.64rem;
+  color: #c2bbb5;
   display: flex;
   align-items: center;
   gap: 0.35rem;
   margin-top: 0.15rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 290px;
+  letter-spacing: 0.02em;
 }
 
 .ai-chat-status__dot {
@@ -2698,6 +2713,7 @@ ol {
   background: #4ade80;
   border-radius: 50%;
   display: inline-block;
+  flex-shrink: 0;
 }
 
 .ai-chat-header__actions {
@@ -3125,12 +3141,17 @@ ol {
 @media (max-width: 480px) {
   .ai-chat-widget {
     bottom: 1rem;
-    right: 1rem;
+    left: 1rem;
+    right: auto;
   }
 
   .ai-chat-window {
     width: calc(100vw - 2rem);
     height: calc(100vh - 5rem);
     max-height: 520px;
+  }
+
+  .ai-chat-status {
+    max-width: calc(100vw - 140px);
   }
 }

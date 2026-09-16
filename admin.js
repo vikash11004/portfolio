@@ -232,6 +232,239 @@ function initCloudinaryUI() {
   }
 }
 
+const AI_STORAGE_KEY = 'portfolio_ai_config_override';
+
+const DEFAULT_AI_CONFIG = {
+  provider: 'builtin',
+  groqApiKey: '',
+  groqModel: 'llama-3.3-70b-versatile',
+  openrouterApiKey: '',
+  openrouterModel: 'meta-llama/llama-3.3-70b-instruct:free',
+  customEndpoint: '',
+  customApiKey: '',
+  customModel: ''
+};
+
+function getAiConfig() {
+  try {
+    const raw = localStorage.getItem(AI_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        return deepMerge(DEFAULT_AI_CONFIG, parsed);
+      }
+    }
+  } catch (_) {}
+
+  if (siteContentState && siteContentState.aiConfig) {
+    return deepMerge(DEFAULT_AI_CONFIG, siteContentState.aiConfig);
+  }
+
+  if (window.PORTFOLIO_CONFIG && window.PORTFOLIO_CONFIG.AI_CONFIG) {
+    return deepMerge(DEFAULT_AI_CONFIG, window.PORTFOLIO_CONFIG.AI_CONFIG);
+  }
+
+  return { ...DEFAULT_AI_CONFIG };
+}
+
+function saveAiConfig(cfg) {
+  try {
+    localStorage.setItem(AI_STORAGE_KEY, JSON.stringify(cfg));
+  } catch (_) {}
+
+  siteContentState = siteContentState || {};
+  siteContentState.aiConfig = { ...cfg };
+}
+
+function initAiConfigUI() {
+  const providerSelect = $('#aiProviderSelect');
+  const groqModelSelect = $('#aiGroqModelSelect');
+  const groqApiKeyInput = $('#aiGroqApiKey');
+  const openrouterApiKeyInput = $('#aiOpenrouterApiKey');
+  const customEndpointInput = $('#aiCustomEndpoint');
+  const customModelInput = $('#aiCustomModel');
+  const customFields = $('#customAiEndpointFields');
+  const saveBtn = $('#saveAiSettingsBtn');
+  const testBtn = $('#testAiConnectionBtn');
+  const badge = $('#aiStatusBadge');
+  const msg = $('#aiSettingsMsg');
+
+  function refreshForm() {
+    const cfg = getAiConfig();
+    if (providerSelect) providerSelect.value = cfg.provider || 'builtin';
+    if (groqModelSelect) groqModelSelect.value = cfg.groqModel || 'llama-3.3-70b-versatile';
+    if (groqApiKeyInput) groqApiKeyInput.value = cfg.groqApiKey || '';
+    if (openrouterApiKeyInput) openrouterApiKeyInput.value = cfg.openrouterApiKey || '';
+    if (customEndpointInput) customEndpointInput.value = cfg.customEndpoint || '';
+    if (customModelInput) customModelInput.value = cfg.customModel || '';
+
+    if (customFields) {
+      customFields.style.display = cfg.provider === 'custom' ? 'grid' : 'none';
+    }
+
+    if (badge) {
+      if (cfg.provider === 'groq') {
+        badge.textContent = cfg.groqApiKey ? `✓ Groq Ready` : 'Groq Key Needed';
+        badge.className = `admin-storage-config__status ${cfg.groqApiKey ? 'is-connected' : ''}`;
+      } else if (cfg.provider === 'openrouter') {
+        badge.textContent = cfg.openrouterApiKey ? '✓ OpenRouter Ready' : 'Key Needed';
+        badge.className = `admin-storage-config__status ${cfg.openrouterApiKey ? 'is-connected' : ''}`;
+      } else if (cfg.provider === 'custom') {
+        badge.textContent = cfg.customEndpoint ? '✓ Custom API' : 'Endpoint Needed';
+        badge.className = `admin-storage-config__status ${cfg.customEndpoint ? 'is-connected' : ''}`;
+      } else {
+        badge.textContent = '✓ Built-in Engine';
+        badge.className = 'admin-storage-config__status is-connected';
+      }
+    }
+  }
+
+  if (providerSelect) {
+    providerSelect.addEventListener('change', () => {
+      if (customFields) {
+        customFields.style.display = providerSelect.value === 'custom' ? 'grid' : 'none';
+      }
+    });
+  }
+
+  refreshForm();
+
+  if (saveBtn) {
+    saveBtn.addEventListener('click', async () => {
+      const cfg = {
+        provider: providerSelect ? providerSelect.value : 'builtin',
+        groqModel: groqModelSelect ? groqModelSelect.value : 'llama-3.3-70b-versatile',
+        groqApiKey: groqApiKeyInput ? groqApiKeyInput.value.trim() : '',
+        openrouterApiKey: openrouterApiKeyInput ? openrouterApiKeyInput.value.trim() : '',
+        customEndpoint: customEndpointInput ? customEndpointInput.value.trim() : '',
+        customModel: customModelInput ? customModelInput.value.trim() : ''
+      };
+
+      saveAiConfig(cfg);
+      refreshForm();
+
+      if (firebaseReady && isOwnerLoggedIn() && firebaseDb) {
+        try {
+          const updated = deepMerge(siteContentState, { aiConfig: cfg });
+          await saveSiteContentToFirestore(updated);
+        } catch (_) {}
+      }
+
+      if (msg) {
+        msg.textContent = '✓ AI configuration saved successfully!';
+        msg.className = 'admin-storage-config__msg is-success';
+        setTimeout(() => { if (msg) msg.textContent = ''; }, 4000);
+      }
+    });
+  }
+
+  if (testBtn) {
+    testBtn.addEventListener('click', async () => {
+      const provider = providerSelect ? providerSelect.value : 'builtin';
+      if (msg) {
+        msg.textContent = 'Testing connection...';
+        msg.className = 'admin-storage-config__msg';
+      }
+
+      if (provider === 'builtin') {
+        if (msg) {
+          msg.textContent = '✓ Built-in Knowledge Base engine is active and ready (no API key needed).';
+          msg.className = 'admin-storage-config__msg is-success';
+        }
+        return;
+      }
+
+      if (provider === 'groq') {
+        const key = groqApiKeyInput ? groqApiKeyInput.value.trim() : '';
+        const model = groqModelSelect ? groqModelSelect.value : 'llama-3.3-70b-versatile';
+        if (!key) {
+          if (msg) {
+            msg.textContent = 'Please enter your Groq API key first.';
+            msg.className = 'admin-storage-config__msg is-error';
+          }
+          return;
+        }
+
+        try {
+          const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${key}`
+            },
+            body: JSON.stringify({
+              model,
+              messages: [{ role: 'user', content: 'Say hello in two words.' }],
+              max_tokens: 15
+            })
+          });
+
+          if (!resp.ok) {
+            const errJson = await resp.json().catch(() => ({}));
+            throw new Error(errJson.error?.message || `HTTP ${resp.status}`);
+          }
+
+          const data = await resp.json();
+          const reply = data.choices?.[0]?.message?.content || 'Connection OK';
+          if (msg) {
+            msg.textContent = `✓ Groq Connected! Model answered: "${reply.trim()}"`;
+            msg.className = 'admin-storage-config__msg is-success';
+          }
+        } catch (err) {
+          if (msg) {
+            msg.textContent = `✗ Groq test failed: ${err.message}`;
+            msg.className = 'admin-storage-config__msg is-error';
+          }
+        }
+        return;
+      }
+
+      if (provider === 'openrouter') {
+        const key = openrouterApiKeyInput ? openrouterApiKeyInput.value.trim() : '';
+        if (!key) {
+          if (msg) {
+            msg.textContent = 'Please enter your OpenRouter API key first.';
+            msg.className = 'admin-storage-config__msg is-error';
+          }
+          return;
+        }
+
+        try {
+          const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${key}`
+            },
+            body: JSON.stringify({
+              model: 'meta-llama/llama-3.3-70b-instruct:free',
+              messages: [{ role: 'user', content: 'Say hello in two words.' }],
+              max_tokens: 15
+            })
+          });
+
+          if (!resp.ok) {
+            const errJson = await resp.json().catch(() => ({}));
+            throw new Error(errJson.error?.message || `HTTP ${resp.status}`);
+          }
+
+          const data = await resp.json();
+          const reply = data.choices?.[0]?.message?.content || 'Connection OK';
+          if (msg) {
+            msg.textContent = `✓ OpenRouter Connected! Model answered: "${reply.trim()}"`;
+            msg.className = 'admin-storage-config__msg is-success';
+          }
+        } catch (err) {
+          if (msg) {
+            msg.textContent = `✗ OpenRouter test failed: ${err.message}`;
+            msg.className = 'admin-storage-config__msg is-error';
+          }
+        }
+      }
+    });
+  }
+}
+
 function deepMerge(base, override) {
   if (Array.isArray(base)) {
     return Array.isArray(override) ? [...override] : [...base];
@@ -1978,6 +2211,7 @@ function setupEvents() {
   });
 
   initCloudinaryUI();
+  initAiConfigUI();
   setupKnowledgeBaseExporter();
 }
 

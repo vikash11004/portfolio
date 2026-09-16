@@ -2041,6 +2041,118 @@ function queryLiveKnowledgeBase(userQuery) {
   return { reply };
 }
 
+function getActiveAiConfig() {
+  try {
+    const local = localStorage.getItem('portfolio_ai_config_override');
+    if (local) {
+      const parsed = JSON.parse(local);
+      if (parsed && typeof parsed === 'object') return parsed;
+    }
+  } catch (_) {}
+
+  if (siteContentState && siteContentState.aiConfig) {
+    return siteContentState.aiConfig;
+  }
+
+  if (window.PORTFOLIO_CONFIG && window.PORTFOLIO_CONFIG.AI_CONFIG) {
+    return window.PORTFOLIO_CONFIG.AI_CONFIG;
+  }
+
+  return { provider: 'builtin' };
+}
+
+async function callCloudAiProvider(userQuery, kb) {
+  const aiConfig = getActiveAiConfig();
+  const provider = aiConfig.provider || 'builtin';
+
+  if (provider === 'builtin') {
+    return null;
+  }
+
+  let endpoint = '';
+  let apiKey = '';
+  let model = '';
+
+  if (provider === 'groq') {
+    apiKey = aiConfig.groqApiKey || '';
+    if (!apiKey) return null;
+    endpoint = 'https://api.groq.com/openai/v1/chat/completions';
+    model = aiConfig.groqModel || 'llama-3.3-70b-versatile';
+  } else if (provider === 'openrouter') {
+    apiKey = aiConfig.openrouterApiKey || '';
+    if (!apiKey) return null;
+    endpoint = 'https://openrouter.ai/api/v1/chat/completions';
+    model = aiConfig.openrouterModel || 'meta-llama/llama-3.3-70b-instruct:free';
+  } else if (provider === 'custom') {
+    apiKey = aiConfig.customApiKey || '';
+    endpoint = aiConfig.customEndpoint || '';
+    model = aiConfig.customModel || 'gpt-3.5-turbo';
+    if (!endpoint) return null;
+  } else {
+    return null;
+  }
+
+  const systemPrompt = `You are GVEN (Generative Virtual Extension of Vikash Thyadi), the personal AI assistant for Vikash Thyadi on his portfolio website.
+Answer concisely, warmly, and accurately using strictly the verified portfolio knowledge base provided below.
+If asked about downloading his resume or CV, mention that his verified resume PDF can be downloaded directly right here in the widget.
+If asked about contact or hiring, provide his email (${kb.contact.email}) and links.
+Use clear markdown formatting (**bold**, *italic*, - bullet lists). Keep answers direct and helpful.
+
+--- LIVE PORTFOLIO KNOWLEDGE BASE ---
+${exportKnowledgeBaseAsMarkdown(kb)}`;
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userQuery }
+      ],
+      max_tokens: 600,
+      temperature: 0.6
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Cloud AI provider returned HTTP ${response.status}`);
+  }
+
+  const data = await response.json();
+  const reply = data.choices?.[0]?.message?.content;
+  if (!reply) throw new Error('Empty response from Cloud AI');
+
+  const qLower = userQuery.toLowerCase();
+  let resumeCard = null;
+  if (qLower.includes('resume') || qLower.includes('cv') || qLower.includes('download') || reply.toLowerCase().includes('resume')) {
+    const rawUrl = kb.resume.url;
+    const fileName = kb.resume.fileName || 'Vikash-Thyadi-Resume.pdf';
+    resumeCard = {
+      rawUrl,
+      downloadUrl: getDownloadableResumeUrl(rawUrl, fileName),
+      fileName
+    };
+  }
+
+  let projectCards = [];
+  const matchedProject = kb.projects.find(p => qLower.includes((p.title || '').toLowerCase()));
+  if (matchedProject) {
+    projectCards = [matchedProject];
+  } else if (qLower.includes('featured') || qLower.includes('projects')) {
+    projectCards = kb.projects.filter(p => p.featured).slice(0, 3);
+  }
+
+  return {
+    reply,
+    projectCards,
+    resumeCard
+  };
+}
+
 function initAiChatbot() {
   const widget = $('#aiChatWidget');
   const toggleBtn = $('#aiChatToggleBtn');
@@ -2059,6 +2171,7 @@ function initAiChatbot() {
     if (shouldOpen) {
       modal.style.display = 'flex';
       toggleBtn.setAttribute('aria-expanded', 'true');
+      widget.classList.remove('is-scrolling');
       const ping = toggleBtn.querySelector('.ai-chat-toggle-ping');
       if (ping) ping.style.display = 'none';
 
@@ -2183,7 +2296,7 @@ function initAiChatbot() {
     if (typingEl) typingEl.remove();
   }
 
-  function handleUserMessage(queryText) {
+  async function handleUserMessage(queryText) {
     const q = String(queryText || '').trim();
     if (!q) return;
 
@@ -2192,12 +2305,30 @@ function initAiChatbot() {
 
     showTypingIndicator();
 
-    // Natural conversational delay (350 - 550ms)
-    setTimeout(() => {
+    try {
+      const kb = buildLiveKnowledgeBase();
+      let result = null;
+
+      // 1. Attempt Cloud AI provider if configured with API key
+      try {
+        result = await callCloudAiProvider(q, kb);
+      } catch (cloudErr) {
+        console.warn('Cloud AI failed, falling back to live knowledge base:', cloudErr.message || cloudErr);
+        result = null;
+      }
+
+      // 2. Seamless fallback to built-in knowledge base engine
+      if (!result) {
+        await new Promise(r => setTimeout(r, 380));
+        result = queryLiveKnowledgeBase(q);
+      }
+
       hideTypingIndicator();
-      const result = queryLiveKnowledgeBase(q);
       appendMessage('bot', result.reply, result.projectCards, result.resumeCard);
-    }, 450);
+    } catch (err) {
+      hideTypingIndicator();
+      appendMessage('bot', "I encountered a momentary issue. Please try asking again!");
+    }
   }
 
   function resetChat() {
@@ -2205,6 +2336,18 @@ function initAiChatbot() {
     const welcome = `Hello! 👋 I'm **GVEN** (*Generative Virtual Extension of Vikash Thyadi*).\n\nI have real-time access to everything on this portfolio. Ask me about Vikash's **projects**, **skills & tech stack**, **education**, **certifications**, or how to **download his resume** and **get in touch**!`;
     appendMessage('bot', welcome);
   }
+
+  // Hide button during page scrolling; reappear smoothly when scrolling stops
+  let scrollTimeout = null;
+  window.addEventListener('scroll', () => {
+    if (modal.style.display === 'none') {
+      widget.classList.add('is-scrolling');
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        widget.classList.remove('is-scrolling');
+      }, 250);
+    }
+  }, { passive: true });
 
   // Event Listeners
   toggleBtn.addEventListener('click', () => toggleChat());

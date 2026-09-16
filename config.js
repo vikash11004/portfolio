@@ -15,6 +15,17 @@ window.PORTFOLIO_CONFIG = {
   CLOUDINARY: {
     cloudName: 'ucebpoei',
     uploadPreset: 'portfolio_uploads'
+  },
+  // Cloud AI Provider configuration for GVEN Assistant (Groq, OpenRouter, etc.)
+  AI_CONFIG: {
+    provider: 'builtin', // 'builtin' | 'groq' | 'openrouter' | 'custom'
+    groqApiKey: '',
+    groqModel: 'llama-3.3-70b-versatile',
+    openrouterApiKey: '',
+    openrouterModel: 'meta-llama/llama-3.3-70b-instruct:free',
+    customEndpoint: '',
+    customApiKey: '',
+    customModel: ''
   }
 };
 

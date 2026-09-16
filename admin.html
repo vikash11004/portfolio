@@ -604,12 +604,65 @@
                 <textarea id="seoDescription" rows="3" required></textarea>
               </label>
 
-              <div class="admin-section-divider">
-                <div>
-                  <h3>Live Knowledge Base Exporter</h3>
-                  <p>Compile and download the complete knowledge base directly from live Firestore content and projects.</p>
+            <!-- Cloud AI & GVEN Settings Card -->
+            <div class="admin-storage-config" id="aiConfigDetails" style="margin-bottom: 2rem;">
+              <div class="admin-storage-config__summary" style="cursor: default;">
+                <span>🤖 GVEN Cloud AI Provider (Groq, OpenRouter &amp; Free LLMs)</span>
+                <span class="admin-storage-config__status" id="aiStatusBadge">Checking...</span>
+              </div>
+              <div class="admin-storage-config__body">
+                <p class="admin-storage-config__desc">
+                  Connect GVEN to a fast Cloud AI provider. Groq Cloud API provides free, ultra-fast inference with Llama 3.3 70B.
+                  If no API key is set or the API is unreachable, GVEN automatically falls back to the built-in live knowledge base.
+                </p>
+                <div class="project-form__grid">
+                  <label>Active AI Provider
+                    <select id="aiProviderSelect">
+                      <option value="builtin">Built-in Knowledge Base Engine (Offline &amp; Free)</option>
+                      <option value="groq">Groq Cloud API (Recommended Free &amp; Fast)</option>
+                      <option value="openrouter">OpenRouter (Free Tier Models)</option>
+                      <option value="custom">Custom OpenAI-Compatible Endpoint</option>
+                    </select>
+                  </label>
+                  <label>Groq Model
+                    <select id="aiGroqModelSelect">
+                      <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile (Recommended)</option>
+                      <option value="llama-3.1-8b-instant">llama-3.1-8b-instant (Fastest)</option>
+                      <option value="mixtral-8x7b-32768">mixtral-8x7b-32768</option>
+                    </select>
+                  </label>
+                  <label>Groq API Key (gsk_...)
+                    <input type="password" id="aiGroqApiKey" placeholder="Enter your free Groq API key">
+                  </label>
+                  <label>OpenRouter API Key (sk-or-...)
+                    <input type="password" id="aiOpenrouterApiKey" placeholder="Enter OpenRouter API key (Optional)">
+                  </label>
+                </div>
+                <div class="project-form__grid" id="customAiEndpointFields" style="display: none;">
+                  <label>Custom API Endpoint URL
+                    <input type="text" id="aiCustomEndpoint" placeholder="https://api.together.xyz/v1/chat/completions">
+                  </label>
+                  <label>Custom Model Name
+                    <input type="text" id="aiCustomModel" placeholder="e.g. meta-llama/Llama-3-70b-chat-hf">
+                  </label>
+                </div>
+                <div class="admin-storage-config__actions">
+                  <button type="button" class="btn btn--primary" id="saveAiSettingsBtn">Save AI Configuration</button>
+                  <button type="button" class="btn btn--secondary" id="testAiConnectionBtn">⚡ Test AI Connection</button>
+                  <span class="admin-storage-config__msg" id="aiSettingsMsg"></span>
+                </div>
+                <div class="admin-storage-config__help">
+                  <small><strong>Free API Keys:</strong> Get a free Groq API key in seconds at <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">console.groq.com</a> or an OpenRouter key at <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer">openrouter.ai</a>. No credit card is needed!</small>
                 </div>
               </div>
+            </div>
+
+            <div class="admin-section-divider">
+              <div>
+                <h3>Live Knowledge Base Exporter</h3>
+                <p>Compile and download the complete knowledge base directly from live Firestore content and projects.</p>
+              </div>
+            </div>
               <div class="project-form__actions" style="margin-bottom: 1.5rem;">
                 <button type="button" class="btn btn--secondary" id="exportKbJsonBtn">📥 Download knowledge-base.json</button>
                 <button type="button" class="btn btn--secondary" id="exportKbMdBtn">📄 Download knowledge-base.md</button>
@@ -636,13 +689,13 @@
     </div>
   </main>
 
-  <script src="config.js?v=2"></script>
+  <script src="config.js?v=3"></script>
   <script src="projects-data.js?v=2"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
-  <script src="admin.js?v=13"></script>
+  <script src="admin.js?v=14"></script>
 </body>
 
 </html>

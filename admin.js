@@ -182,15 +182,25 @@ function initCloudinaryUI() {
     if (cloudNameInput && !cloudNameInput.value) cloudNameInput.value = config.cloudName;
     if (uploadPresetInput && !uploadPresetInput.value) uploadPresetInput.value = config.uploadPreset;
 
+    const details = $('#cloudinaryConfigDetails');
     if (badge) {
       if (config.cloudName && config.uploadPreset) {
         badge.textContent = `✓ Ready (${config.cloudName})`;
         badge.classList.add('is-connected');
+        if (details && !details.dataset.userToggled) details.open = false;
       } else {
         badge.textContent = 'Setup Required';
         badge.classList.remove('is-connected');
+        if (details) details.open = true;
       }
     }
+  }
+
+  const detailsEl = $('#cloudinaryConfigDetails');
+  if (detailsEl) {
+    detailsEl.addEventListener('toggle', () => {
+      detailsEl.dataset.userToggled = '1';
+    });
   }
 
   refreshBadge();
@@ -478,15 +488,14 @@ function uploadProjectAsset(file, kind, onProgress) {
     return uploadToCloudinary(file, kind, onProgress);
   }
 
-  if (firebaseStorage) {
-    return uploadToFirebaseStorage(file, kind, onProgress);
+  const details = $('#cloudinaryConfigDetails');
+  if (details) {
+    details.open = true;
+    details.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
-  const details = $('#cloudinaryConfigDetails');
-  if (details) details.open = true;
-
   return Promise.reject(new Error(
-    'Cloudinary is not configured yet. Enter your Cloud Name and Upload Preset in Media Storage settings above, or paste an image URL directly.'
+    'Cloudinary is not configured yet! Open "Media Storage (Cloudinary)" above, enter your Cloud Name & Upload Preset, and click Save.'
   ));
 }
 
@@ -524,7 +533,7 @@ async function handleFilesUpload(files, kind, dropzoneEl, statusEl) {
   if (!files || !files.length) return false;
 
   const cConfig = getCloudinaryConfig();
-  const hasStorage = Boolean((cConfig.cloudName && cConfig.uploadPreset) || firebaseStorage);
+  const hasCloudinary = Boolean(cConfig.cloudName && cConfig.uploadPreset);
 
   if (!isOwnerLoggedIn()) {
     setFormMessage('Please sign in as owner before uploading images.', true);
@@ -539,17 +548,20 @@ async function handleFilesUpload(files, kind, dropzoneEl, statusEl) {
     return false;
   }
 
-  if (!hasStorage) {
+  if (!hasCloudinary) {
     const details = $('#cloudinaryConfigDetails');
-    if (details) details.open = true;
-    setFormMessage('Media storage not configured. Please enter your free Cloudinary settings above.', true);
+    if (details) {
+      details.open = true;
+      details.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    setFormMessage('Cloudinary setup required. Please enter your Cloud Name and Upload Preset in Media Storage settings above.', true);
     if (dropzoneEl) {
       dropzoneEl.classList.remove('is-uploading', 'is-success');
       dropzoneEl.classList.add('is-error');
     }
     if (statusEl) {
       statusEl.style.display = 'block';
-      statusEl.textContent = '✗ Cloudinary configuration required (click above)';
+      statusEl.textContent = '✗ Cloudinary setup required (open Media Storage above)';
     }
     return false;
   }

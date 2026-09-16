@@ -39,6 +39,34 @@
           <div class="admin-edit-state" id="adminEditState" hidden>
             Editing <strong id="adminEditingTitle"></strong>
           </div>
+          <details class="admin-storage-config" id="cloudinaryConfigDetails">
+            <summary class="admin-storage-config__summary">
+              <span>☁️ Media Storage (Cloudinary — 100% Free)</span>
+              <span class="admin-storage-config__status" id="cloudinaryStatusBadge">Checking...</span>
+            </summary>
+            <div class="admin-storage-config__body">
+              <p class="admin-storage-config__desc">
+                Firebase Storage now requires a paid Google Cloud plan. Cloudinary provides 25GB of free CDN media storage without requiring a credit card.
+                Enter your Cloudinary <strong>Cloud Name</strong> and <strong>Unsigned Upload Preset</strong> below, or define them in <code>config.js</code>.
+              </p>
+              <div class="admin-storage-config__grid">
+                <label>Cloud Name
+                  <input type="text" id="cloudinaryCloudName" placeholder="e.g. dxy1234">
+                </label>
+                <label>Upload Preset (Unsigned)
+                  <input type="text" id="cloudinaryUploadPreset" placeholder="e.g. portfolio_uploads">
+                </label>
+              </div>
+              <div class="admin-storage-config__actions">
+                <button type="button" class="btn btn--secondary" id="saveCloudinarySettingsBtn">Save Cloudinary Settings</button>
+                <span class="admin-storage-config__msg" id="cloudinarySettingsMsg"></span>
+              </div>
+              <div class="admin-storage-config__help">
+                <small><strong>Quick 2-minute setup:</strong> Log in to <a href="https://cloudinary.com/console/settings/upload" target="_blank" rel="noopener">Cloudinary Settings &gt; Upload</a>, scroll to <em>Upload presets</em>, click <em>Add upload preset</em>, change Signing Mode to <strong>Unsigned</strong>, copy its name, and save!</small>
+              </div>
+            </div>
+          </details>
+
           <form id="projectForm" class="project-form">
             <input type="hidden" id="projectRowId">
 
@@ -83,8 +111,8 @@
                   <div class="project-dropzone__status" id="thumbnailDropzoneStatus"></div>
                   <div class="project-dropzone__progress-bar" id="thumbnailProgressBar" style="display:none;"><div class="project-dropzone__progress-fill" id="thumbnailProgressFill"></div></div>
                 </div>
-                <input type="text" id="projectThumbnail" placeholder="assets/images/project-1.png">
-                <span class="project-form__asset-hint">Drop an image to auto-upload to Storage, or paste a URL directly.</span>
+                <input type="text" id="projectThumbnail" placeholder="https://res.cloudinary.com/... or assets/images/project-1.png">
+                <span class="project-form__asset-hint">Drop an image to auto-upload via Cloudinary, or paste a URL directly.</span>
               </div>
               <div class="project-form__asset-field" data-asset-dropzone="screenshots">
                 <label for="projectScreenshots">Project Screenshots</label>
@@ -100,7 +128,7 @@
                   <div class="project-dropzone__progress-bar" id="screenshotsProgressBar" style="display:none;"><div class="project-dropzone__progress-fill" id="screenshotsProgressFill"></div></div>
                 </div>
                 <textarea id="projectScreenshots" rows="3" placeholder="https://.../screen-1.png&#10;https://.../screen-2.png"></textarea>
-                <span class="project-form__asset-hint">One URL per line. Dropped or uploaded images append automatically.</span>
+                <span class="project-form__asset-hint">One URL per line. Dropped images upload via Cloudinary and append automatically.</span>
               </div>
               <label>Live URL
                 <input type="url" id="projectLiveUrl" placeholder="https://...">

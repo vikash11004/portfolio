@@ -130,6 +130,98 @@ let projectsState = [];
 let siteContentState = deepMerge(DEFAULT_SITE_CONTENT, {});
 let siteRawJsonBaseline = '';
 
+const CLOUDINARY_STORAGE_KEY = 'portfolio_cloudinary_config';
+
+function getCloudinaryConfig() {
+  try {
+    const raw = localStorage.getItem(CLOUDINARY_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.cloudName && parsed.uploadPreset) {
+        return {
+          cloudName: String(parsed.cloudName).trim(),
+          uploadPreset: String(parsed.uploadPreset).trim()
+        };
+      }
+    }
+  } catch (_) {}
+
+  const configObj = window.PORTFOLIO_CONFIG?.CLOUDINARY;
+  if (configObj && configObj.cloudName && configObj.uploadPreset) {
+    return {
+      cloudName: String(configObj.cloudName).trim(),
+      uploadPreset: String(configObj.uploadPreset).trim()
+    };
+  }
+
+  return { cloudName: '', uploadPreset: '' };
+}
+
+function saveCloudinaryConfig(cloudName, uploadPreset) {
+  const cleanName = String(cloudName || '').trim();
+  const cleanPreset = String(uploadPreset || '').trim();
+  if (!cleanName || !cleanPreset) {
+    localStorage.removeItem(CLOUDINARY_STORAGE_KEY);
+  } else {
+    localStorage.setItem(CLOUDINARY_STORAGE_KEY, JSON.stringify({
+      cloudName: cleanName,
+      uploadPreset: cleanPreset
+    }));
+  }
+}
+
+function initCloudinaryUI() {
+  const cloudNameInput = $('#cloudinaryCloudName');
+  const uploadPresetInput = $('#cloudinaryUploadPreset');
+  const badge = $('#cloudinaryStatusBadge');
+  const saveBtn = $('#saveCloudinarySettingsBtn');
+  const msg = $('#cloudinarySettingsMsg');
+
+  function refreshBadge() {
+    const config = getCloudinaryConfig();
+    if (cloudNameInput && !cloudNameInput.value) cloudNameInput.value = config.cloudName;
+    if (uploadPresetInput && !uploadPresetInput.value) uploadPresetInput.value = config.uploadPreset;
+
+    if (badge) {
+      if (config.cloudName && config.uploadPreset) {
+        badge.textContent = `✓ Ready (${config.cloudName})`;
+        badge.classList.add('is-connected');
+      } else {
+        badge.textContent = 'Setup Required';
+        badge.classList.remove('is-connected');
+      }
+    }
+  }
+
+  refreshBadge();
+
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      const name = cloudNameInput ? cloudNameInput.value.trim() : '';
+      const preset = uploadPresetInput ? uploadPresetInput.value.trim() : '';
+
+      if (!name || !preset) {
+        if (msg) {
+          msg.textContent = 'Please enter both Cloud Name and Upload Preset.';
+          msg.className = 'admin-storage-config__msg is-error';
+        }
+        return;
+      }
+
+      saveCloudinaryConfig(name, preset);
+      refreshBadge();
+
+      if (msg) {
+        msg.textContent = '✓ Cloudinary settings saved!';
+        msg.className = 'admin-storage-config__msg is-success';
+        setTimeout(() => {
+          if (msg) msg.textContent = '';
+        }, 4000);
+      }
+    });
+  }
+}
+
 function deepMerge(base, override) {
   if (Array.isArray(base)) {
     return Array.isArray(override) ? [...override] : [...base];
@@ -237,14 +329,83 @@ function updateThumbnailPreview(url, fileName = '', fileSize = 0) {
   }
 }
 
-function uploadProjectAsset(file, kind, onProgress) {
+function uploadToCloudinary(file, kind, onProgress) {
+  return new Promise((resolve, reject) => {
+    const config = getCloudinaryConfig();
+    if (!config.cloudName || !config.uploadPreset) {
+      return reject(new Error('Cloudinary is not configured. Please enter your Cloud Name and Upload Preset in Media Storage settings above.'));
+    }
+
+    if (!isImageFile(file)) {
+      return reject(new Error(`Only image files (PNG, JPG, WEBP, etc.) can be uploaded for ${kind}.`));
+    }
+
+    if (file.size > 25 * 1024 * 1024) {
+      return reject(new Error(`File "${file.name}" exceeds the 25MB limit.`));
+    }
+
+    const endpoint = `https://api.cloudinary.com/v1_1/${encodeURIComponent(config.cloudName)}/image/upload`;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', config.uploadPreset);
+    formData.append('folder', 'portfolio');
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', endpoint);
+
+    if (xhr.upload && typeof onProgress === 'function') {
+      xhr.upload.onprogress = (evt) => {
+        if (evt.lengthComputable && evt.total > 0) {
+          const pct = Math.round((evt.loaded / evt.total) * 100);
+          onProgress(pct);
+        }
+      };
+    }
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          if (data.secure_url) {
+            resolve(data.secure_url);
+          } else {
+            reject(new Error('Upload succeeded, but no secure_url was returned by Cloudinary.'));
+          }
+        } catch (err) {
+          reject(new Error('Invalid response from Cloudinary API.'));
+        }
+      } else {
+        let msg = `Cloudinary upload failed (HTTP ${xhr.status})`;
+        try {
+          const errData = JSON.parse(xhr.responseText);
+          if (errData.error?.message) {
+            msg = errData.error.message;
+            if (msg.toLowerCase().includes('preset') || msg.toLowerCase().includes('unsigned')) {
+              msg += ' — Ensure your upload preset in Cloudinary Settings > Upload is set to "Unsigned".';
+            }
+          }
+        } catch (_) {}
+        reject(new Error(msg));
+      }
+    };
+
+    xhr.onerror = () => {
+      reject(new Error('Network error uploading to Cloudinary. Check your internet connection or Cloud Name.'));
+    };
+
+    xhr.ontimeout = () => {
+      reject(new Error('Cloudinary upload timed out (30s).'));
+    };
+
+    xhr.timeout = 30000;
+    xhr.send(formData);
+  });
+}
+
+function uploadToFirebaseStorage(file, kind, onProgress) {
   return new Promise((resolve, reject) => {
     if (!firebaseStorage) {
       return reject(new Error('Firebase Storage SDK not loaded.'));
-    }
-
-    if (!isOwnerLoggedIn()) {
-      return reject(new Error('Please sign in as owner before uploading images.'));
     }
 
     if (!isImageFile(file)) {
@@ -264,7 +425,7 @@ function uploadProjectAsset(file, kind, onProgress) {
       if (!settled) {
         settled = true;
         try { uploadTask.cancel(); } catch (_) {}
-        reject(new Error('Upload timed out (15s). Ensure Firebase Storage is activated in Firebase Console (Build > Storage > Get Started).'));
+        reject(new Error('Upload timed out (15s). Ensure Firebase Storage is activated in Firebase Console.'));
       }
     }, 15000);
 
@@ -283,7 +444,7 @@ function uploadProjectAsset(file, kind, onProgress) {
         const code = error && error.code ? error.code : '';
         const msg = error && error.message ? error.message : '';
         if (code === 'storage/bucket-not-found' || msg.includes('404') || msg.includes('does not exist')) {
-          reject(new Error('Firebase Storage bucket not activated yet. Enable it in Firebase Console -> Build -> Storage -> Get Started.'));
+          reject(new Error('Firebase Storage bucket not activated. Use Cloudinary or upgrade to Blaze plan.'));
         } else if (code === 'storage/unauthorized') {
           reject(new Error('Storage permission denied. Ensure you are signed in as owner.'));
         } else if (code === 'storage/canceled') {
@@ -306,6 +467,29 @@ function uploadProjectAsset(file, kind, onProgress) {
     );
   });
 }
+
+function uploadProjectAsset(file, kind, onProgress) {
+  if (!isOwnerLoggedIn()) {
+    return Promise.reject(new Error('Please sign in as owner before uploading images.'));
+  }
+
+  const cConfig = getCloudinaryConfig();
+  if (cConfig.cloudName && cConfig.uploadPreset) {
+    return uploadToCloudinary(file, kind, onProgress);
+  }
+
+  if (firebaseStorage) {
+    return uploadToFirebaseStorage(file, kind, onProgress);
+  }
+
+  const details = $('#cloudinaryConfigDetails');
+  if (details) details.open = true;
+
+  return Promise.reject(new Error(
+    'Cloudinary is not configured yet. Enter your Cloud Name and Upload Preset in Media Storage settings above, or paste an image URL directly.'
+  ));
+}
+
 
 function appendUrlsToTextarea(textarea, urls) {
   if (!textarea || !Array.isArray(urls) || !urls.length) return;
@@ -339,10 +523,8 @@ function getFilesFromDropEvent(event) {
 async function handleFilesUpload(files, kind, dropzoneEl, statusEl) {
   if (!files || !files.length) return false;
 
-  if (!firebaseStorage) {
-    setFormMessage('Firebase Storage is not available.', true);
-    return false;
-  }
+  const cConfig = getCloudinaryConfig();
+  const hasStorage = Boolean((cConfig.cloudName && cConfig.uploadPreset) || firebaseStorage);
 
   if (!isOwnerLoggedIn()) {
     setFormMessage('Please sign in as owner before uploading images.', true);
@@ -353,6 +535,21 @@ async function handleFilesUpload(files, kind, dropzoneEl, statusEl) {
     if (statusEl) {
       statusEl.style.display = 'block';
       statusEl.textContent = '✗ Sign in as owner to upload';
+    }
+    return false;
+  }
+
+  if (!hasStorage) {
+    const details = $('#cloudinaryConfigDetails');
+    if (details) details.open = true;
+    setFormMessage('Media storage not configured. Please enter your free Cloudinary settings above.', true);
+    if (dropzoneEl) {
+      dropzoneEl.classList.remove('is-uploading', 'is-success');
+      dropzoneEl.classList.add('is-error');
+    }
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = '✗ Cloudinary configuration required (click above)';
     }
     return false;
   }
@@ -395,8 +592,8 @@ async function handleFilesUpload(files, kind, dropzoneEl, statusEl) {
         dropzoneEl.classList.remove('is-uploading', 'is-error');
         dropzoneEl.classList.add('is-success');
       }
-      setFormMessage('Thumbnail uploaded to Firebase Storage and added to form.');
-      if (statusEl) statusEl.textContent = '✓ Uploaded to Firebase Storage!';
+      setFormMessage('Thumbnail uploaded to Cloudinary and added to form.');
+      if (statusEl) statusEl.textContent = '✓ Uploaded to Cloudinary!';
       return true;
     }
 
@@ -432,7 +629,7 @@ async function handleFilesUpload(files, kind, dropzoneEl, statusEl) {
       dropzoneEl.classList.remove('is-uploading', 'is-error');
       dropzoneEl.classList.add('is-success');
     }
-    setFormMessage(`Uploaded ${uploadedUrls.length} screenshot${uploadedUrls.length === 1 ? '' : 's'} to Storage.`);
+    setFormMessage(`Uploaded ${uploadedUrls.length} screenshot${uploadedUrls.length === 1 ? '' : 's'} to Cloudinary.`);
     if (statusEl) statusEl.textContent = `✓ ${uploadedUrls.length} screenshot${uploadedUrls.length === 1 ? '' : 's'} uploaded!`;
     return true;
   } catch (error) {
@@ -1388,6 +1585,8 @@ function setupEvents() {
     '#screenshotsDropzoneStatus',
     'screenshots'
   );
+
+  initCloudinaryUI();
 }
 
 async function initAdmin() {

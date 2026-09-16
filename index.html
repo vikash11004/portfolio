@@ -6,7 +6,7 @@
   <meta name="description" content="Vikash Thyadi — Developer & Designer. A refined brutalist portfolio showcasing projects, skills, and creative work." id="metaDescription">
   <meta name="theme-color" content="#2A2529">
   <title>Vikash Thyadi — Portfolio</title>
-  <link rel="stylesheet" href="styles.css?v=8">
+  <link rel="stylesheet" href="styles.css?v=9">
   <link rel="icon" id="siteFavicon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 </head>
 <body>
@@ -259,12 +259,67 @@
     </footer>
   </main>
 
+  <!-- ============================================
+       AI CHATBOT WIDGET (LIVE KNOWLEDGE BASE)
+       ============================================ -->
+  <aside class="ai-chat-widget" id="aiChatWidget" aria-label="AI Portfolio Assistant">
+    <!-- Chat Window -->
+    <div class="ai-chat-window" id="aiChatModal" role="dialog" aria-modal="false" aria-label="Chat with GVEN (Generative Virtual Extension of Vikash Thyadi)" style="display: none;">
+      <div class="ai-chat-header">
+        <div class="ai-chat-header__info">
+          <div class="ai-chat-avatar">⚡</div>
+          <div>
+            <div class="ai-chat-title">GVEN</div>
+            <div class="ai-chat-status"><span class="ai-chat-status__dot"></span> Generative Virtual Extension of Vikash Thyadi</div>
+          </div>
+        </div>
+        <div class="ai-chat-header__actions">
+          <button type="button" class="ai-chat-action-btn" id="aiChatClearBtn" title="Clear conversation" aria-label="Clear chat">↻</button>
+          <button type="button" class="ai-chat-action-btn" id="aiChatCloseBtn" title="Close chat" aria-label="Close chat">✕</button>
+        </div>
+      </div>
+
+      <div class="ai-chat-messages" id="aiChatMessages" aria-live="polite">
+        <!-- Messages dynamically rendered here -->
+      </div>
+
+      <div class="ai-chat-suggestions" id="aiChatSuggestions">
+        <span class="ai-chat-suggestions__label">Quick Questions:</span>
+        <div class="ai-chat-suggestions__list" id="aiChatSuggestionsList">
+          <button type="button" class="ai-chat-chip" data-query="Who is Vikash? Tell me about his background.">Who is Vikash?</button>
+          <button type="button" class="ai-chat-chip" data-query="What are his featured projects?">Featured Projects</button>
+          <button type="button" class="ai-chat-chip" data-query="What is his tech stack and skills?">Tech Stack</button>
+          <button type="button" class="ai-chat-chip" data-query="What certifications and awards does he have?">Certifications</button>
+          <button type="button" class="ai-chat-chip" data-query="Where can I download his resume?">Download Resume</button>
+          <button type="button" class="ai-chat-chip" data-query="How can I contact or hire Vikash?">Contact / Hire</button>
+        </div>
+      </div>
+
+      <form class="ai-chat-input-area" id="aiChatForm">
+        <input type="text" id="aiChatInput" class="ai-chat-input" placeholder="Ask GVEN anything about Vikash..." autocomplete="off" maxlength="300" required>
+        <button type="submit" class="ai-chat-send-btn" id="aiChatSendBtn" aria-label="Send message">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </form>
+    </div>
+
+    <!-- Floating Toggle Button -->
+    <button type="button" class="ai-chat-toggle-btn" id="aiChatToggleBtn" aria-expanded="false" aria-controls="aiChatModal" title="Chat with GVEN (Generative Virtual Extension of Vikash Thyadi)">
+      <span class="ai-chat-toggle-icon" id="aiChatToggleIcon">💬</span>
+      <span class="ai-chat-toggle-label">Ask GVEN</span>
+      <span class="ai-chat-toggle-ping"></span>
+    </button>
+  </aside>
+
   <script src="config.js?v=2"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-  <script src="script.js?v=13"></script>
+  <script src="script.js?v=15"></script>
 </body>
 </html>

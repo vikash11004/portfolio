@@ -606,6 +606,19 @@
 
               <div class="admin-section-divider">
                 <div>
+                  <h3>Live Knowledge Base Exporter</h3>
+                  <p>Compile and download the complete knowledge base directly from live Firestore content and projects.</p>
+                </div>
+              </div>
+              <div class="project-form__actions" style="margin-bottom: 1.5rem;">
+                <button type="button" class="btn btn--secondary" id="exportKbJsonBtn">📥 Download knowledge-base.json</button>
+                <button type="button" class="btn btn--secondary" id="exportKbMdBtn">📄 Download knowledge-base.md</button>
+                <button type="button" class="btn btn--secondary" id="copyKbBtn">📋 Copy RAG Context</button>
+                <span class="project-form__message" id="exportKbMessage"></span>
+              </div>
+
+              <div class="admin-section-divider">
+                <div>
                   <h3>Advanced JSON Override (Optional)</h3>
                   <p>Only needed if you want to paste or export raw site configuration JSON.</p>
                 </div>

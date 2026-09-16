@@ -22,34 +22,18 @@ const SITE_CONTENT_ROW_ID = 'portfolio_site';
 const SITE_CONTENT_SYNC_KEY = 'portfolio-site-content-sync';
 
 const DEFAULT_SITE_CONTENT = {
-  "projectsPreview": {
-    "titleLine2": "Projects",
-    "titleLine1": "Featured",
-    "ctaText": "See All Projects",
-    "sectionLabel": "Selected Work"
-  },
-  "brand": {
-    "resumeFileName": "Vikash-Thyadi-Resume.pdf",
-    "logoUrl": "assets/images/logo1.png",
-    "resumeUrl": "assets/resume/VikashThyadi_Resume.pdf",
-    "name": "Vikash Thyadi"
-  },
-  "projectsPage": {
-    "subtitle": "A collection of work spanning web applications, design systems, creative coding, and open-source contributions.",
-    "titleLine1": "All",
-    "sectionLabel": "Archive",
-    "titleLine2": "Projects"
-  },
   "seo": {
-    "detailTitleTemplate": "{project} — Vikash Thyadi",
-    "faviconEmoji": "⚡",
-    "description": "Vikash Thyadi — Developer & Designer. A refined brutalist portfolio showcasing projects, skills, and creative work.",
     "projectsTitle": "Projects — Vikash Thyadi",
+    "detailTitleTemplate": "{project} — Vikash Thyadi",
     "homeTitle": "Vikash Thyadi — Portfolio",
-    "themeColor": "#2A2529"
+    "faviconEmoji": "⚡",
+    "themeColor": "#2A2529",
+    "description": "Vikash Thyadi — Developer & Designer. A refined brutalist portfolio showcasing projects, skills, and creative work."
   },
   "skills": {
+    "resumeButtonText": "Download Resume",
     "sectionLabel": "Capabilities",
+    "headingLine2": "I Work With",
     "items": [
       "JavaScript",
       "TypeScript",
@@ -78,25 +62,26 @@ const DEFAULT_SITE_CONTENT = {
       "Vercel",
       "Linux"
     ],
-    "resumeButtonText": "Download Resume",
-    "headingLine2": "I Work With",
     "headingLine1": "Tools & Technologies"
   },
   "contact": {
-    "subtext": "Have a project in mind, or just want to say hello? I'm always open to discussing new ideas and opportunities.",
-    "recipientEmail": "",
     "headingLine1": "Let's Work",
-    "linkedinText": "LinkedIn →",
-    "githubText": "GitHub →",
     "sectionLabel": "Get In Touch",
-    "headingLine2": "Together",
-    "instagramUrl": "https://www.instagram.com/vikash.thyadi/",
-    "githubUrl": "https://github.com/vikash11004",
     "instagramText": "Instagram →",
-    "linkedinUrl": "https://www.linkedin.com/in/vikashthyadi/"
+    "instagramUrl": "https://www.instagram.com/vikash.thyadi/",
+    "headingLine2": "Together",
+    "githubText": "GitHub →",
+    "subtext": "Have a project in mind, or just want to say hello? I'm always open to discussing new ideas and opportunities.",
+    "linkedinUrl": "https://www.linkedin.com/in/vikashthyadi/",
+    "githubUrl": "https://github.com/vikash11004",
+    "linkedinText": "LinkedIn →",
+    "recipientEmail": ""
   },
   "about": {
+    "imageAlt": "Vikash working at desk",
+    "imageUrl": "assets/images/about.jpeg",
     "bio": "I'm a developer and designer who believes great software should feel inevitable intuitive, precise, and expressive. I approach every project with the discipline of an engineer and the curiosity of a craftsman, turning complex problems into clean, purposeful interfaces.",
+    "headingLine1": "Education &",
     "educationItems": [
       {
         "year": "2023 — Present",
@@ -114,31 +99,46 @@ const DEFAULT_SITE_CONTENT = {
         "detail": "Earned the ServiceNow Certified System Administrator (CSA) and Certified Application Developer (CAD) certifications, validating expertise in platform administration and application development.<br>Successfully completed NPTEL Python for Data Science, strengthening skills in Python, data analysis, and machine learning fundamentals."
       }
     ],
-    "imageAlt": "Vikash working at desk",
-    "headingLine1": "Education &",
-    "sectionLabel": "Background",
-    "imageUrl": "assets/images/about.jpeg",
-    "headingLine2": "Experience"
+    "headingLine2": "Experience",
+    "sectionLabel": "Background"
+  },
+  "navbar": {
+    "homeLabel": "Home",
+    "contactLabel": "Contact",
+    "projectsLabel": "Projects"
+  },
+  "brand": {
+    "name": "Vikash Thyadi",
+    "logoUrl": "assets/images/logo1.png",
+    "resumeUrl": "assets/resume/VikashThyadi_Resume.pdf",
+    "resumeFileName": "Vikash-Thyadi-Resume.pdf"
   },
   "footer": {
     "copyright": "© 2026 Vikash Thyadi. All rights reserved.",
     "backToTopLabel": "↑ Back to Top"
   },
   "hero": {
-    "primaryButtonText": "View Work",
-    "titleLine1": "Vikash",
-    "secondaryButtonText": "Download Resume",
-    "titleLine2": "Thyadi",
-    "imageAlt": "Vikash Thyadi — Portrait",
+    "imageUrl": "assets/images/profile.jpeg",
     "scrollCueText": "About Me",
     "subtitle": "Highly motivated and curious engineering student.",
+    "secondaryButtonText": "Download Resume",
     "label": "Developer & Designer",
-    "imageUrl": "assets/images/profile.jpeg"
+    "imageAlt": "Vikash Thyadi — Portrait",
+    "primaryButtonText": "View Work",
+    "titleLine2": "Thyadi",
+    "titleLine1": "Vikash"
   },
-  "navbar": {
-    "contactLabel": "Contact",
-    "homeLabel": "Home",
-    "projectsLabel": "Projects"
+  "projectsPage": {
+    "sectionLabel": "Archive",
+    "titleLine1": "All",
+    "subtitle": "A collection of work spanning web applications, design systems, creative coding, and open-source contributions.",
+    "titleLine2": "Projects"
+  },
+  "projectsPreview": {
+    "titleLine1": "Featured",
+    "sectionLabel": "Selected Work",
+    "ctaText": "See All Projects",
+    "titleLine2": "Projects"
   }
 };
 
@@ -280,6 +280,7 @@ async function init() {
   populateFeaturedProjects();
   populateProjectsGrid();
   populateSkillsMarquee();
+  initAiChatbot();
 
   // Hide loader after a short delay for effect
   requestAnimationFrame(() => {
@@ -1710,3 +1711,523 @@ function setContactFormStatus(message, isError = false, isSuccess = false) {
   statusEl.classList.toggle('is-error', !!isError);
   statusEl.classList.toggle('is-success', !!isSuccess);
 }
+
+// ─── AI Chatbot & Live Knowledge Base ───────────
+
+function buildLiveKnowledgeBase() {
+  const content = siteContentState || DEFAULT_SITE_CONTENT;
+  const brand = content.brand || DEFAULT_SITE_CONTENT.brand;
+  const hero = content.hero || DEFAULT_SITE_CONTENT.hero;
+  const about = content.about || DEFAULT_SITE_CONTENT.about;
+  const skills = Array.isArray(content.skills?.items) && content.skills.items.length
+    ? content.skills.items
+    : DEFAULT_SITE_CONTENT.skills.items;
+  const contact = content.contact || DEFAULT_SITE_CONTENT.contact;
+  const educationItems = Array.isArray(about.educationItems) && about.educationItems.length
+    ? about.educationItems
+    : (DEFAULT_SITE_CONTENT.about.educationItems || []);
+  const projects = Array.isArray(projectsState) && projectsState.length
+    ? projectsState
+    : (window.PORTFOLIO_PROJECT_SEED || []);
+
+  return {
+    identity: {
+      name: brand.name || 'Vikash Thyadi',
+      label: hero.label || 'Developer & Designer',
+      title: `${hero.titleLine1 || 'Vikash'} ${hero.titleLine2 || 'Thyadi'}`,
+      subtitle: hero.subtitle || '',
+      bio: about.bio || '',
+      location: 'Andhra Pradesh, India',
+      philosophy: 'Believes great software should feel inevitable — intuitive, precise, and expressive.'
+    },
+    education: educationItems,
+    skills: skills,
+    projects: projects.map(p => ({
+      id: p.id || p.slug,
+      slug: p.slug,
+      title: p.title,
+      role: p.role,
+      year: p.year,
+      category: p.categoryLabel || p.category,
+      tech: Array.isArray(p.tech) ? p.tech : (typeof p.tech === 'string' ? p.tech.split(',').map(s => s.trim()) : []),
+      shortDescription: p.shortDescription || getProjectExcerpt(p),
+      description: extractTextFromDescription(p.description),
+      liveUrl: p.liveUrl || null,
+      githubUrl: p.githubUrl || null,
+      featured: !!p.featured
+    })),
+    resume: {
+      url: brand.resumeUrl || DEFAULT_SITE_CONTENT.brand.resumeUrl,
+      fileName: brand.resumeFileName || DEFAULT_SITE_CONTENT.brand.resumeFileName
+    },
+    contact: {
+      email: contact.recipientEmail || OWNER_EMAIL,
+      linkedin: contact.linkedinUrl || 'https://www.linkedin.com/in/vikashthyadi/',
+      github: contact.githubUrl || 'https://github.com/vikash11004',
+      instagram: contact.instagramUrl || 'https://www.instagram.com/vikash.thyadi/'
+    }
+  };
+}
+
+function exportKnowledgeBaseAsMarkdown(kb) {
+  let md = `# ${kb.identity.name} — Live Portfolio Knowledge Base\n\n`;
+  md += `## 1. Profile & Bio\n`;
+  md += `- **Name**: ${kb.identity.name}\n`;
+  md += `- **Title**: ${kb.identity.label}\n`;
+  md += `- **Location**: ${kb.identity.location}\n`;
+  md += `- **Bio**: ${kb.identity.bio}\n\n`;
+
+  md += `## 2. Education & Milestones\n`;
+  kb.education.forEach((item, idx) => {
+    md += `### ${idx + 1}. ${item.year || 'Period'}: ${item.title || 'Milestone'}\n`;
+    md += `${(item.detail || '').replace(/<br\s*\/?>/gi, '\n')}\n\n`;
+  });
+
+  md += `## 3. Skills & Technologies\n`;
+  md += `${kb.skills.join(', ')}\n\n`;
+
+  md += `## 4. Projects Directory (${kb.projects.length} Projects)\n`;
+  kb.projects.forEach((p, idx) => {
+    md += `### ${idx + 1}. ${p.title} (${p.year || ''}) — ${p.role || ''}\n`;
+    md += `- **Category**: ${p.category}\n`;
+    md += `- **Tech Stack**: ${p.tech.join(', ')}\n`;
+    if (p.githubUrl) md += `- **GitHub**: ${p.githubUrl}\n`;
+    if (p.liveUrl) md += `- **Live Site**: ${p.liveUrl}\n`;
+    md += `- **Description**: ${p.shortDescription || p.description}\n\n`;
+  });
+
+  md += `## 5. Resume & Contact\n`;
+  md += `- **Resume URL**: ${kb.resume.url} (${kb.resume.fileName})\n`;
+  md += `- **Email**: ${kb.contact.email}\n`;
+  md += `- **LinkedIn**: ${kb.contact.linkedin}\n`;
+  md += `- **GitHub**: ${kb.contact.github}\n`;
+  md += `- **Instagram**: ${kb.contact.instagram}\n`;
+
+  return md;
+}
+
+// Global programmatic getter so any script, tool, or visitor can get the complete knowledge base directly from the site
+window.getPortfolioKnowledgeBase = function (format = 'json') {
+  const kb = buildLiveKnowledgeBase();
+  if (format === 'markdown' || format === 'md') {
+    return exportKnowledgeBaseAsMarkdown(kb);
+  }
+  return kb;
+};
+
+function getDownloadableResumeUrl(rawUrl, fileName) {
+  const url = String(rawUrl || '').trim();
+  if (!url) return '';
+
+  const cleanFileName = (fileName || 'Vikash-Thyadi-Resume.pdf')
+    .replace(/\.pdf$/i, '')
+    .replace(/[^a-zA-Z0-9_-]/g, '_');
+
+  // If Cloudinary URL, inject fl_attachment transformation to force Content-Disposition: attachment header
+  if (url.includes('cloudinary.com') && url.includes('/upload/')) {
+    if (url.includes('fl_attachment')) return url;
+    return url.replace('/upload/', `/upload/fl_attachment:${encodeURIComponent(cleanFileName)}/`);
+  }
+
+  return url;
+}
+
+function formatChatMarkdown(text) {
+  if (!text) return '';
+  let html = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Markdown links: [text](url) — attach download attribute if it targets a resume or pdf
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, label, rawUrl) => {
+    const isDoc = /\.pdf(\?.*)?$/i.test(rawUrl) || /resume|cv|download/i.test(label);
+    const downloadAttr = isDoc ? ` download="Vikash-Thyadi-Resume.pdf"` : '';
+    return `<a href="${rawUrl}" target="_blank" rel="noopener noreferrer"${downloadAttr}>${label}</a>`;
+  });
+
+  // Bold **text**
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+  // Italic *text*
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+  // Bullet points
+  const lines = html.split('\n');
+  let inList = false;
+  let formattedLines = [];
+
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+      if (!inList) {
+        formattedLines.push('<ul>');
+        inList = true;
+      }
+      formattedLines.push(`<li>${trimmed.substring(2)}</li>`);
+    } else {
+      if (inList) {
+        formattedLines.push('</ul>');
+        inList = false;
+      }
+      if (trimmed) {
+        formattedLines.push(`<p>${line}</p>`);
+      }
+    }
+  });
+
+  if (inList) {
+    formattedLines.push('</ul>');
+  }
+
+  return formattedLines.join('');
+}
+
+function queryLiveKnowledgeBase(userQuery) {
+  const kb = buildLiveKnowledgeBase();
+  const q = String(userQuery || '').toLowerCase().trim();
+
+  // 0. GVEN IDENTITY & SELF-INTRODUCTION
+  if (q.includes('who are you') || q.includes('what are you') || q.includes('gven') || q.includes('your name') || q.includes('what is gven')) {
+    let reply = `I am **GVEN** (**Generative Virtual Extension of Vikash Thyadi**), an interactive AI assistant built directly into this portfolio.\n\n`;
+    reply += `I have real-time access to Vikash's live knowledge base, projects, tech stack, certifications, education, and contact channels. You can ask me any question about his work, or ask me to download his resume!`;
+    return { reply };
+  }
+
+  // 1. SPECIFIC PROJECT MATCH
+  const foundProject = kb.projects.find(p => {
+    const nameLower = (p.title || '').toLowerCase();
+    const slugLower = (p.slug || '').toLowerCase();
+    return q.includes(nameLower) || (slugLower && q.includes(slugLower));
+  });
+
+  if (foundProject) {
+    let reply = `**${foundProject.title}** (${foundProject.year || 'Project'}) is one of Vikash's key projects where he served as **${foundProject.role || 'Developer'}**.\n\n`;
+    if (foundProject.shortDescription) {
+      reply += `${foundProject.shortDescription}\n\n`;
+    }
+    reply += `- **Category**: ${foundProject.category}\n`;
+    reply += `- **Tech Stack**: ${foundProject.tech.join(', ')}\n`;
+
+    return {
+      reply,
+      projectCards: [foundProject]
+    };
+  }
+
+  // 2. GENERAL PROJECTS QUERY
+  if (q.includes('project') || q.includes('work') || q.includes('built') || q.includes('portfolio') || q.includes('apps') || q.includes('show me')) {
+    const featuredProjects = kb.projects.filter(p => p.featured);
+    const displayProjects = featuredProjects.length ? featuredProjects : kb.projects.slice(0, 4);
+
+    let reply = `Vikash has built **${kb.projects.length} software, AI, and design projects** across full-stack web, machine learning, and mobile apps. Here are his top featured projects:\n\n`;
+    displayProjects.forEach(p => {
+      reply += `- **${p.title}** (${p.role}): ${p.shortDescription || p.tech.join(', ')}\n`;
+    });
+    reply += `\nYou can click any card below to view the live app or explore the source code on GitHub!`;
+
+    return {
+      reply,
+      projectCards: displayProjects
+    };
+  }
+
+  // 3. SKILLS / TECH STACK
+  if (q.includes('skill') || q.includes('tech') || q.includes('stack') || q.includes('language') || q.includes('know') || q.includes('framework') || q.includes('tool')) {
+    let reply = `Vikash works with a modern stack spanning full-stack development, AI/RAG systems, databases, and design:\n\n`;
+    reply += `- **Languages**: JavaScript (ES6+), TypeScript, Python, C++, Java, PHP, HTML5, CSS3\n`;
+    reply += `- **Frontend & Design**: React.js, Next.js, Tailwind CSS, Bootstrap, Figma (UI/UX design)\n`;
+    reply += `- **AI & RAG Engineering**: LangChain, Groq Cloud API, Llama 3 / 3.1 70B, FAISS vector store, sentence-transformers\n`;
+    reply += `- **Backend & Databases**: Node.js, Express.js, RESTful APIs, GraphQL, Google Cloud Firestore, MongoDB, MySQL, PostgreSQL\n`;
+    reply += `- **Cloud & Tools**: Firebase, Vercel, Git/GitHub, Linux, Power BI\n\n`;
+    reply += `All of these skills are applied directly across his live projects!`;
+
+    return { reply };
+  }
+
+  // 4. EDUCATION & COLLEGE
+  if (q.includes('education') || q.includes('college') || q.includes('university') || q.includes('degree') || q.includes('study') || q.includes('studied') || q.includes('aitam') || q.includes('cgpa') || q.includes('academic')) {
+    let reply = `Vikash is pursuing his **Bachelor of Technology (B.Tech)** in **Computer Science & Engineering (Data Science)**:\n\n`;
+    reply += `- **Institution**: Aditya Institute of Technology and Management (AITAM), Tekkali, Andhra Pradesh\n`;
+    reply += `- **Timeline**: 2023 — Present\n`;
+    reply += `- **Academic Standing**: CGPA of **7.99 / 8.04**\n`;
+    reply += `- **Core Areas**: Data Structures & Algorithms, Full-Stack Development, Data Science, and Machine Learning Systems.\n\n`;
+
+    if (kb.education.length > 1) {
+      reply += `**Other Academic Milestones & Activities:**\n`;
+      kb.education.slice(1).forEach(item => {
+        const cleanDetail = (item.detail || '').replace(/<br\s*\/?>/gi, ' ');
+        reply += `- **${item.title}** (${item.year}): ${cleanDetail}\n`;
+      });
+    }
+
+    return { reply };
+  }
+
+  // 5. CERTIFICATIONS
+  if (q.includes('certif') || q.includes('servicenow') || q.includes('csa') || q.includes('cad') || q.includes('nptel')) {
+    let reply = `Vikash holds notable industry certifications:\n\n`;
+    reply += `- **ServiceNow Certified System Administrator (CSA)**: Validates core expertise in ServiceNow platform implementation, configuration, and administration.\n`;
+    reply += `- **ServiceNow Certified Application Developer (CAD)**: Validates advanced custom application design, business rules, script includes, and enterprise workflow architecture.\n`;
+    reply += `- **NPTEL — Python for Data Science**: Certified in scientific data analysis, Pandas, numerical processing, and foundational machine learning techniques.\n`;
+
+    return { reply };
+  }
+
+  // 6. ACHIEVEMENTS / HACKATHONS
+  if (q.includes('achievement') || q.includes('hackathon') || q.includes('award') || q.includes('medal') || q.includes('win') || q.includes('honor')) {
+    let reply = `Vikash has earned honors in competitive software hackathons:\n\n`;
+    reply += `- **🥈 2nd Place Winner — AITAM 24-Hour Hackathon**: Designed, developed, and pitched a complete working software solution in an intensive 24-hour sprint.\n`;
+    reply += `- **🏅 Medal Winner — V Cube Software Solutions 7-Hour Hackathon**: Awarded a medal for exceptional rapid prototyping and architecture execution.\n`;
+
+    return { reply };
+  }
+
+  // 7. RESUME / CV
+  if (q.includes('resume') || q.includes('cv') || q.includes('download') || q.includes('pdf')) {
+    const rawUrl = kb.resume.url;
+    const fileName = kb.resume.fileName || 'Vikash-Thyadi-Resume.pdf';
+    const downloadUrl = getDownloadableResumeUrl(rawUrl, fileName);
+
+    let reply = `You can download Vikash's latest resume directly below!\n\n`;
+    reply += `It includes his complete academic timeline, verified certifications (CSA, CAD), technical stack, and software project leadership.`;
+
+    return {
+      reply,
+      resumeCard: {
+        rawUrl,
+        downloadUrl,
+        fileName
+      }
+    };
+  }
+
+  // 8. CONTACT / HIRE / EMAIL / SOCIALS
+  if (q.includes('contact') || q.includes('hire') || q.includes('email') || q.includes('reach') || q.includes('call') || q.includes('linkedin') || q.includes('github') || q.includes('social') || q.includes('freelance') || q.includes('internship')) {
+    let reply = `Vikash is actively open to **software engineering internships, developer roles, and freelance opportunities**!\n\n`;
+    reply += `You can connect with him through:\n`;
+    reply += `- **Email**: [${kb.contact.email}](mailto:${kb.contact.email})\n`;
+    reply += `- **LinkedIn**: [linkedin.com/in/vikashthyadi](${kb.contact.linkedin})\n`;
+    reply += `- **GitHub**: [github.com/vikash11004](${kb.contact.github})\n`;
+    reply += `- **Instagram**: [@vikash.thyadi](${kb.contact.instagram})\n\n`;
+    reply += `You can also scroll down to the **Get In Touch** section to send a direct message via the contact form!`;
+
+    return { reply };
+  }
+
+  // 9. IDENTITY / WHO IS VIKASH
+  if (q.includes('who is') || q.includes('about') || q.includes('bio') || q.includes('vikash') || q.includes('intro') || q.includes('hello') || q.includes('hi') || q.includes('hey')) {
+    let reply = `**Vikash Thyadi** is a passionate **${kb.identity.label}** and Computer Science & Engineering student (Data Science) based in Andhra Pradesh, India.\n\n`;
+    reply += `${kb.identity.bio || 'He combines engineering discipline with design craftsmanship to turn complex technical challenges into intuitive, high-performance web and AI applications.'}\n\n`;
+    reply += `**Quick facts:**\n`;
+    reply += `- 🎓 B.Tech CSE (Data Science) at AITAM (CGPA 7.99 / 8.04)\n`;
+    reply += `- 📜 Certified ServiceNow Administrator (CSA) & Application Developer (CAD)\n`;
+    reply += `- 🚀 Lead developer on AI & RAG projects like **FinPath** and **Xpenso**\n`;
+    reply += `- 🛠️ Experienced with React, TypeScript, Python, Groq, and Cloud Firestore\n\n`;
+    reply += `Feel free to ask me about any of his projects, skills, or certifications!`;
+
+    return { reply };
+  }
+
+  // 10. GENERAL FALLBACK WITH RELEVANCE SEARCH
+  let reply = `I'm **GVEN** (**Generative Virtual Extension of Vikash Thyadi**), and I'm happy to help you explore Vikash's work!\n\nVikash is a **${kb.identity.label}** specializing in full-stack web applications, AI/RAG solutions, and responsive UI design.\n\n`;
+  reply += `Here are some popular topics you can ask me about:\n`;
+  reply += `- **Projects**: *"Tell me about FinPath or Xpenso"*, *"Show me featured projects"*\n`;
+  reply += `- **Skills**: *"What languages and frameworks does he use?"*\n`;
+  reply += `- **Certifications**: *"Tell me about his ServiceNow CSA & CAD credentials"*\n`;
+  reply += `- **Resume**: *"Download resume"* or *"Where can I get his CV?"*\n`;
+  reply += `- **Contact**: *"How can I get in touch or hire him?"*`;
+
+  return { reply };
+}
+
+function initAiChatbot() {
+  const widget = $('#aiChatWidget');
+  const toggleBtn = $('#aiChatToggleBtn');
+  const modal = $('#aiChatModal');
+  const closeBtn = $('#aiChatCloseBtn');
+  const clearBtn = $('#aiChatClearBtn');
+  const form = $('#aiChatForm');
+  const input = $('#aiChatInput');
+  const messagesContainer = $('#aiChatMessages');
+  const suggestionsList = $('#aiChatSuggestionsList');
+
+  if (!widget || !toggleBtn || !modal || !messagesContainer) return;
+
+  function toggleChat(forceOpen = null) {
+    const shouldOpen = forceOpen !== null ? forceOpen : modal.style.display === 'none';
+    if (shouldOpen) {
+      modal.style.display = 'flex';
+      toggleBtn.setAttribute('aria-expanded', 'true');
+      const ping = toggleBtn.querySelector('.ai-chat-toggle-ping');
+      if (ping) ping.style.display = 'none';
+
+      if (window.innerWidth > 600 && input) {
+        setTimeout(() => input.focus(), 150);
+      }
+      scrollToBottom();
+    } else {
+      modal.style.display = 'none';
+      toggleBtn.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  function scrollToBottom() {
+    requestAnimationFrame(() => {
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    });
+  }
+
+  function appendMessage(sender, text, projectCards = [], resumeCard = null) {
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const msgEl = document.createElement('div');
+    msgEl.className = `ai-chat-msg ai-chat-msg--${sender}`;
+
+    let html = `<div class="ai-chat-bubble">${formatChatMarkdown(text)}`;
+
+    if (Array.isArray(projectCards) && projectCards.length) {
+      projectCards.forEach(p => {
+        html += `
+          <div class="ai-chat-project-card">
+            <div class="ai-chat-project-card__header">
+              <span class="ai-chat-project-card__title">${escapeHtml(p.title)}</span>
+              <span class="ai-chat-project-card__role">${escapeHtml(p.role || 'Project')}</span>
+            </div>
+            <div class="ai-chat-project-card__desc">${escapeHtml(p.shortDescription || '')}</div>
+            <div class="ai-chat-project-card__tech">Tech: ${escapeHtml((p.tech || []).slice(0, 5).join(', '))}</div>
+            <div class="ai-chat-project-card__links">
+              ${p.liveUrl ? `<a href="${escapeHtml(p.liveUrl)}" target="_blank" rel="noopener noreferrer">Live Demo ↗</a>` : ''}
+              ${p.githubUrl ? `<a href="${escapeHtml(p.githubUrl)}" target="_blank" rel="noopener noreferrer">GitHub ↗</a>` : ''}
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    if (resumeCard && resumeCard.downloadUrl) {
+      html += `
+        <div class="ai-chat-resume-card">
+          <div class="ai-chat-resume-card__info">
+            <div class="ai-chat-resume-card__icon">📄</div>
+            <div>
+              <div class="ai-chat-resume-card__name">${escapeHtml(resumeCard.fileName)}</div>
+              <div class="ai-chat-resume-card__sub">PDF Document · Verified Credentials & Experience</div>
+            </div>
+          </div>
+          <div class="ai-chat-resume-card__actions">
+            <a href="${escapeHtml(resumeCard.downloadUrl)}" download="${escapeHtml(resumeCard.fileName)}" class="ai-chat-download-btn" data-download-url="${escapeHtml(resumeCard.downloadUrl)}" data-filename="${escapeHtml(resumeCard.fileName)}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Download Resume
+            </a>
+            <a href="${escapeHtml(resumeCard.rawUrl || resumeCard.downloadUrl)}" target="_blank" rel="noopener noreferrer" class="ai-chat-view-link">Preview in browser ↗</a>
+          </div>
+        </div>
+      `;
+    }
+
+    html += `</div><span class="ai-chat-msg__time">${timeStr}</span>`;
+    msgEl.innerHTML = html;
+    messagesContainer.appendChild(msgEl);
+
+    // Interactive download listener with blob fallback
+    const downloadBtn = msgEl.querySelector('.ai-chat-download-btn');
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', async (e) => {
+        const fileUrl = downloadBtn.getAttribute('data-download-url') || downloadBtn.href;
+        const fileName = downloadBtn.getAttribute('data-filename') || 'Vikash-Thyadi-Resume.pdf';
+
+        try {
+          const resp = await fetch(fileUrl);
+          if (resp.ok) {
+            e.preventDefault();
+            const blob = await resp.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+          }
+        } catch (_) {
+          // If cross-origin fetch is blocked, the native link click with fl_attachment executes
+        }
+      });
+    }
+
+    scrollToBottom();
+  }
+
+  function showTypingIndicator() {
+    const typingEl = document.createElement('div');
+    typingEl.className = 'ai-chat-msg ai-chat-msg--bot';
+    typingEl.id = 'aiChatTypingIndicator';
+    typingEl.innerHTML = `
+      <div class="ai-chat-typing">
+        <span class="ai-chat-typing__dot"></span>
+        <span class="ai-chat-typing__dot"></span>
+        <span class="ai-chat-typing__dot"></span>
+      </div>
+    `;
+    messagesContainer.appendChild(typingEl);
+    scrollToBottom();
+  }
+
+  function hideTypingIndicator() {
+    const typingEl = $('#aiChatTypingIndicator');
+    if (typingEl) typingEl.remove();
+  }
+
+  function handleUserMessage(queryText) {
+    const q = String(queryText || '').trim();
+    if (!q) return;
+
+    appendMessage('user', q);
+    if (input) input.value = '';
+
+    showTypingIndicator();
+
+    // Natural conversational delay (350 - 550ms)
+    setTimeout(() => {
+      hideTypingIndicator();
+      const result = queryLiveKnowledgeBase(q);
+      appendMessage('bot', result.reply, result.projectCards, result.resumeCard);
+    }, 450);
+  }
+
+  function resetChat() {
+    messagesContainer.innerHTML = '';
+    const welcome = `Hello! 👋 I'm **GVEN** (*Generative Virtual Extension of Vikash Thyadi*).\n\nI have real-time access to everything on this portfolio. Ask me about Vikash's **projects**, **skills & tech stack**, **education**, **certifications**, or how to **download his resume** and **get in touch**!`;
+    appendMessage('bot', welcome);
+  }
+
+  // Event Listeners
+  toggleBtn.addEventListener('click', () => toggleChat());
+  if (closeBtn) closeBtn.addEventListener('click', () => toggleChat(false));
+  if (clearBtn) clearBtn.addEventListener('click', () => resetChat());
+
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (input) handleUserMessage(input.value);
+    });
+  }
+
+  if (suggestionsList) {
+    suggestionsList.addEventListener('click', (e) => {
+      const chip = e.target.closest('.ai-chat-chip');
+      if (chip && chip.dataset.query) {
+        handleUserMessage(chip.dataset.query);
+      }
+    });
+  }
+
+  // Initial welcome message
+  resetChat();
+}
+

@@ -68,6 +68,60 @@ async function syncFallbackFiles() {
   } else {
     console.error('Could not find DEFAULT_SITE_CONTENT range in script.js');
   }
+
+  // 3. Update knowledge-base.json
+  const kbJsonPath = path.join(rootDir, 'knowledge-base.json');
+  const kbData = {
+    identity: {
+      name: liveContent?.brand?.name || 'Vikash Thyadi',
+      label: liveContent?.hero?.label || 'Developer & Designer',
+      title: `${liveContent?.hero?.titleLine1 || 'Vikash'} ${liveContent?.hero?.titleLine2 || 'Thyadi'}`,
+      subtitle: liveContent?.hero?.subtitle || '',
+      bio: liveContent?.about?.bio || '',
+      location: 'Andhra Pradesh, India'
+    },
+    education: liveContent?.about?.educationItems || [],
+    skills: liveContent?.skills?.items || [],
+    projects: projects.map(p => ({
+      title: p.title,
+      role: p.role,
+      year: p.year,
+      category: p.category,
+      tech: p.tech,
+      description: p.short_description || p.description,
+      liveUrl: p.live_url || null,
+      githubUrl: p.github_url || null,
+      featured: !!p.featured
+    })),
+    resume: {
+      url: liveContent?.brand?.resumeUrl || 'assets/resume/VikashThyadi_Resume.pdf',
+      fileName: liveContent?.brand?.resumeFileName || 'Vikash-Thyadi-Resume.pdf'
+    },
+    contact: liveContent?.contact || {}
+  };
+  fs.writeFileSync(kbJsonPath, JSON.stringify(kbData, null, 2), 'utf-8');
+  console.log('Updated knowledge-base.json successfully.');
+
+  // 4. Update knowledge-base.md
+  const kbMdPath = path.join(rootDir, 'knowledge-base.md');
+  let md = `# ${kbData.identity.name} — Live Portfolio Knowledge Base\n\n`;
+  md += `## 1. Profile & Bio\n- **Name**: ${kbData.identity.name}\n- **Title**: ${kbData.identity.label}\n- **Location**: ${kbData.identity.location}\n- **Bio**: ${kbData.identity.bio}\n\n`;
+  md += `## 2. Education & Milestones\n`;
+  (kbData.education || []).forEach((item, idx) => {
+    md += `### ${idx + 1}. ${item.year || 'Period'}: ${item.title || 'Milestone'}\n${(item.detail || '').replace(/<br\s*\/?>/gi, '\n')}\n\n`;
+  });
+  md += `## 3. Skills & Technologies\n${(kbData.skills || []).join(', ')}\n\n`;
+  md += `## 4. Projects Directory (${kbData.projects.length} Projects)\n`;
+  kbData.projects.forEach((p, idx) => {
+    md += `### ${idx + 1}. ${p.title} (${p.year || ''}) — ${p.role || ''}\n`;
+    md += `- **Category**: ${p.category}\n- **Tech**: ${Array.isArray(p.tech) ? p.tech.join(', ') : p.tech}\n`;
+    if (p.githubUrl) md += `- **GitHub**: ${p.githubUrl}\n`;
+    if (p.liveUrl) md += `- **Live Site**: ${p.liveUrl}\n`;
+    md += `- **Description**: ${p.description}\n\n`;
+  });
+  md += `## 5. Resume & Contact\n- **Resume**: ${kbData.resume.url}\n- **Email**: ${kbData.contact.recipientEmail || ''}\n`;
+  fs.writeFileSync(kbMdPath, md, 'utf-8');
+  console.log('Updated knowledge-base.md successfully.');
 }
 
 syncFallbackFiles().catch(err => {

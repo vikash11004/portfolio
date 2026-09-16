@@ -1978,6 +1978,160 @@ function setupEvents() {
   });
 
   initCloudinaryUI();
+  setupKnowledgeBaseExporter();
+}
+
+function buildLiveAdminKnowledgeBase() {
+  const content = siteContentState || DEFAULT_SITE_CONTENT;
+  const brand = content.brand || DEFAULT_SITE_CONTENT.brand;
+  const hero = content.hero || DEFAULT_SITE_CONTENT.hero;
+  const about = content.about || DEFAULT_SITE_CONTENT.about;
+  const skills = Array.isArray(content.skills?.items) && content.skills.items.length
+    ? content.skills.items
+    : DEFAULT_SITE_CONTENT.skills.items;
+  const contact = content.contact || DEFAULT_SITE_CONTENT.contact;
+  const educationItems = Array.isArray(about.educationItems) && about.educationItems.length
+    ? about.educationItems
+    : (DEFAULT_SITE_CONTENT.about.educationItems || []);
+  const projects = Array.isArray(projectsState) && projectsState.length
+    ? projectsState
+    : (PROJECT_SEED || []);
+
+  return {
+    identity: {
+      name: brand.name || 'Vikash Thyadi',
+      label: hero.label || 'Developer & Designer',
+      title: `${hero.titleLine1 || 'Vikash'} ${hero.titleLine2 || 'Thyadi'}`,
+      subtitle: hero.subtitle || '',
+      bio: about.bio || '',
+      location: 'Andhra Pradesh, India',
+      philosophy: 'Believes great software should feel inevitable — intuitive, precise, and expressive.'
+    },
+    education: educationItems,
+    skills: skills,
+    projects: projects.map(p => ({
+      id: p.id || p.slug,
+      slug: p.slug,
+      title: p.title,
+      role: p.role,
+      year: p.year,
+      category: p.categoryLabel || (CATEGORY_LABELS[p.category] || p.category),
+      tech: Array.isArray(p.tech) ? p.tech : (typeof p.tech === 'string' ? p.tech.split(',').map(s => s.trim()) : []),
+      shortDescription: p.shortDescription || (p.description ? p.description.slice(0, 120) + '…' : ''),
+      description: p.description || '',
+      liveUrl: p.liveUrl || null,
+      githubUrl: p.githubUrl || null,
+      featured: !!p.featured
+    })),
+    resume: {
+      url: brand.resumeUrl || DEFAULT_SITE_CONTENT.brand.resumeUrl,
+      fileName: brand.resumeFileName || DEFAULT_SITE_CONTENT.brand.resumeFileName
+    },
+    contact: {
+      email: contact.recipientEmail || OWNER_EMAIL,
+      linkedin: contact.linkedinUrl || 'https://www.linkedin.com/in/vikashthyadi/',
+      github: contact.githubUrl || 'https://github.com/vikash11004',
+      instagram: contact.instagramUrl || 'https://www.instagram.com/vikash.thyadi/'
+    }
+  };
+}
+
+function triggerFileDownload(content, filename, mimeType = 'text/plain') {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
+}
+
+function setupKnowledgeBaseExporter() {
+  const jsonBtn = $('#exportKbJsonBtn');
+  const mdBtn = $('#exportKbMdBtn');
+  const copyBtn = $('#copyKbBtn');
+  const msgEl = $('#exportKbMessage');
+
+  function showMsg(text, isError = false) {
+    if (!msgEl) return;
+    msgEl.textContent = text;
+    msgEl.style.color = isError ? '#d94000' : '#2e7d32';
+    setTimeout(() => { if (msgEl) msgEl.textContent = ''; }, 4000);
+  }
+
+  if (jsonBtn) {
+    jsonBtn.addEventListener('click', () => {
+      try {
+        const kb = buildLiveAdminKnowledgeBase();
+        triggerFileDownload(JSON.stringify(kb, null, 2), 'knowledge-base.json', 'application/json');
+        showMsg('✓ Downloaded knowledge-base.json!');
+      } catch (err) {
+        showMsg(`✗ Error exporting: ${err.message}`, true);
+      }
+    });
+  }
+
+  if (mdBtn) {
+    mdBtn.addEventListener('click', () => {
+      try {
+        const kb = buildLiveAdminKnowledgeBase();
+        let md = `# ${kb.identity.name} — Live Portfolio Knowledge Base\n\n`;
+        md += `## 1. Profile & Bio\n`;
+        md += `- **Name**: ${kb.identity.name}\n`;
+        md += `- **Title**: ${kb.identity.label}\n`;
+        md += `- **Location**: ${kb.identity.location}\n`;
+        md += `- **Bio**: ${kb.identity.bio}\n\n`;
+
+        md += `## 2. Education & Milestones\n`;
+        kb.education.forEach((item, idx) => {
+          md += `### ${idx + 1}. ${item.year || 'Period'}: ${item.title || 'Milestone'}\n`;
+          md += `${(item.detail || '').replace(/<br\s*\/?>/gi, '\n')}\n\n`;
+        });
+
+        md += `## 3. Skills & Technologies\n`;
+        md += `${kb.skills.join(', ')}\n\n`;
+
+        md += `## 4. Projects Directory (${kb.projects.length} Projects)\n`;
+        kb.projects.forEach((p, idx) => {
+          md += `### ${idx + 1}. ${p.title} (${p.year || ''}) — ${p.role || ''}\n`;
+          md += `- **Category**: ${p.category}\n`;
+          md += `- **Tech Stack**: ${p.tech.join(', ')}\n`;
+          if (p.githubUrl) md += `- **GitHub**: ${p.githubUrl}\n`;
+          if (p.liveUrl) md += `- **Live Site**: ${p.liveUrl}\n`;
+          md += `- **Description**: ${p.shortDescription || p.description}\n\n`;
+        });
+
+        md += `## 5. Resume & Contact\n`;
+        md += `- **Resume URL**: ${kb.resume.url} (${kb.resume.fileName})\n`;
+        md += `- **Email**: ${kb.contact.email}\n`;
+        md += `- **LinkedIn**: ${kb.contact.linkedin}\n`;
+        md += `- **GitHub**: ${kb.contact.github}\n`;
+        md += `- **Instagram**: ${kb.contact.instagram}\n`;
+
+        triggerFileDownload(md, 'knowledge-base.md', 'text/markdown');
+        showMsg('✓ Downloaded knowledge-base.md!');
+      } catch (err) {
+        showMsg(`✗ Error exporting: ${err.message}`, true);
+      }
+    });
+  }
+
+  if (copyBtn) {
+    copyBtn.addEventListener('click', async () => {
+      try {
+        const kb = buildLiveAdminKnowledgeBase();
+        const text = JSON.stringify(kb, null, 2);
+        await navigator.clipboard.writeText(text);
+        showMsg('✓ Copied RAG context to clipboard!');
+      } catch (err) {
+        showMsg(`✗ Copy failed: ${err.message}`, true);
+      }
+    });
+  }
 }
 
 async function initAdmin() {

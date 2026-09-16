@@ -436,23 +436,80 @@ async function restoreAuthSession() {
   adminSessionChecked = true;
 }
 
-async function loadSiteContent() {
-  siteContentState = deepMerge(DEFAULT_SITE_CONTENT, {});
+function parseFirestoreRestField(field) {
+  if (!field || typeof field !== 'object') return null;
+  if ('stringValue' in field) return field.stringValue;
+  if ('booleanValue' in field) return field.booleanValue;
+  if ('integerValue' in field) return parseInt(field.integerValue, 10);
+  if ('doubleValue' in field) return parseFloat(field.doubleValue);
+  if ('mapValue' in field) {
+    const result = {};
+    const subFields = field.mapValue?.fields || {};
+    for (const key of Object.keys(subFields)) {
+      result[key] = parseFirestoreRestField(subFields[key]);
+    }
+    return result;
+  }
+  if ('arrayValue' in field) {
+    const vals = field.arrayValue?.values || [];
+    return vals.map(parseFirestoreRestField);
+  }
+  if ('nullValue' in field) return null;
+  return null;
+}
 
-  if (!firebaseReady || !firebaseDb) {
-    return;
+async function fetchSiteContentViaRest() {
+  const projectId = FIREBASE_CONFIG?.projectId || 'portfolio-d114e';
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/site_content/${SITE_CONTENT_ROW_ID}`;
+  const resp = await fetch(url, { cache: 'no-cache' });
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const json = await resp.json();
+  const rawContent = json.fields?.content;
+  if (!rawContent) throw new Error('No content field in Firestore document');
+  return parseFirestoreRestField(rawContent);
+}
+
+async function loadSiteContent() {
+  siteContentState = deepMerge(DEFAULT_SITE_CONTENT, siteContentState || {});
+  let loaded = false;
+
+  // 1. Try Firestore SDK if available
+  if (firebaseReady && firebaseDb) {
+    try {
+      const snap = await firebaseDb.collection('site_content').doc(SITE_CONTENT_ROW_ID).get();
+      if (snap.exists) {
+        const data = snap.data() || {};
+        if (data.content) {
+          siteContentState = deepMerge(DEFAULT_SITE_CONTENT, data.content);
+          loaded = true;
+        }
+      }
+    } catch (error) {
+      console.warn('Firestore SDK get failed, attempting REST fallback:', error.message || error);
+    }
   }
 
-  try {
-    const snap = await firebaseDb.collection('site_content').doc(SITE_CONTENT_ROW_ID).get();
-    if (snap.exists) {
-      const data = snap.data() || {};
-      siteContentState = deepMerge(DEFAULT_SITE_CONTENT, data.content || {});
-    } else {
-      siteContentState = deepMerge(DEFAULT_SITE_CONTENT, {});
+  // 2. Fallback to public Firestore REST API (works for any unauthenticated visitor)
+  if (!loaded) {
+    try {
+      const restContent = await fetchSiteContentViaRest();
+      if (restContent && typeof restContent === 'object') {
+        siteContentState = deepMerge(DEFAULT_SITE_CONTENT, restContent);
+        loaded = true;
+      }
+    } catch (error) {
+      console.warn('Public REST site content fallback failed:', error.message || error);
     }
-  } catch (error) {
-    console.warn('Site content unavailable:', error.message || error);
+  }
+
+  // 3. Cache to localStorage for instant subsequent loads
+  if (loaded) {
+    try {
+      localStorage.setItem(SITE_CONTENT_SYNC_KEY, JSON.stringify({
+        updatedAt: new Date().toISOString(),
+        content: siteContentState
+      }));
+    } catch (_) {}
   }
 }
 
@@ -604,19 +661,52 @@ function updateAdminAvailability() {
   }
 }
 
+async function fetchProjectsViaRest() {
+  const projectId = FIREBASE_CONFIG?.projectId || 'portfolio-d114e';
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/projects`;
+  const resp = await fetch(url, { cache: 'no-cache' });
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const json = await resp.json();
+  const docs = json.documents || [];
+  return docs.map((doc) => {
+    const data = {};
+    const fields = doc.fields || {};
+    for (const key of Object.keys(fields)) {
+      data[key] = parseFirestoreRestField(fields[key]);
+    }
+    return {
+      docId: doc.name.split('/').pop(),
+      ...data
+    };
+  });
+}
+
 async function loadProjects() {
-  if (!firebaseReady || !firebaseDb) {
-    projectsState = [];
-    return;
+  let rows = [];
+
+  // 1. Try Firestore SDK if available
+  if (firebaseReady && firebaseDb) {
+    try {
+      const snap = await firebaseDb.collection('projects').get();
+      rows = snap.docs.map((docSnap) => ({
+        docId: docSnap.id,
+        ...docSnap.data()
+      }));
+    } catch (error) {
+      console.warn('Firestore SDK projects get failed, trying REST fallback:', error.message || error);
+    }
   }
 
-  try {
-    const snap = await firebaseDb.collection('projects').get();
-    const rows = snap.docs.map((docSnap) => ({
-      docId: docSnap.id,
-      ...docSnap.data()
-    }));
+  // 2. Fallback to public REST API if SDK failed or returned empty
+  if (!rows.length) {
+    try {
+      rows = await fetchProjectsViaRest();
+    } catch (error) {
+      console.warn('Public REST projects fallback failed:', error.message || error);
+    }
+  }
 
+  if (rows.length) {
     rows.sort((a, b) => {
       const orderA = Number.isFinite(a.sort_order) ? a.sort_order : Number.isFinite(a.sortOrder) ? a.sortOrder : 0;
       const orderB = Number.isFinite(b.sort_order) ? b.sort_order : Number.isFinite(b.sortOrder) ? b.sortOrder : 0;
@@ -632,10 +722,9 @@ async function loadProjects() {
       return timeB - timeA;
     });
 
-    projectsState = rows.length ? rows.map(mapDbProjectToViewModel) : [];
+    projectsState = rows.map(mapDbProjectToViewModel);
     prefetchMarkdownDescriptions(projectsState);
-  } catch (error) {
-    console.error('Failed loading projects from Firestore:', error.message || error);
+  } else {
     projectsState = [];
   }
 }

@@ -759,6 +759,162 @@ function setupAssetDropTarget(containerSelector, dropzoneSelector, inputSelector
   });
 }
 
+function setupAssetCardDropzone({
+  dropzoneSelector,
+  fileInputSelector,
+  statusSelector,
+  inputSelector,
+  previewImgSelector,
+  kind
+}) {
+  const dropzone = $(dropzoneSelector);
+  const fileInput = $(fileInputSelector);
+  const statusEl = $(statusSelector);
+  const textInput = $(inputSelector);
+  const previewImg = $(previewImgSelector);
+
+  if (!dropzone) return;
+
+  dropzone.addEventListener('click', (e) => {
+    if (e.target !== fileInput && fileInput) {
+      fileInput.click();
+    }
+  });
+
+  dropzone.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (fileInput) fileInput.click();
+    }
+  });
+
+  if (textInput && previewImg) {
+    textInput.addEventListener('input', (e) => {
+      const val = e.target.value.trim();
+      if (val) previewImg.src = val;
+    });
+  }
+
+  async function handleSingleUpload(file) {
+    if (!file) return;
+
+    if (!isOwnerLoggedIn()) {
+      setAssetsMessage('Please sign in as owner before uploading images.', true);
+      dropzone.classList.remove('is-uploading', 'is-success');
+      dropzone.classList.add('is-error');
+      if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = '✗ Sign in as owner to upload';
+      }
+      return;
+    }
+
+    const cConfig = getCloudinaryConfig();
+    if (!cConfig.cloudName || !cConfig.uploadPreset) {
+      setAssetsMessage('Cloudinary setup required. Check Settings & SEO tab.', true);
+      dropzone.classList.remove('is-uploading', 'is-success');
+      dropzone.classList.add('is-error');
+      if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = '✗ Cloudinary setup required';
+      }
+      return;
+    }
+
+    try {
+      if (previewImg) previewImg.src = URL.createObjectURL(file);
+    } catch (_) {}
+
+    dropzone.classList.remove('is-success', 'is-error');
+    dropzone.classList.add('is-uploading');
+    const progressBar = dropzone.querySelector('.project-dropzone__progress-bar');
+    const progressFill = dropzone.querySelector('.project-dropzone__progress-fill');
+    if (progressBar) progressBar.style.display = 'block';
+    if (progressFill) progressFill.style.width = '0%';
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'Uploading to Cloudinary...';
+    }
+
+    try {
+      const uploadedUrl = await uploadToCloudinary(file, kind, (pct) => {
+        if (progressFill) progressFill.style.width = `${pct}%`;
+        if (statusEl) statusEl.textContent = `Uploading ${pct}%...`;
+      });
+
+      if (textInput) textInput.value = uploadedUrl;
+      if (previewImg) previewImg.src = uploadedUrl;
+
+      dropzone.classList.remove('is-uploading', 'is-error');
+      dropzone.classList.add('is-success');
+      if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = '✓ Uploaded to Cloudinary!';
+      }
+      setAssetsMessage('Photo uploaded! Click "Save Photo & Asset Changes" below to publish.');
+    } catch (err) {
+      dropzone.classList.remove('is-uploading', 'is-success');
+      dropzone.classList.add('is-error');
+      if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = `✗ ${err.message || 'Upload failed'}`;
+      }
+      setAssetsMessage(err.message || 'Unable to upload photo.', true);
+    } finally {
+      if (progressBar) progressBar.style.display = 'none';
+    }
+  }
+
+  if (fileInput) {
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (file) await handleSingleUpload(file);
+      fileInput.value = '';
+    });
+  }
+
+  let dragCounter = 0;
+  const elementsToListen = [dropzone, textInput].filter(Boolean);
+
+  elementsToListen.forEach((el) => {
+    el.addEventListener('dragenter', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounter++;
+      dropzone.classList.add('is-dragover');
+    });
+
+    el.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+      dropzone.classList.add('is-dragover');
+    });
+
+    el.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounter--;
+      if (dragCounter <= 0) {
+        dragCounter = 0;
+        dropzone.classList.remove('is-dragover');
+      }
+    });
+
+    el.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounter = 0;
+      dropzone.classList.remove('is-dragover');
+
+      const files = getFilesFromDropEvent(e);
+      if (files.length) {
+        await handleSingleUpload(files[0]);
+      }
+    });
+  });
+}
+
 function parseUrlList(value, fallback = []) {
   if (Array.isArray(value)) {
     return value.map(item => String(item || '').trim()).filter(Boolean);
@@ -774,59 +930,82 @@ function parseUrlList(value, fallback = []) {
   return fallback;
 }
 
-function normalizeEducationItem(item, index = 0) {
-  if (!item || typeof item !== 'object' || Array.isArray(item)) {
-    throw new Error(`Education item ${index + 1} must be a JSON object.`);
-  }
-
-  const normalized = {
-    year: String(item.year || '').trim(),
-    title: String(item.title || '').trim(),
-    detail: String(item.detail || '').trim()
-  };
-
-  if (!normalized.year || !normalized.title) {
-    throw new Error(`Education item ${index + 1} needs at least "year" and "title".`);
-  }
-
-  return normalized;
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-function parseEducationItems(value) {
-  const input = String(value || '').trim();
-  if (!input) return [];
+function renderEducationItems(items) {
+  const container = $('#educationItemsContainer');
+  if (!container) return;
+  container.innerHTML = '';
+  const list = Array.isArray(items) && items.length ? items : [];
 
-  try {
-    const parsed = JSON.parse(input);
-    const items = Array.isArray(parsed) ? parsed : [parsed];
-    return items.map((item, index) => normalizeEducationItem(item, index));
-  } catch (error) {
-    if (input.startsWith('[') || input.startsWith('{')) {
-      throw new Error(`Education / Experience Items JSON is not valid: ${error.message}`);
-    }
-  }
+  list.forEach((item, index) => {
+    const card = createEducationItemCard(item, index);
+    container.appendChild(card);
+  });
+}
 
-  return input
-    .split(/\r?\n/)
-    .map(line => line.trim())
-    .filter(Boolean)
-    .map((line, index) => {
-      try {
-        return normalizeEducationItem(JSON.parse(line), index);
-      } catch (error) {
-        throw new Error(`Education / Experience line ${index + 1} is not valid JSON: ${error.message}`);
-      }
+function createEducationItemCard(item = {}, index = 0) {
+  const card = document.createElement('div');
+  card.className = 'admin-exp-card';
+  card.innerHTML = `
+    <div class="admin-exp-card__header">
+      <span class="admin-exp-card__num">Milestone #${index + 1}</span>
+      <button type="button" class="admin-exp-card__del-btn" title="Delete milestone">✕ Remove</button>
+    </div>
+    <div class="project-form__grid">
+      <label>Year / Period
+        <input type="text" class="exp-year-input" value="${escapeHtml(item.year || '')}" placeholder="e.g. 2023 — Present, Achievements, 2024" required>
+      </label>
+      <label>Title / Degree / Role
+        <input type="text" class="exp-title-input" value="${escapeHtml(item.title || '')}" placeholder="e.g. B.Tech in CSE (Data Science), Hackathons" required>
+      </label>
+    </div>
+    <label>Description / Details (HTML formatting like &lt;br&gt; supported)
+      <textarea class="exp-detail-input" rows="3" placeholder="Institution, achievements, awards, key focus areas...">${escapeHtml(item.detail || '')}</textarea>
+    </label>
+  `;
+
+  const delBtn = card.querySelector('.admin-exp-card__del-btn');
+  if (delBtn) {
+    delBtn.addEventListener('click', () => {
+      card.remove();
+      renumberEducationCards();
     });
+  }
+
+  return card;
 }
 
-function serializeEducationItems(items) {
-  return (Array.isArray(items) ? items : [])
-    .map(item => JSON.stringify({
-      year: item.year || '',
-      title: item.title || '',
-      detail: item.detail || ''
-    }))
-    .join('\n');
+function renumberEducationCards() {
+  const cards = document.querySelectorAll('#educationItemsContainer .admin-exp-card');
+  cards.forEach((card, idx) => {
+    const numEl = card.querySelector('.admin-exp-card__num');
+    if (numEl) numEl.textContent = `Milestone #${idx + 1}`;
+  });
+}
+
+function getEducationItemsFromDOM() {
+  const cards = document.querySelectorAll('#educationItemsContainer .admin-exp-card');
+  const items = [];
+  cards.forEach((card) => {
+    const yearInput = card.querySelector('.exp-year-input');
+    const titleInput = card.querySelector('.exp-title-input');
+    const detailInput = card.querySelector('.exp-detail-input');
+    const year = (yearInput?.value || '').trim();
+    const title = (titleInput?.value || '').trim();
+    const detail = (detailInput?.value || '').trim();
+    if (year || title || detail) {
+      items.push({ year, title, detail });
+    }
+  });
+  return items;
 }
 
 function getSelectedCategories() {
@@ -853,8 +1032,22 @@ function setFormMessage(message, isError = false) {
   el.style.color = isError ? '#d94000' : '#2a2529';
 }
 
+function setAssetsMessage(message, isError = false) {
+  const el = $('#assetsFormMessage');
+  if (!el) return;
+  el.textContent = message;
+  el.style.color = isError ? '#d94000' : '#2a2529';
+}
+
 function setSiteMessage(message, isError = false) {
   const el = $('#siteFormMessage');
+  if (!el) return;
+  el.textContent = message;
+  el.style.color = isError ? '#d94000' : '#2a2529';
+}
+
+function setSeoMessage(message, isError = false) {
+  const el = $('#seoFormMessage');
   if (!el) return;
   el.textContent = message;
   el.style.color = isError ? '#d94000' : '#2a2529';
@@ -883,6 +1076,9 @@ function updateAdminAvailability() {
   const disabledBox = $('#adminDisabled');
   const panel = $('#adminPanel');
   const siteSaveBtn = $('#saveSiteContentBtn');
+  const assetsSaveBtn = $('#saveAssetsBtn');
+  const seoSaveBtn = $('#saveSeoBtn');
+  const projectSaveBtn = $('#saveProjectBtn');
 
   if (!disabledBox || !panel) return;
 
@@ -895,17 +1091,25 @@ function updateAdminAvailability() {
 
   disabledBox.hidden = true;
 
+  const allSaveButtons = [siteSaveBtn, assetsSaveBtn, seoSaveBtn, projectSaveBtn];
+
   if (isOwnerLoggedIn()) {
     panel.hidden = false;
-    if (siteSaveBtn) siteSaveBtn.disabled = false;
+    allSaveButtons.forEach((btn) => {
+      if (btn) btn.disabled = false;
+    });
     setAuthStatus(`Signed in as ${currentUser.email}`);
   } else if (currentUser && currentUser.email !== OWNER_EMAIL) {
     panel.hidden = true;
-    if (siteSaveBtn) siteSaveBtn.disabled = true;
+    allSaveButtons.forEach((btn) => {
+      if (btn) btn.disabled = true;
+    });
     setAuthStatus('This account is not authorized for admin access.');
   } else {
     panel.hidden = true;
-    if (siteSaveBtn) siteSaveBtn.disabled = true;
+    allSaveButtons.forEach((btn) => {
+      if (btn) btn.disabled = true;
+    });
     setAuthStatus('Sign in as the owner to manage projects and website content.');
   }
 }
@@ -1285,25 +1489,40 @@ function renderAdminProjectsList() {
   });
 }
 
+function initAdminTabs() {
+  const tabBtns = document.querySelectorAll('.admin-tab-btn');
+  const tabPanels = document.querySelectorAll('.admin-tab-panel');
+  if (!tabBtns.length) return;
+
+  tabBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.dataset.tab;
+      tabBtns.forEach((b) => b.classList.toggle('active', b === btn));
+      tabPanels.forEach((p) => p.classList.toggle('active', p.id === targetId));
+    });
+  });
+}
+
 function fillSiteContentForm(content) {
   const safe = deepMerge(DEFAULT_SITE_CONTENT, content || {});
 
-  ($('#siteName') || {}).value = safe.brand.name || '';
+  // TAB 2: Photos & Assets
+  ($('#heroImageUrl') || {}).value = safe.hero.imageUrl || '';
+  ($('#heroImageAlt') || {}).value = safe.hero.imageAlt || '';
+  ($('#aboutImageUrl') || {}).value = safe.about.imageUrl || '';
+  ($('#aboutImageAlt') || {}).value = safe.about.imageAlt || '';
   ($('#siteLogoUrl') || {}).value = safe.brand.logoUrl || '';
-  ($('#seoHomeTitle') || {}).value = safe.seo.homeTitle || '';
-  ($('#seoProjectsTitle') || {}).value = safe.seo.projectsTitle || '';
-  ($('#seoDetailTitleTemplate') || {}).value = safe.seo.detailTitleTemplate || '{project} — Portfolio';
-  ($('#seoDescription') || {}).value = safe.seo.description || '';
-  ($('#seoThemeColor') || {}).value = safe.seo.themeColor || '#2A2529';
-  ($('#seoFaviconEmoji') || {}).value = safe.seo.faviconEmoji || '⚡';
   ($('#brandResumeUrl') || {}).value = safe.brand.resumeUrl || '';
   ($('#brandResumeFileName') || {}).value = safe.brand.resumeFileName || '';
-  ($('#contactRecipientEmail') || {}).value = safe.contact.recipientEmail || '';
 
-  ($('#navHomeText') || {}).value = safe.navbar.homeLabel || '';
-  ($('#navProjectsText') || {}).value = safe.navbar.projectsLabel || '';
-  ($('#navContactText') || {}).value = safe.navbar.contactLabel || '';
+  const heroImg = $('#heroAssetPreviewImg');
+  if (heroImg) heroImg.src = safe.hero.imageUrl || 'assets/images/profile.jpeg';
+  const aboutImg = $('#aboutAssetPreviewImg');
+  if (aboutImg) aboutImg.src = safe.about.imageUrl || 'assets/images/about.jpeg';
+  const logoImg = $('#logoAssetPreviewImg');
+  if (logoImg) logoImg.src = safe.brand.logoUrl || 'assets/images/logo1.png';
 
+  // TAB 3: Website Content
   ($('#heroLabelInput') || {}).value = safe.hero.label || '';
   ($('#heroTitleLine1Input') || {}).value = safe.hero.titleLine1 || '';
   ($('#heroTitleLine2Input') || {}).value = safe.hero.titleLine2 || '';
@@ -1311,16 +1530,14 @@ function fillSiteContentForm(content) {
   ($('#heroPrimaryButtonText') || {}).value = safe.hero.primaryButtonText || '';
   ($('#heroSecondaryButtonText') || {}).value = safe.hero.secondaryButtonText || '';
   ($('#heroScrollCueText') || {}).value = safe.hero.scrollCueText || '';
-  ($('#heroImageUrl') || {}).value = safe.hero.imageUrl || '';
-  ($('#heroImageAlt') || {}).value = safe.hero.imageAlt || '';
 
   ($('#aboutSectionLabelInput') || {}).value = safe.about.sectionLabel || '';
   ($('#aboutHeadingLine1Input') || {}).value = safe.about.headingLine1 || '';
   ($('#aboutHeadingLine2Input') || {}).value = safe.about.headingLine2 || '';
   ($('#aboutBioInput') || {}).value = safe.about.bio || '';
-  ($('#aboutImageUrl') || {}).value = safe.about.imageUrl || '';
-  ($('#aboutImageAlt') || {}).value = safe.about.imageAlt || '';
-  ($('#aboutEducationItems') || {}).value = serializeEducationItems(safe.about.educationItems || []);
+
+  // Populate dynamic milestone cards (no JSON required)
+  renderEducationItems(safe.about.educationItems || []);
 
   ($('#featuredSectionLabelInput') || {}).value = safe.projectsPreview.sectionLabel || '';
   ($('#featuredTitleLine1Input') || {}).value = safe.projectsPreview.titleLine1 || '';
@@ -1337,12 +1554,17 @@ function fillSiteContentForm(content) {
   ($('#contactHeadingLine1Input') || {}).value = safe.contact.headingLine1 || '';
   ($('#contactHeadingLine2Input') || {}).value = safe.contact.headingLine2 || '';
   ($('#contactSubtextInput') || {}).value = safe.contact.subtext || '';
+  ($('#contactRecipientEmail') || {}).value = safe.contact.recipientEmail || '';
   ($('#contactInstagramText') || {}).value = safe.contact.instagramText || '';
   ($('#contactInstagramUrl') || {}).value = safe.contact.instagramUrl || '';
   ($('#contactGithubText') || {}).value = safe.contact.githubText || '';
   ($('#contactGithubUrl') || {}).value = safe.contact.githubUrl || '';
   ($('#contactLinkedinText') || {}).value = safe.contact.linkedinText || '';
   ($('#contactLinkedinUrl') || {}).value = safe.contact.linkedinUrl || '';
+
+  ($('#navHomeText') || {}).value = safe.navbar.homeLabel || '';
+  ($('#navProjectsText') || {}).value = safe.navbar.projectsLabel || '';
+  ($('#navContactText') || {}).value = safe.navbar.contactLabel || '';
 
   ($('#archiveSectionLabelInput') || {}).value = safe.projectsPage.sectionLabel || '';
   ($('#archiveTitleLine1Input') || {}).value = safe.projectsPage.titleLine1 || '';
@@ -1352,91 +1574,194 @@ function fillSiteContentForm(content) {
   ($('#footerCopyright') || {}).value = safe.footer.copyright || '';
   ($('#footerBackToTopText') || {}).value = safe.footer.backToTopLabel || '';
 
+  // TAB 4: Settings & SEO
+  ($('#siteName') || {}).value = safe.brand.name || '';
+  ($('#seoHomeTitle') || {}).value = safe.seo.homeTitle || '';
+  ($('#seoProjectsTitle') || {}).value = safe.seo.projectsTitle || '';
+  ($('#seoDetailTitleTemplate') || {}).value = safe.seo.detailTitleTemplate || '{project} — Vikash Thyadi';
+  ($('#seoDescription') || {}).value = safe.seo.description || '';
+  ($('#seoThemeColor') || {}).value = safe.seo.themeColor || '#2A2529';
+  ($('#seoFaviconEmoji') || {}).value = safe.seo.faviconEmoji || '⚡';
+
   ($('#siteRawJson') || {}).value = '';
   siteRawJsonBaseline = '';
 }
 
-function getSiteContentFromForm() {
-  return {
-    seo: {
-      homeTitle: String((($('#seoHomeTitle') || {}).value || '')).trim(),
-      projectsTitle: String((($('#seoProjectsTitle') || {}).value || '')).trim(),
-      detailTitleTemplate: String((($('#seoDetailTitleTemplate') || {}).value || '')).trim(),
-      description: String((($('#seoDescription') || {}).value || '')).trim(),
-      themeColor: String((($('#seoThemeColor') || {}).value || '')).trim() || '#2A2529',
-      faviconEmoji: String((($('#seoFaviconEmoji') || {}).value || '')).trim() || '⚡'
-    },
-    brand: {
-      name: String((($('#siteName') || {}).value || '')).trim(),
-      logoUrl: String((($('#siteLogoUrl') || {}).value || '')).trim(),
-      resumeUrl: String((($('#brandResumeUrl') || {}).value || '')).trim(),
-      resumeFileName: String((($('#brandResumeFileName') || {}).value || '')).trim()
-    },
-    navbar: {
-      homeLabel: String((($('#navHomeText') || {}).value || '')).trim(),
-      projectsLabel: String((($('#navProjectsText') || {}).value || '')).trim(),
-      contactLabel: String((($('#navContactText') || {}).value || '')).trim()
-    },
-    hero: {
-      label: String((($('#heroLabelInput') || {}).value || '')).trim(),
-      titleLine1: String((($('#heroTitleLine1Input') || {}).value || '')).trim(),
-      titleLine2: String((($('#heroTitleLine2Input') || {}).value || '')).trim(),
-      subtitle: String((($('#heroSubtitleInput') || {}).value || '')).trim(),
-      primaryButtonText: String((($('#heroPrimaryButtonText') || {}).value || '')).trim(),
-      secondaryButtonText: String((($('#heroSecondaryButtonText') || {}).value || '')).trim(),
-      scrollCueText: String((($('#heroScrollCueText') || {}).value || '')).trim(),
-      imageUrl: String((($('#heroImageUrl') || {}).value || '')).trim(),
-      imageAlt: String((($('#heroImageAlt') || {}).value || '')).trim()
-    },
-    about: {
-      sectionLabel: String((($('#aboutSectionLabelInput') || {}).value || '')).trim(),
-      headingLine1: String((($('#aboutHeadingLine1Input') || {}).value || '')).trim(),
-      headingLine2: String((($('#aboutHeadingLine2Input') || {}).value || '')).trim(),
-      bio: String((($('#aboutBioInput') || {}).value || '')).trim(),
-      imageUrl: String((($('#aboutImageUrl') || {}).value || '')).trim(),
-      imageAlt: String((($('#aboutImageAlt') || {}).value || '')).trim(),
-      educationItems: parseEducationItems((($('#aboutEducationItems') || {}).value || ''))
-    },
-    projectsPreview: {
-      sectionLabel: String((($('#featuredSectionLabelInput') || {}).value || '')).trim(),
-      titleLine1: String((($('#featuredTitleLine1Input') || {}).value || '')).trim(),
-      titleLine2: String((($('#featuredTitleLine2Input') || {}).value || '')).trim(),
-      ctaText: String((($('#featuredCtaTextInput') || {}).value || '')).trim()
-    },
-    skills: {
-      sectionLabel: String((($('#skillsSectionLabelInput') || {}).value || '')).trim(),
-      headingLine1: String((($('#skillsHeadingLine1Input') || {}).value || '')).trim(),
-      headingLine2: String((($('#skillsHeadingLine2Input') || {}).value || '')).trim(),
-      resumeButtonText: String((($('#skillsResumeButtonText') || {}).value || '')).trim(),
-      items: String((($('#skillsItems') || {}).value || ''))
-        .split(/\r?\n|,/) 
-        .map(item => item.trim())
-        .filter(Boolean)
-    },
-    contact: {
-      sectionLabel: String((($('#contactSectionLabelInput') || {}).value || '')).trim(),
-      headingLine1: String((($('#contactHeadingLine1Input') || {}).value || '')).trim(),
-      headingLine2: String((($('#contactHeadingLine2Input') || {}).value || '')).trim(),
-      subtext: String((($('#contactSubtextInput') || {}).value || '')).trim(),
-      instagramText: String((($('#contactInstagramText') || {}).value || '')).trim(),
-      instagramUrl: String((($('#contactInstagramUrl') || {}).value || '')).trim(),
-      githubText: String((($('#contactGithubText') || {}).value || '')).trim(),
-      githubUrl: String((($('#contactGithubUrl') || {}).value || '')).trim(),
-      linkedinText: String((($('#contactLinkedinText') || {}).value || '')).trim(),
-      linkedinUrl: String((($('#contactLinkedinUrl') || {}).value || '')).trim(),
-      recipientEmail: String((($('#contactRecipientEmail') || {}).value || '')).trim()
-    },
-    projectsPage: {
-      sectionLabel: String((($('#archiveSectionLabelInput') || {}).value || '')).trim(),
-      titleLine1: String((($('#archiveTitleLine1Input') || {}).value || '')).trim(),
-      titleLine2: String((($('#archiveTitleLine2Input') || {}).value || '')).trim(),
-      subtitle: String((($('#archiveSubtitleInput') || {}).value || '')).trim()
-    },
-    footer: {
-      copyright: String((($('#footerCopyright') || {}).value || '')).trim(),
-      backToTopLabel: String((($('#footerBackToTopText') || {}).value || '')).trim()
+async function saveSiteContentToFirestore(updatedContent) {
+  if (!firebaseReady || !isOwnerLoggedIn() || !firebaseDb) {
+    throw new Error('You must be signed in as owner.');
+  }
+
+  siteContentState = deepMerge(DEFAULT_SITE_CONTENT, updatedContent);
+
+  await firebaseDb.collection('site_content').doc(SITE_CONTENT_DOC_ID).set({
+    content: siteContentState,
+    updated_at: new Date().toISOString()
+  }, { merge: true });
+
+  try {
+    localStorage.setItem(SITE_CONTENT_SYNC_KEY, JSON.stringify({
+      updatedAt: new Date().toISOString(),
+      content: siteContentState
+    }));
+  } catch (_error) {
+    // Ignore storage sync failures; Firestore remains the source of truth.
+  }
+
+  fillSiteContentForm(siteContentState);
+  return siteContentState;
+}
+
+async function handleAssetsSave(event) {
+  event.preventDefault();
+  if (!firebaseReady || !isOwnerLoggedIn() || !firebaseDb) {
+    setAssetsMessage('You must be signed in as owner.', true);
+    return;
+  }
+
+  try {
+    const patch = {
+      hero: {
+        imageUrl: String((($('#heroImageUrl') || {}).value || '')).trim() || DEFAULT_SITE_CONTENT.hero.imageUrl,
+        imageAlt: String((($('#heroImageAlt') || {}).value || '')).trim() || DEFAULT_SITE_CONTENT.hero.imageAlt
+      },
+      about: {
+        imageUrl: String((($('#aboutImageUrl') || {}).value || '')).trim() || DEFAULT_SITE_CONTENT.about.imageUrl,
+        imageAlt: String((($('#aboutImageAlt') || {}).value || '')).trim() || DEFAULT_SITE_CONTENT.about.imageAlt
+      },
+      brand: {
+        logoUrl: String((($('#siteLogoUrl') || {}).value || '')).trim() || DEFAULT_SITE_CONTENT.brand.logoUrl,
+        resumeUrl: String((($('#brandResumeUrl') || {}).value || '')).trim() || DEFAULT_SITE_CONTENT.brand.resumeUrl,
+        resumeFileName: String((($('#brandResumeFileName') || {}).value || '')).trim() || DEFAULT_SITE_CONTENT.brand.resumeFileName
+      }
+    };
+
+    const updated = deepMerge(siteContentState, patch);
+    await saveSiteContentToFirestore(updated);
+    setAssetsMessage('✓ Photos and assets saved! Changes are live on your portfolio.');
+  } catch (error) {
+    setAssetsMessage(error.message || 'Unable to save photos/assets.', true);
+  }
+}
+
+async function handleSiteContentSave(event) {
+  event.preventDefault();
+  if (!firebaseReady || !isOwnerLoggedIn() || !firebaseDb) {
+    setSiteMessage('You must be signed in as owner.', true);
+    return;
+  }
+
+  try {
+    const patch = {
+      hero: {
+        label: String((($('#heroLabelInput') || {}).value || '')).trim(),
+        titleLine1: String((($('#heroTitleLine1Input') || {}).value || '')).trim(),
+        titleLine2: String((($('#heroTitleLine2Input') || {}).value || '')).trim(),
+        subtitle: String((($('#heroSubtitleInput') || {}).value || '')).trim(),
+        primaryButtonText: String((($('#heroPrimaryButtonText') || {}).value || '')).trim(),
+        secondaryButtonText: String((($('#heroSecondaryButtonText') || {}).value || '')).trim(),
+        scrollCueText: String((($('#heroScrollCueText') || {}).value || '')).trim()
+      },
+      about: {
+        sectionLabel: String((($('#aboutSectionLabelInput') || {}).value || '')).trim(),
+        headingLine1: String((($('#aboutHeadingLine1Input') || {}).value || '')).trim(),
+        headingLine2: String((($('#aboutHeadingLine2Input') || {}).value || '')).trim(),
+        bio: String((($('#aboutBioInput') || {}).value || '')).trim(),
+        educationItems: getEducationItemsFromDOM()
+      },
+      projectsPreview: {
+        sectionLabel: String((($('#featuredSectionLabelInput') || {}).value || '')).trim(),
+        titleLine1: String((($('#featuredTitleLine1Input') || {}).value || '')).trim(),
+        titleLine2: String((($('#featuredTitleLine2Input') || {}).value || '')).trim(),
+        ctaText: String((($('#featuredCtaTextInput') || {}).value || '')).trim()
+      },
+      skills: {
+        sectionLabel: String((($('#skillsSectionLabelInput') || {}).value || '')).trim(),
+        headingLine1: String((($('#skillsHeadingLine1Input') || {}).value || '')).trim(),
+        headingLine2: String((($('#skillsHeadingLine2Input') || {}).value || '')).trim(),
+        resumeButtonText: String((($('#skillsResumeButtonText') || {}).value || '')).trim(),
+        items: String((($('#skillsItems') || {}).value || ''))
+          .split(/\r?\n|,/)
+          .map(item => item.trim())
+          .filter(Boolean)
+      },
+      contact: {
+        sectionLabel: String((($('#contactSectionLabelInput') || {}).value || '')).trim(),
+        headingLine1: String((($('#contactHeadingLine1Input') || {}).value || '')).trim(),
+        headingLine2: String((($('#contactHeadingLine2Input') || {}).value || '')).trim(),
+        subtext: String((($('#contactSubtextInput') || {}).value || '')).trim(),
+        recipientEmail: String((($('#contactRecipientEmail') || {}).value || '')).trim(),
+        instagramText: String((($('#contactInstagramText') || {}).value || '')).trim(),
+        instagramUrl: String((($('#contactInstagramUrl') || {}).value || '')).trim(),
+        githubText: String((($('#contactGithubText') || {}).value || '')).trim(),
+        githubUrl: String((($('#contactGithubUrl') || {}).value || '')).trim(),
+        linkedinText: String((($('#contactLinkedinText') || {}).value || '')).trim(),
+        linkedinUrl: String((($('#contactLinkedinUrl') || {}).value || '')).trim()
+      },
+      navbar: {
+        homeLabel: String((($('#navHomeText') || {}).value || '')).trim(),
+        projectsLabel: String((($('#navProjectsText') || {}).value || '')).trim(),
+        contactLabel: String((($('#navContactText') || {}).value || '')).trim()
+      },
+      projectsPage: {
+        sectionLabel: String((($('#archiveSectionLabelInput') || {}).value || '')).trim(),
+        titleLine1: String((($('#archiveTitleLine1Input') || {}).value || '')).trim(),
+        titleLine2: String((($('#archiveTitleLine2Input') || {}).value || '')).trim(),
+        subtitle: String((($('#archiveSubtitleInput') || {}).value || '')).trim()
+      },
+      footer: {
+        copyright: String((($('#footerCopyright') || {}).value || '')).trim(),
+        backToTopLabel: String((($('#footerBackToTopText') || {}).value || '')).trim()
+      }
+    };
+
+    const updated = deepMerge(siteContentState, patch);
+    await saveSiteContentToFirestore(updated);
+    setSiteMessage('✓ Website content saved! Changes are live on your portfolio.');
+  } catch (error) {
+    setSiteMessage(error.message || 'Unable to save site content.', true);
+  }
+}
+
+async function handleSeoSave(event) {
+  event.preventDefault();
+  if (!firebaseReady || !isOwnerLoggedIn() || !firebaseDb) {
+    setSeoMessage('You must be signed in as owner.', true);
+    return;
+  }
+
+  try {
+    let patch = {
+      brand: {
+        name: String((($('#siteName') || {}).value || '')).trim()
+      },
+      seo: {
+        homeTitle: String((($('#seoHomeTitle') || {}).value || '')).trim(),
+        projectsTitle: String((($('#seoProjectsTitle') || {}).value || '')).trim(),
+        detailTitleTemplate: String((($('#seoDetailTitleTemplate') || {}).value || '')).trim(),
+        description: String((($('#seoDescription') || {}).value || '')).trim(),
+        themeColor: String((($('#seoThemeColor') || {}).value || '')).trim() || '#2A2529',
+        faviconEmoji: String((($('#seoFaviconEmoji') || {}).value || '')).trim() || '⚡'
+      }
+    };
+
+    const raw = String((($('#siteRawJson') || {}).value || '')).trim();
+    if (raw && raw !== siteRawJsonBaseline.trim()) {
+      try {
+        const rawObj = JSON.parse(raw);
+        patch = deepMerge(patch, rawObj);
+      } catch (_err) {
+        setSeoMessage('Advanced JSON Override contains invalid JSON.', true);
+        return;
+      }
     }
-  };
+
+    const updated = deepMerge(siteContentState, patch);
+    await saveSiteContentToFirestore(updated);
+    setSeoMessage('✓ SEO & Appearance settings saved! Changes are live.');
+  } catch (error) {
+    setSeoMessage(error.message || 'Unable to save SEO settings.', true);
+  }
 }
 
 async function loadSiteContent() {
@@ -1460,58 +1785,6 @@ async function loadSiteContent() {
   } catch (error) {
     setSiteMessage(`Unable to load site content (${error.message}).`, true);
     fillSiteContentForm(siteContentState);
-  }
-}
-
-async function handleSiteContentSave(event) {
-  event.preventDefault();
-
-  if (!firebaseReady || !isOwnerLoggedIn() || !firebaseDb) {
-    setSiteMessage('You must be signed in as owner.', true);
-    return;
-  }
-
-  let basePayload;
-  try {
-    basePayload = getSiteContentFromForm();
-  } catch (error) {
-    setSiteMessage(error.message || 'Website content has invalid values.', true);
-    return;
-  }
-
-  const raw = String((($('#siteRawJson') || {}).value || '')).trim();
-  let payload = deepMerge(DEFAULT_SITE_CONTENT, basePayload);
-  const hasRawOverride = !!raw && raw !== siteRawJsonBaseline.trim();
-
-  if (hasRawOverride) {
-    try {
-      const rawPayload = JSON.parse(raw);
-      payload = deepMerge(payload, rawPayload);
-    } catch (_error) {
-      setSiteMessage('Advanced Content JSON is not valid JSON.', true);
-      return;
-    }
-  }
-
-  try {
-    await firebaseDb.collection('site_content').doc(SITE_CONTENT_DOC_ID).set({
-      content: payload,
-      updated_at: new Date().toISOString()
-    }, { merge: true });
-
-    siteContentState = payload;
-    fillSiteContentForm(siteContentState);
-    try {
-      localStorage.setItem(SITE_CONTENT_SYNC_KEY, JSON.stringify({
-        updatedAt: new Date().toISOString(),
-        content: payload
-      }));
-    } catch (_error) {
-      // Ignore storage sync failures; Firestore remains the source of truth.
-    }
-    setSiteMessage('Website content saved. Changes are live on your portfolio.');
-  } catch (error) {
-    setSiteMessage(error.message || 'Unable to save site content.', true);
   }
 }
 
@@ -1553,13 +1826,32 @@ function setupEvents() {
   const titleField = $('#projectTitle');
   const slugField = $('#projectSlug');
   const siteForm = $('#siteContentForm');
+  const assetsForm = $('#siteAssetsForm');
+  const seoForm = $('#seoSettingsForm');
   const reloadSiteBtn = $('#reloadSiteContentBtn');
+  const addEducationBtn = $('#addEducationItemBtn');
+
+  initAdminTabs();
 
   if (loginForm) loginForm.addEventListener('submit', handleAdminLogin);
   if (signOutBtn) signOutBtn.addEventListener('click', handleAdminSignOut);
   if (projectForm) projectForm.addEventListener('submit', handleProjectSave);
   if (clearBtn) clearBtn.addEventListener('click', clearProjectForm);
+  if (assetsForm) assetsForm.addEventListener('submit', handleAssetsSave);
   if (siteForm) siteForm.addEventListener('submit', handleSiteContentSave);
+  if (seoForm) seoForm.addEventListener('submit', handleSeoSave);
+
+  if (addEducationBtn) {
+    addEducationBtn.addEventListener('click', () => {
+      const container = $('#educationItemsContainer');
+      if (!container) return;
+      const count = container.querySelectorAll('.admin-exp-card').length;
+      const card = createEducationItemCard({ year: '', title: '', detail: '' }, count);
+      container.appendChild(card);
+      card.querySelector('.exp-year-input')?.focus();
+    });
+  }
+
   if (reloadSiteBtn) {
     reloadSiteBtn.addEventListener('click', () => {
       loadSiteContent().catch((error) => {
@@ -1581,6 +1873,7 @@ function setupEvents() {
     });
   }
 
+  // Setup Projects Tab dropzones
   setupAssetDropTarget(
     '[data-asset-dropzone="thumbnail"]',
     '#thumbnailDropzone',
@@ -1597,6 +1890,34 @@ function setupEvents() {
     '#screenshotsDropzoneStatus',
     'screenshots'
   );
+
+  // Setup Standalone Photos & Assets Tab dropzones
+  setupAssetCardDropzone({
+    dropzoneSelector: '#heroAssetDropzone',
+    fileInputSelector: '#heroAssetFileInput',
+    statusSelector: '#heroAssetDropzoneStatus',
+    inputSelector: '#heroImageUrl',
+    previewImgSelector: '#heroAssetPreviewImg',
+    kind: 'hero'
+  });
+
+  setupAssetCardDropzone({
+    dropzoneSelector: '#aboutAssetDropzone',
+    fileInputSelector: '#aboutAssetFileInput',
+    statusSelector: '#aboutAssetDropzoneStatus',
+    inputSelector: '#aboutImageUrl',
+    previewImgSelector: '#aboutAssetPreviewImg',
+    kind: 'about'
+  });
+
+  setupAssetCardDropzone({
+    dropzoneSelector: '#logoAssetDropzone',
+    fileInputSelector: '#logoAssetFileInput',
+    statusSelector: '#logoAssetDropzoneStatus',
+    inputSelector: '#siteLogoUrl',
+    previewImgSelector: '#logoAssetPreviewImg',
+    kind: 'logo'
+  });
 
   initCloudinaryUI();
 }

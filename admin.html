@@ -32,354 +32,523 @@
         <h2>Firebase Setup Required</h2>
         <p>Add your Firebase config and owner email in config.local.js.</p>
       </div>
-
       <section class="admin-panel" id="adminPanel" hidden>
-        <div class="admin-editor reveal visible">
-          <h2 class="admin-panel__heading">Project Editor</h2>
-          <div class="admin-edit-state" id="adminEditState" hidden>
-            Editing <strong id="adminEditingTitle"></strong>
-          </div>
-          <details class="admin-storage-config" id="cloudinaryConfigDetails">
-            <summary class="admin-storage-config__summary">
-              <span>☁️ Media Storage (Cloudinary — 100% Free)</span>
-              <span class="admin-storage-config__status" id="cloudinaryStatusBadge">Checking...</span>
-            </summary>
-            <div class="admin-storage-config__body">
-              <p class="admin-storage-config__desc">
-                Firebase Storage now requires a paid Google Cloud plan. Cloudinary provides 25GB of free CDN media storage without requiring a credit card.
-                Enter your Cloudinary <strong>Cloud Name</strong> and <strong>Unsigned Upload Preset</strong> below, or define them in <code>config.js</code>.
-              </p>
-              <div class="admin-storage-config__grid">
-                <label>Cloud Name
-                  <input type="text" id="cloudinaryCloudName" placeholder="e.g. dxy1234">
-                </label>
-                <label>Upload Preset (Unsigned)
-                  <input type="text" id="cloudinaryUploadPreset" placeholder="e.g. portfolio_uploads">
-                </label>
-              </div>
-              <div class="admin-storage-config__actions">
-                <button type="button" class="btn btn--secondary" id="saveCloudinarySettingsBtn">Save Cloudinary Settings</button>
-                <span class="admin-storage-config__msg" id="cloudinarySettingsMsg"></span>
-              </div>
-              <div class="admin-storage-config__help">
-                <small><strong>Quick 2-minute setup:</strong> Log in to <a href="https://cloudinary.com/console/settings/upload" target="_blank" rel="noopener">Cloudinary Settings &gt; Upload</a>, scroll to <em>Upload presets</em>, click <em>Add upload preset</em>, change Signing Mode to <strong>Unsigned</strong>, copy its name, and save!</small>
-              </div>
-            </div>
-          </details>
+        <!-- Tab Navigation Bar -->
+        <div class="admin-tabs-nav" role="tablist">
+          <button type="button" class="admin-tab-btn active" data-tab="projectsTab">📁 Projects</button>
+          <button type="button" class="admin-tab-btn" data-tab="assetsTab">📸 Photos & Assets</button>
+          <button type="button" class="admin-tab-btn" data-tab="contentTab">📝 Website Content</button>
+          <button type="button" class="admin-tab-btn" data-tab="settingsTab">⚙️ Settings & SEO</button>
+        </div>
 
-          <form id="projectForm" class="project-form">
-            <input type="hidden" id="projectRowId">
+        <!-- ============================================
+             TAB 1: PROJECTS
+             ============================================ -->
+        <div class="admin-tab-panel active" id="projectsTab">
+          <div class="admin-projects-grid">
+            <div class="admin-editor">
+              <h2 class="admin-panel__heading">Project Editor</h2>
+              <div class="admin-edit-state" id="adminEditState" hidden>
+                Editing <strong id="adminEditingTitle"></strong>
+              </div>
 
-            <div class="project-form__grid">
-              <label>Title
-                <input type="text" id="projectTitle" required>
-              </label>
-              <label>Slug
-                <input type="text" id="projectSlug" placeholder="my-awesome-project" required>
-              </label>
-              <label>Categories
-                <div class="project-form__checks" id="projectCategories">
-                  <label class="project-form__check"><input type="checkbox" value="web"> Web App</label>
-                  <label class="project-form__check"><input type="checkbox" value="design"> Design</label>
-                  <label class="project-form__check"><input type="checkbox" value="oss"> Open Source</label>
-                  <label class="project-form__check"><input type="checkbox" value="software"> Software</label>
-                </div>
-              </label>
-              <label>Year
-                <input type="number" id="projectYear" min="2000" max="2100" required>
-              </label>
-              <label>Role
-                <input type="text" id="projectRole" required>
-              </label>
-              <div class="project-form__asset-field" data-asset-dropzone="thumbnail">
-                <label for="projectThumbnail">Thumbnail Image</label>
-                <div class="project-dropzone" id="thumbnailDropzone" tabindex="0" role="button" aria-label="Upload thumbnail image">
-                  <input type="file" id="thumbnailFileInput" accept="image/*" class="project-dropzone__file-input" tabindex="-1">
-                  <div class="project-dropzone__content" id="thumbnailDropzoneContent">
-                    <span class="project-dropzone__icon">📷</span>
-                    <span class="project-dropzone__text">Drag & drop image here, or <strong class="project-dropzone__link">browse</strong></span>
-                    <span class="project-dropzone__subtext">PNG, JPG, WEBP up to 10MB</span>
-                  </div>
-                  <div class="project-dropzone__preview" id="thumbnailDropzonePreview" style="display:none;">
-                    <img id="thumbnailPreviewImg" src="" alt="Thumbnail preview">
-                    <div class="project-dropzone__preview-info">
-                      <span class="project-dropzone__preview-name" id="thumbnailPreviewName"></span>
-                      <span class="project-dropzone__preview-meta" id="thumbnailPreviewMeta"></span>
+              <form id="projectForm" class="project-form">
+                <input type="hidden" id="projectRowId">
+
+                <div class="project-form__grid">
+                  <label>Title
+                    <input type="text" id="projectTitle" required>
+                  </label>
+                  <label>Slug
+                    <input type="text" id="projectSlug" placeholder="my-awesome-project" required>
+                  </label>
+                  <label>Categories
+                    <div class="project-form__checks" id="projectCategories">
+                      <label class="project-form__check"><input type="checkbox" value="web"> Web App</label>
+                      <label class="project-form__check"><input type="checkbox" value="design"> Design</label>
+                      <label class="project-form__check"><input type="checkbox" value="oss"> Open Source</label>
+                      <label class="project-form__check"><input type="checkbox" value="software"> Software</label>
                     </div>
-                    <button type="button" class="project-dropzone__preview-clear" id="thumbnailPreviewClear" title="Remove image">×</button>
+                  </label>
+                  <label>Year
+                    <input type="number" id="projectYear" min="2000" max="2100" required>
+                  </label>
+                  <label>Role
+                    <input type="text" id="projectRole" required>
+                  </label>
+                  <div class="project-form__asset-field" data-asset-dropzone="thumbnail">
+                    <label for="projectThumbnail">Thumbnail Image</label>
+                    <div class="project-dropzone" id="thumbnailDropzone" tabindex="0" role="button" aria-label="Upload thumbnail image">
+                      <input type="file" id="thumbnailFileInput" accept="image/*" class="project-dropzone__file-input" tabindex="-1">
+                      <div class="project-dropzone__content" id="thumbnailDropzoneContent">
+                        <span class="project-dropzone__icon">📷</span>
+                        <span class="project-dropzone__text">Drag & drop image here, or <strong class="project-dropzone__link">browse</strong></span>
+                        <span class="project-dropzone__subtext">PNG, JPG, WEBP up to 10MB</span>
+                      </div>
+                      <div class="project-dropzone__preview" id="thumbnailDropzonePreview" style="display:none;">
+                        <img id="thumbnailPreviewImg" src="" alt="Thumbnail preview">
+                        <div class="project-dropzone__preview-info">
+                          <span class="project-dropzone__preview-name" id="thumbnailPreviewName"></span>
+                          <span class="project-dropzone__preview-meta" id="thumbnailPreviewMeta"></span>
+                        </div>
+                        <button type="button" class="project-dropzone__preview-clear" id="thumbnailPreviewClear" title="Remove image">×</button>
+                      </div>
+                      <div class="project-dropzone__status" id="thumbnailDropzoneStatus"></div>
+                      <div class="project-dropzone__progress-bar" id="thumbnailProgressBar" style="display:none;"><div class="project-dropzone__progress-fill" id="thumbnailProgressFill"></div></div>
+                    </div>
+                    <input type="text" id="projectThumbnail" placeholder="https://res.cloudinary.com/... or assets/images/project-1.png">
+                    <span class="project-form__asset-hint">Drop an image to auto-upload via Cloudinary, or paste a URL directly.</span>
                   </div>
-                  <div class="project-dropzone__status" id="thumbnailDropzoneStatus"></div>
-                  <div class="project-dropzone__progress-bar" id="thumbnailProgressBar" style="display:none;"><div class="project-dropzone__progress-fill" id="thumbnailProgressFill"></div></div>
-                </div>
-                <input type="text" id="projectThumbnail" placeholder="https://res.cloudinary.com/... or assets/images/project-1.png">
-                <span class="project-form__asset-hint">Drop an image to auto-upload via Cloudinary, or paste a URL directly.</span>
-              </div>
-              <div class="project-form__asset-field" data-asset-dropzone="screenshots">
-                <label for="projectScreenshots">Project Screenshots</label>
-                <div class="project-dropzone" id="screenshotsDropzone" tabindex="0" role="button" aria-label="Upload screenshots">
-                  <input type="file" id="screenshotsFileInput" accept="image/*" multiple class="project-dropzone__file-input" tabindex="-1">
-                  <div class="project-dropzone__content" id="screenshotsDropzoneContent">
-                    <span class="project-dropzone__icon">🖼️</span>
-                    <span class="project-dropzone__text">Drag & drop screenshots here, or <strong class="project-dropzone__link">browse</strong></span>
-                    <span class="project-dropzone__subtext">Multiple images supported</span>
+                  <div class="project-form__asset-field" data-asset-dropzone="screenshots">
+                    <label for="projectScreenshots">Project Screenshots</label>
+                    <div class="project-dropzone" id="screenshotsDropzone" tabindex="0" role="button" aria-label="Upload screenshots">
+                      <input type="file" id="screenshotsFileInput" accept="image/*" multiple class="project-dropzone__file-input" tabindex="-1">
+                      <div class="project-dropzone__content" id="screenshotsDropzoneContent">
+                        <span class="project-dropzone__icon">🖼️</span>
+                        <span class="project-dropzone__text">Drag & drop screenshots here, or <strong class="project-dropzone__link">browse</strong></span>
+                        <span class="project-dropzone__subtext">Multiple images supported</span>
+                      </div>
+                      <div class="project-dropzone__previews" id="screenshotsDropzonePreviews" style="display:none;"></div>
+                      <div class="project-dropzone__status" id="screenshotsDropzoneStatus"></div>
+                      <div class="project-dropzone__progress-bar" id="screenshotsProgressBar" style="display:none;"><div class="project-dropzone__progress-fill" id="screenshotsProgressFill"></div></div>
+                    </div>
+                    <textarea id="projectScreenshots" rows="3" placeholder="https://.../screen-1.png&#10;https://.../screen-2.png"></textarea>
+                    <span class="project-form__asset-hint">One URL per line. Dropped images upload via Cloudinary and append automatically.</span>
                   </div>
-                  <div class="project-dropzone__previews" id="screenshotsDropzonePreviews" style="display:none;"></div>
-                  <div class="project-dropzone__status" id="screenshotsDropzoneStatus"></div>
-                  <div class="project-dropzone__progress-bar" id="screenshotsProgressBar" style="display:none;"><div class="project-dropzone__progress-fill" id="screenshotsProgressFill"></div></div>
+                  <label>Live URL
+                    <input type="url" id="projectLiveUrl" placeholder="https://...">
+                  </label>
+                  <label>GitHub URL
+                    <input type="url" id="projectGithubUrl" placeholder="https://github.com/...">
+                  </label>
+                  <label>Sort Order
+                    <input type="number" id="projectSortOrder" min="0" value="0">
+                  </label>
+                  <label>Featured on Landing Page
+                    <select id="projectFeatured">
+                      <option value="true">Yes</option>
+                      <option value="false">No</option>
+                    </select>
+                  </label>
                 </div>
-                <textarea id="projectScreenshots" rows="3" placeholder="https://.../screen-1.png&#10;https://.../screen-2.png"></textarea>
-                <span class="project-form__asset-hint">One URL per line. Dropped images upload via Cloudinary and append automatically.</span>
-              </div>
-              <label>Live URL
-                <input type="url" id="projectLiveUrl" placeholder="https://...">
-              </label>
-              <label>GitHub URL
-                <input type="url" id="projectGithubUrl" placeholder="https://github.com/...">
-              </label>
-              <label>Sort Order
-                <input type="number" id="projectSortOrder" min="0" value="0">
-              </label>
-              <label>Featured on Landing Page
-                <select id="projectFeatured">
-                  <option value="true">Yes</option>
-                  <option value="false">No</option>
-                </select>
-              </label>
+
+                <label>Tech Stack (comma separated)
+                  <input type="text" id="projectTech" placeholder="React, TypeScript, Node.js" required>
+                </label>
+
+                <label>Short Description (for cards)
+                  <input type="text" id="projectShortDescription" maxlength="220" placeholder="One-line summary shown on project cards">
+                  <span class="project-form__hint">A short one-line summary (max 220 characters) shown on project cards. Keep it concise.</span>
+                </label>
+
+                <label>Description HTML / README Markdown
+                  <textarea id="projectDescription" rows="10" required></textarea>
+                  <span class="project-form__hint">Paste a README.md here in Markdown, or keep using HTML if you prefer. The project page will render either format.</span>
+                </label>
+
+                <div class="project-form__actions">
+                  <button type="submit" class="btn btn--primary" id="saveProjectBtn">Save Project</button>
+                  <button type="button" class="btn btn--secondary" id="clearProjectForm">Clear</button>
+                </div>
+                <p class="project-form__message" id="projectFormMessage"></p>
+              </form>
             </div>
 
-            <label>Tech Stack (comma separated)
-              <input type="text" id="projectTech" placeholder="React, TypeScript, Node.js" required>
-            </label>
-
-            <label>Short Description (for cards)
-              <input type="text" id="projectShortDescription" maxlength="220" placeholder="One-line summary shown on project cards">
-              <span class="project-form__hint">A short one-line summary (max 220 characters) shown on project cards. Keep it concise.</span>
-            </label>
-
-            <label>Description HTML / README Markdown
-              <textarea id="projectDescription" rows="10" required></textarea>
-              <span class="project-form__hint">Paste a README.md here in Markdown, or keep using HTML if you prefer. The project page will render either format.</span>
-            </label>
-
-            <div class="project-form__actions">
-              <button type="submit" class="btn btn--primary" id="saveProjectBtn">Save Project</button>
-              <button type="button" class="btn btn--secondary" id="clearProjectForm">Clear</button>
+            <div class="admin-list">
+              <h2 class="admin-panel__heading">Your Projects</h2>
+              <div class="admin-list__items" id="adminProjectList"></div>
             </div>
-            <p class="project-form__message" id="projectFormMessage"></p>
-          </form>
+          </div>
         </div>
 
-        <div class="admin-list reveal visible">
-          <h2 class="admin-panel__heading">Your Projects</h2>
-          <div class="admin-list__items" id="adminProjectList"></div>
+        <!-- ============================================
+             TAB 2: PHOTOS & ASSETS
+             ============================================ -->
+        <div class="admin-tab-panel" id="assetsTab">
+          <div class="admin-editor admin-editor--wide">
+            <h2 class="admin-panel__heading">Profile Photos & Site Assets</h2>
+            <p class="admin-storage-config__desc" style="margin-bottom: 1.5rem;">
+              Upload your photos directly to Cloudinary. Drag and drop any new photo below to instantly upload and preview it! Click <strong>Save Photo & Asset Changes</strong> when finished.
+            </p>
+
+            <form id="siteAssetsForm" class="project-form">
+              <div class="admin-assets-grid">
+                <!-- Hero Portrait Card -->
+                <div class="admin-asset-card">
+                  <div class="admin-asset-card__header">
+                    <h3 class="admin-asset-card__title">Hero Portrait Photo</h3>
+                    <span class="admin-asset-card__badge">Homepage Hero</span>
+                  </div>
+                  <p class="admin-asset-card__desc">Main photo shown on the homepage introduction next to your name.</p>
+                  <div class="admin-asset-preview-box" id="heroAssetPreviewBox">
+                    <img id="heroAssetPreviewImg" src="assets/images/profile.jpeg" alt="Hero portrait preview">
+                  </div>
+                  <div class="project-dropzone" id="heroAssetDropzone" tabindex="0" role="button" aria-label="Upload hero photo">
+                    <input type="file" id="heroAssetFileInput" accept="image/*" class="project-dropzone__file-input" tabindex="-1">
+                    <div class="project-dropzone__content">
+                      <span class="project-dropzone__icon">📷</span>
+                      <span class="project-dropzone__text">Drop new portrait here or <strong>browse</strong></span>
+                      <span class="project-dropzone__subtext">JPG, PNG, WEBP</span>
+                    </div>
+                    <div class="project-dropzone__status" id="heroAssetDropzoneStatus"></div>
+                    <div class="project-dropzone__progress-bar" style="display:none;"><div class="project-dropzone__progress-fill"></div></div>
+                  </div>
+                  <label>Image URL
+                    <input type="text" id="heroImageUrl" placeholder="assets/images/profile.jpeg">
+                  </label>
+                  <label>Alt Description
+                    <input type="text" id="heroImageAlt" placeholder="Vikash Thyadi — Portrait">
+                  </label>
+                </div>
+
+                <!-- About Photo Card -->
+                <div class="admin-asset-card">
+                  <div class="admin-asset-card__header">
+                    <h3 class="admin-asset-card__title">About Working Photo</h3>
+                    <span class="admin-asset-card__badge">About Section</span>
+                  </div>
+                  <p class="admin-asset-card__desc">Photo shown in the About section (e.g. working at desk, workspace).</p>
+                  <div class="admin-asset-preview-box" id="aboutAssetPreviewBox">
+                    <img id="aboutAssetPreviewImg" src="assets/images/about.jpeg" alt="About photo preview">
+                  </div>
+                  <div class="project-dropzone" id="aboutAssetDropzone" tabindex="0" role="button" aria-label="Upload about photo">
+                    <input type="file" id="aboutAssetFileInput" accept="image/*" class="project-dropzone__file-input" tabindex="-1">
+                    <div class="project-dropzone__content">
+                      <span class="project-dropzone__icon">📷</span>
+                      <span class="project-dropzone__text">Drop new photo here or <strong>browse</strong></span>
+                      <span class="project-dropzone__subtext">JPG, PNG, WEBP</span>
+                    </div>
+                    <div class="project-dropzone__status" id="aboutAssetDropzoneStatus"></div>
+                    <div class="project-dropzone__progress-bar" style="display:none;"><div class="project-dropzone__progress-fill"></div></div>
+                  </div>
+                  <label>Image URL
+                    <input type="text" id="aboutImageUrl" placeholder="assets/images/about.jpeg">
+                  </label>
+                  <label>Alt Description
+                    <input type="text" id="aboutImageAlt" placeholder="Vikash working at desk">
+                  </label>
+                </div>
+
+                <!-- Logo & Resume Card -->
+                <div class="admin-asset-card">
+                  <div class="admin-asset-card__header">
+                    <h3 class="admin-asset-card__title">Logo & Resume</h3>
+                    <span class="admin-asset-card__badge">Navbar & CTA</span>
+                  </div>
+                  <p class="admin-asset-card__desc">Navbar brand logo and resume document downloadable by visitors.</p>
+                  <div class="admin-asset-preview-box admin-asset-preview-box--contain" id="logoAssetPreviewBox">
+                    <img id="logoAssetPreviewImg" src="assets/images/logo1.png" alt="Site logo preview">
+                  </div>
+                  <div class="project-dropzone" id="logoAssetDropzone" tabindex="0" role="button" aria-label="Upload site logo">
+                    <input type="file" id="logoAssetFileInput" accept="image/*" class="project-dropzone__file-input" tabindex="-1">
+                    <div class="project-dropzone__content">
+                      <span class="project-dropzone__icon">🖼️</span>
+                      <span class="project-dropzone__text">Drop new logo or <strong>browse</strong></span>
+                      <span class="project-dropzone__subtext">PNG, SVG, JPG</span>
+                    </div>
+                    <div class="project-dropzone__status" id="logoAssetDropzoneStatus"></div>
+                    <div class="project-dropzone__progress-bar" style="display:none;"><div class="project-dropzone__progress-fill"></div></div>
+                  </div>
+                  <label>Logo URL
+                    <input type="text" id="siteLogoUrl" placeholder="assets/images/logo1.png">
+                  </label>
+                  <label>Resume File URL
+                    <input type="text" id="brandResumeUrl" placeholder="assets/resume/VikashThyadi_Resume.pdf">
+                  </label>
+                  <label>Downloaded Resume Filename
+                    <input type="text" id="brandResumeFileName" placeholder="Vikash-Thyadi-Resume.pdf">
+                  </label>
+                </div>
+              </div>
+
+              <div class="project-form__actions">
+                <button type="submit" class="btn btn--primary" id="saveAssetsBtn">Save Photo & Asset Changes</button>
+              </div>
+              <p class="project-form__message" id="assetsFormMessage"></p>
+            </form>
+          </div>
         </div>
 
-        <div class="admin-editor admin-editor--wide reveal visible">
-          <h2 class="admin-panel__heading">Website Content Editor</h2>
-          <form id="siteContentForm" class="project-form">
-            <div class="project-form__grid">
-              <label>Site Name
-                <input type="text" id="siteName" required>
+        <!-- ============================================
+             TAB 3: WEBSITE CONTENT
+             ============================================ -->
+        <div class="admin-tab-panel" id="contentTab">
+          <div class="admin-editor admin-editor--wide">
+            <h2 class="admin-panel__heading">Website Content & Text</h2>
+            <form id="siteContentForm" class="project-form">
+              <!-- Hero Section -->
+              <div class="admin-section-divider">
+                <div>
+                  <h3>Hero Section</h3>
+                  <p>Main title, subtitle, and buttons shown on the landing page.</p>
+                </div>
+              </div>
+              <div class="project-form__grid">
+                <label>Hero Label / Badge
+                  <input type="text" id="heroLabelInput" required>
+                </label>
+                <label>First Name (Line 1)
+                  <input type="text" id="heroTitleLine1Input" required>
+                </label>
+                <label>Last Name (Line 2)
+                  <input type="text" id="heroTitleLine2Input" required>
+                </label>
+                <label>Primary Button Text
+                  <input type="text" id="heroPrimaryButtonText" required>
+                </label>
+                <label>Resume Button Text
+                  <input type="text" id="heroSecondaryButtonText" required>
+                </label>
+                <label>Scroll Cue Text
+                  <input type="text" id="heroScrollCueText" required>
+                </label>
+              </div>
+              <label>Hero Subtitle / Bio Pitch
+                <textarea id="heroSubtitleInput" rows="2" required></textarea>
               </label>
-              <label>Logo URL
-                <input type="text" id="siteLogoUrl" placeholder="assets/images/logo1.png">
+
+              <!-- About Section -->
+              <div class="admin-section-divider">
+                <div>
+                  <h3>About Section</h3>
+                  <p>Your personal story, background, and philosophy.</p>
+                </div>
+              </div>
+              <div class="project-form__grid">
+                <label>Section Label
+                  <input type="text" id="aboutSectionLabelInput" required>
+                </label>
+                <label>Heading Line 1
+                  <input type="text" id="aboutHeadingLine1Input" required>
+                </label>
+                <label>Heading Line 2
+                  <input type="text" id="aboutHeadingLine2Input" required>
+                </label>
+              </div>
+              <label>About Bio
+                <textarea id="aboutBioInput" rows="4" required></textarea>
               </label>
-              <label>SEO Home Title
-                <input type="text" id="seoHomeTitle" required>
+
+              <!-- Education & Experience (INTERACTIVE CARDS) -->
+              <div class="admin-section-divider">
+                <div>
+                  <h3>Education & Achievements</h3>
+                  <p>Interactive milestone cards — click "+ Add Milestone" to add one, or delete with the red button. No JSON needed!</p>
+                </div>
+                <button type="button" class="btn btn--secondary" id="addEducationItemBtn">+ Add Milestone</button>
+              </div>
+              <div class="admin-exp-container" id="educationItemsContainer">
+                <!-- Dynamically populated by admin.js -->
+              </div>
+
+              <!-- Skills -->
+              <div class="admin-section-divider">
+                <div>
+                  <h3>Skills & Capabilities</h3>
+                  <p>Technologies and tools featured in your capabilities marquee.</p>
+                </div>
+              </div>
+              <div class="project-form__grid">
+                <label>Section Label
+                  <input type="text" id="skillsSectionLabelInput" required>
+                </label>
+                <label>Heading Line 1
+                  <input type="text" id="skillsHeadingLine1Input" required>
+                </label>
+                <label>Heading Line 2
+                  <input type="text" id="skillsHeadingLine2Input" required>
+                </label>
+                <label>Skills Resume Button Text
+                  <input type="text" id="skillsResumeButtonText" required>
+                </label>
+              </div>
+              <label>Skills Items (comma separated)
+                <textarea id="skillsItems" rows="3" placeholder="JavaScript, TypeScript, React, Next.js, Python, ..."></textarea>
               </label>
-              <label>SEO Projects Title
-                <input type="text" id="seoProjectsTitle" required>
+
+              <!-- Contact & Socials -->
+              <div class="admin-section-divider">
+                <div>
+                  <h3>Contact & Social Links</h3>
+                  <p>Your social profiles and contact form recipient.</p>
+                </div>
+              </div>
+              <div class="project-form__grid">
+                <label>Section Label
+                  <input type="text" id="contactSectionLabelInput" required>
+                </label>
+                <label>Heading Line 1
+                  <input type="text" id="contactHeadingLine1Input" required>
+                </label>
+                <label>Heading Line 2
+                  <input type="text" id="contactHeadingLine2Input" required>
+                </label>
+                <label>Contact Form Recipient Email
+                  <input type="email" id="contactRecipientEmail" placeholder="vikashthyadi1104@gmail.com">
+                </label>
+                <label>Instagram Handle / Text
+                  <input type="text" id="contactInstagramText">
+                </label>
+                <label>Instagram URL
+                  <input type="url" id="contactInstagramUrl">
+                </label>
+                <label>GitHub Handle / Text
+                  <input type="text" id="contactGithubText">
+                </label>
+                <label>GitHub URL
+                  <input type="url" id="contactGithubUrl">
+                </label>
+                <label>LinkedIn Handle / Text
+                  <input type="text" id="contactLinkedinText">
+                </label>
+                <label>LinkedIn URL
+                  <input type="url" id="contactLinkedinUrl">
+                </label>
+              </div>
+              <label>Contact Subtext
+                <textarea id="contactSubtextInput" rows="2" required></textarea>
               </label>
-              <label>SEO Detail Title Template
-                <input type="text" id="seoDetailTitleTemplate" placeholder="{project} — Your Name" required>
+
+              <!-- Navigation, Archive & Footer -->
+              <div class="admin-section-divider">
+                <div>
+                  <h3>Navigation, Archive & Footer</h3>
+                  <p>Section labels, navigation tabs, and footer copyright.</p>
+                </div>
+              </div>
+              <div class="project-form__grid">
+                <label>Nav Home Label
+                  <input type="text" id="navHomeText" required>
+                </label>
+                <label>Nav Projects Label
+                  <input type="text" id="navProjectsText" required>
+                </label>
+                <label>Nav Contact Label
+                  <input type="text" id="navContactText" required>
+                </label>
+                <label>Projects Archive Label
+                  <input type="text" id="archiveSectionLabelInput" required>
+                </label>
+                <label>Archive Title Line 1
+                  <input type="text" id="archiveTitleLine1Input" required>
+                </label>
+                <label>Archive Title Line 2
+                  <input type="text" id="archiveTitleLine2Input" required>
+                </label>
+                <label>Featured Projects Section Label
+                  <input type="text" id="featuredSectionLabelInput" required>
+                </label>
+                <label>Featured Title Line 1
+                  <input type="text" id="featuredTitleLine1Input" required>
+                </label>
+                <label>Featured Title Line 2
+                  <input type="text" id="featuredTitleLine2Input" required>
+                </label>
+                <label>Featured CTA Text
+                  <input type="text" id="featuredCtaTextInput" required>
+                </label>
+                <label>Footer Copyright
+                  <input type="text" id="footerCopyright" required>
+                </label>
+                <label>Back-To-Top Button Text
+                  <input type="text" id="footerBackToTopText" required>
+                </label>
+              </div>
+              <label>Projects Archive Subtitle
+                <textarea id="archiveSubtitleInput" rows="2" required></textarea>
               </label>
-              <label>Theme Color
-                <input type="text" id="seoThemeColor" placeholder="#2A2529">
-              </label>
-              <label>Favicon Emoji
-                <input type="text" id="seoFaviconEmoji" maxlength="2" placeholder="⚡">
-              </label>
-              <label>Resume URL
-                <input type="text" id="brandResumeUrl" placeholder="assets/resume/Resume.pdf">
-              </label>
-              <label>Resume File Name
-                <input type="text" id="brandResumeFileName" placeholder="Vikash-Thyadi-Resume.pdf">
-              </label>
-              <label>Contact Recipient Email
-                <input type="email" id="contactRecipientEmail" placeholder="owner@example.com">
-              </label>
+
+              <div class="project-form__actions">
+                <button type="submit" class="btn btn--primary" id="saveSiteContentBtn">Save Website Content</button>
+                <button type="button" class="btn btn--secondary" id="reloadSiteContentBtn">Reload from Database</button>
+              </div>
+              <p class="project-form__message" id="siteFormMessage"></p>
+            </form>
+          </div>
+        </div>
+
+        <!-- ============================================
+             TAB 4: SETTINGS & SEO
+             ============================================ -->
+        <div class="admin-tab-panel" id="settingsTab">
+          <div class="admin-editor admin-editor--wide">
+            <h2 class="admin-panel__heading">Media Storage & SEO Settings</h2>
+
+            <!-- Cloudinary Config Card -->
+            <div class="admin-storage-config" id="cloudinaryConfigDetails" style="margin-bottom: 2rem;">
+              <div class="admin-storage-config__summary" style="cursor: default;">
+                <span>☁️ Media Storage (Cloudinary — 100% Free)</span>
+                <span class="admin-storage-config__status" id="cloudinaryStatusBadge">Checking...</span>
+              </div>
+              <div class="admin-storage-config__body">
+                <p class="admin-storage-config__desc">
+                  Cloudinary provides 25GB of free CDN media storage without requiring a credit card.
+                  All images uploaded in Projects or Photos tabs upload directly to your Cloudinary cloud.
+                </p>
+                <div class="admin-storage-config__grid">
+                  <label>Cloud Name
+                    <input type="text" id="cloudinaryCloudName" placeholder="e.g. ucebpoei">
+                  </label>
+                  <label>Upload Preset (Unsigned)
+                    <input type="text" id="cloudinaryUploadPreset" placeholder="e.g. portfolio_uploads">
+                  </label>
+                </div>
+                <div class="admin-storage-config__actions">
+                  <button type="button" class="btn btn--secondary" id="saveCloudinarySettingsBtn">Save Cloudinary Settings</button>
+                  <span class="admin-storage-config__msg" id="cloudinarySettingsMsg"></span>
+                </div>
+                <div class="admin-storage-config__help">
+                  <small><strong>Quick tip:</strong> When creating a preset in Cloudinary Settings &gt; Upload, make sure Signing Mode is set to <strong>Unsigned</strong>.</small>
+                </div>
+              </div>
             </div>
 
-            <label>SEO Description
-              <textarea id="seoDescription" rows="3" required></textarea>
-            </label>
+            <!-- SEO & Brand Settings -->
+            <form id="seoSettingsForm" class="project-form">
+              <div class="admin-section-divider">
+                <div>
+                  <h3>SEO & Browser Tab Appearance</h3>
+                  <p>Search engine title, meta description, and browser tab appearance.</p>
+                </div>
+              </div>
+              <div class="project-form__grid">
+                <label>Site / Brand Name
+                  <input type="text" id="siteName" required>
+                </label>
+                <label>Browser Tab Home Title
+                  <input type="text" id="seoHomeTitle" required>
+                </label>
+                <label>Projects Page Title
+                  <input type="text" id="seoProjectsTitle" required>
+                </label>
+                <label>Detail Title Template
+                  <input type="text" id="seoDetailTitleTemplate" placeholder="{project} — Vikash Thyadi" required>
+                </label>
+                <label>Browser Theme Color
+                  <input type="text" id="seoThemeColor" placeholder="#2A2529">
+                </label>
+                <label>Favicon Emoji
+                  <input type="text" id="seoFaviconEmoji" maxlength="2" placeholder="⚡">
+                </label>
+              </div>
+              <label>SEO Meta Description
+                <textarea id="seoDescription" rows="3" required></textarea>
+              </label>
 
-            <div class="project-form__grid">
-              <label>Nav Home Label
-                <input type="text" id="navHomeText" required>
-              </label>
-              <label>Nav Projects Label
-                <input type="text" id="navProjectsText" required>
-              </label>
-              <label>Nav Contact Label
-                <input type="text" id="navContactText" required>
-              </label>
-              <label>Hero Section Label
-                <input type="text" id="heroLabelInput" required>
-              </label>
-              <label>Hero Title Line 1
-                <input type="text" id="heroTitleLine1Input" required>
-              </label>
-              <label>Hero Title Line 2
-                <input type="text" id="heroTitleLine2Input" required>
-              </label>
-              <label>Hero Primary Button Text
-                <input type="text" id="heroPrimaryButtonText" required>
-              </label>
-              <label>Hero Secondary Button Text
-                <input type="text" id="heroSecondaryButtonText" required>
-              </label>
-              <label>Hero Scroll Cue Label
-                <input type="text" id="heroScrollCueText" required>
-              </label>
-              <label>Hero Image URL
-                <input type="text" id="heroImageUrl" placeholder="assets/images/profile.jpeg">
-              </label>
-              <label>Hero Image Alt
-                <input type="text" id="heroImageAlt">
-              </label>
-            </div>
+              <div class="admin-section-divider">
+                <div>
+                  <h3>Advanced JSON Override (Optional)</h3>
+                  <p>Only needed if you want to paste or export raw site configuration JSON.</p>
+                </div>
+              </div>
+              <textarea id="siteRawJson" rows="6" placeholder="Leave empty for normal editing..."></textarea>
 
-            <label>Hero Subtitle
-              <textarea id="heroSubtitleInput" rows="3" required></textarea>
-            </label>
-
-            <div class="project-form__grid">
-              <label>About Section Label
-                <input type="text" id="aboutSectionLabelInput" required>
-              </label>
-              <label>About Heading Line 1
-                <input type="text" id="aboutHeadingLine1Input" required>
-              </label>
-              <label>About Heading Line 2
-                <input type="text" id="aboutHeadingLine2Input" required>
-              </label>
-              <label>About Image URL
-                <input type="text" id="aboutImageUrl" placeholder="assets/images/about.jpeg">
-              </label>
-              <label>About Image Alt
-                <input type="text" id="aboutImageAlt">
-              </label>
-            </div>
-
-            <label>About Bio
-              <textarea id="aboutBioInput" rows="4" required></textarea>
-            </label>
-
-            <label>Education / Experience Items (JSON array or one JSON object per line)
-              <textarea id="aboutEducationItems" rows="6" placeholder='{"year":"2023 — Present","title":"B.Tech...","detail":"Details..."}'></textarea>
-            </label>
-
-            <div class="project-form__grid">
-              <label>Featured Projects Label
-                <input type="text" id="featuredSectionLabelInput" required>
-              </label>
-              <label>Featured Title Line 1
-                <input type="text" id="featuredTitleLine1Input" required>
-              </label>
-              <label>Featured Title Line 2
-                <input type="text" id="featuredTitleLine2Input" required>
-              </label>
-              <label>Featured CTA Text
-                <input type="text" id="featuredCtaTextInput" required>
-              </label>
-              <label>Skills Section Label
-                <input type="text" id="skillsSectionLabelInput" required>
-              </label>
-              <label>Skills Heading Line 1
-                <input type="text" id="skillsHeadingLine1Input" required>
-              </label>
-              <label>Skills Heading Line 2
-                <input type="text" id="skillsHeadingLine2Input" required>
-              </label>
-              <label>Resume Button Text
-                <input type="text" id="skillsResumeButtonText" required>
-              </label>
-            </div>
-
-            <label>Skills Items (comma separated)
-              <textarea id="skillsItems" rows="3"></textarea>
-            </label>
-
-            <div class="project-form__grid">
-              <label>Contact Section Label
-                <input type="text" id="contactSectionLabelInput" required>
-              </label>
-              <label>Contact Heading Line 1
-                <input type="text" id="contactHeadingLine1Input" required>
-              </label>
-              <label>Contact Heading Line 2
-                <input type="text" id="contactHeadingLine2Input" required>
-              </label>
-              <label>Instagram Link Text
-                <input type="text" id="contactInstagramText" required>
-              </label>
-              <label>Instagram URL
-                <input type="url" id="contactInstagramUrl" placeholder="https://instagram.com/...">
-              </label>
-              <label>GitHub Link Text
-                <input type="text" id="contactGithubText" required>
-              </label>
-              <label>GitHub URL
-                <input type="url" id="contactGithubUrl" placeholder="https://github.com/...">
-              </label>
-              <label>LinkedIn Link Text
-                <input type="text" id="contactLinkedinText" required>
-              </label>
-              <label>LinkedIn URL
-                <input type="url" id="contactLinkedinUrl" placeholder="https://linkedin.com/in/...">
-              </label>
-            </div>
-
-            <label>Contact Subtext
-              <textarea id="contactSubtextInput" rows="3" required></textarea>
-            </label>
-
-            <div class="project-form__grid">
-              <label>Projects Archive Label
-                <input type="text" id="archiveSectionLabelInput" required>
-              </label>
-              <label>Projects Archive Title Line 1
-                <input type="text" id="archiveTitleLine1Input" required>
-              </label>
-              <label>Projects Archive Title Line 2
-                <input type="text" id="archiveTitleLine2Input" required>
-              </label>
-              <label>Footer Back-To-Top Text
-                <input type="text" id="footerBackToTopText" required>
-              </label>
-            </div>
-
-            <label>Projects Archive Subtitle
-              <textarea id="archiveSubtitleInput" rows="3" required></textarea>
-            </label>
-
-            <label>Footer Copyright
-              <input type="text" id="footerCopyright" required>
-            </label>
-
-            <label>Advanced Content JSON (optional override)
-              <textarea id="siteRawJson" rows="12" placeholder="{\n  \"hero\": { \"subtitle\": \"...\" }\n}"></textarea>
-            </label>
-
-            <p class="project-form__hint">Leave this empty for normal editing. If JSON is provided, it will be deep-merged over the values above.</p>
-
-            <div class="project-form__actions">
-              <button type="submit" class="btn btn--primary" id="saveSiteContentBtn">Save Website Content</button>
-              <button type="button" class="btn btn--secondary" id="reloadSiteContentBtn">Reload from Database</button>
-            </div>
-            <p class="project-form__message" id="siteFormMessage"></p>
-          </form>
+              <div class="project-form__actions">
+                <button type="submit" class="btn btn--primary" id="saveSeoBtn">Save SEO & Appearance Settings</button>
+              </div>
+              <p class="project-form__message" id="seoFormMessage"></p>
+            </form>
+          </div>
         </div>
       </section>
     </div>
@@ -391,6 +560,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
-  <script src="admin.js?v=9"></script>
+  <script src="admin.js?v=11"></script>
 </body>
 </html>

@@ -13,8 +13,8 @@ window.PORTFOLIO_CONFIG = {
   OWNER_EMAIL: 'vikashthyadi1104@gmail.com',
   // Cloudinary image upload configuration (100% free, no credit card required)
   CLOUDINARY: {
-    cloudName: '', // e.g. 'your_cloud_name'
-    uploadPreset: '' // e.g. 'portfolio_uploads' (must be an Unsigned preset)
+    cloudName: 'ucebpoei',
+    uploadPreset: 'portfolio_uploads'
   }
 };
 

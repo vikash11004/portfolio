@@ -237,7 +237,7 @@ const AI_STORAGE_KEY = 'portfolio_ai_config_override';
 const DEFAULT_AI_CONFIG = {
   provider: 'builtin',
   groqApiKey: '',
-  groqModel: 'llama-3.3-70b-versatile',
+  groqModel: 'groq/compound-mini',
   openrouterApiKey: '',
   openrouterModel: 'meta-llama/llama-3.3-70b-instruct:free',
   customEndpoint: '',
@@ -245,23 +245,36 @@ const DEFAULT_AI_CONFIG = {
   customModel: ''
 };
 
+function normalizeGroqModel(model) {
+  if (!model || model.includes('llama-3') || model.includes('mixtral')) {
+    return 'groq/compound-mini';
+  }
+  return model;
+}
+
 function getAiConfig() {
   try {
     const raw = localStorage.getItem(AI_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && typeof parsed === 'object') {
-        return deepMerge(DEFAULT_AI_CONFIG, parsed);
+        const merged = deepMerge(DEFAULT_AI_CONFIG, parsed);
+        merged.groqModel = normalizeGroqModel(merged.groqModel);
+        return merged;
       }
     }
   } catch (_) {}
 
   if (siteContentState && siteContentState.aiConfig) {
-    return deepMerge(DEFAULT_AI_CONFIG, siteContentState.aiConfig);
+    const merged = deepMerge(DEFAULT_AI_CONFIG, siteContentState.aiConfig);
+    merged.groqModel = normalizeGroqModel(merged.groqModel);
+    return merged;
   }
 
   if (window.PORTFOLIO_CONFIG && window.PORTFOLIO_CONFIG.AI_CONFIG) {
-    return deepMerge(DEFAULT_AI_CONFIG, window.PORTFOLIO_CONFIG.AI_CONFIG);
+    const merged = deepMerge(DEFAULT_AI_CONFIG, window.PORTFOLIO_CONFIG.AI_CONFIG);
+    merged.groqModel = normalizeGroqModel(merged.groqModel);
+    return merged;
   }
 
   return { ...DEFAULT_AI_CONFIG };
@@ -292,7 +305,7 @@ function initAiConfigUI() {
   function refreshForm() {
     const cfg = getAiConfig();
     if (providerSelect) providerSelect.value = cfg.provider || 'builtin';
-    if (groqModelSelect) groqModelSelect.value = cfg.groqModel || 'llama-3.3-70b-versatile';
+    if (groqModelSelect) groqModelSelect.value = normalizeGroqModel(cfg.groqModel);
     if (groqApiKeyInput) groqApiKeyInput.value = cfg.groqApiKey || '';
     if (openrouterApiKeyInput) openrouterApiKeyInput.value = cfg.openrouterApiKey || '';
     if (customEndpointInput) customEndpointInput.value = cfg.customEndpoint || '';
@@ -327,14 +340,36 @@ function initAiConfigUI() {
     });
   }
 
+  if (groqApiKeyInput) {
+    groqApiKeyInput.addEventListener('input', () => {
+      const val = groqApiKeyInput.value.trim();
+      if (val.startsWith('gsk_') && providerSelect && providerSelect.value === 'builtin') {
+        providerSelect.value = 'groq';
+        if (badge) {
+          badge.textContent = '✓ Groq Ready';
+          badge.className = 'admin-storage-config__status is-connected';
+        }
+      }
+    });
+  }
+
   refreshForm();
 
   if (saveBtn) {
     saveBtn.addEventListener('click', async () => {
+      let provider = providerSelect ? providerSelect.value : 'builtin';
+      const groqKey = groqApiKeyInput ? groqApiKeyInput.value.trim() : '';
+
+      // If user provided a Groq key but left provider on builtin, auto-activate groq
+      if (groqKey && provider === 'builtin') {
+        provider = 'groq';
+        if (providerSelect) providerSelect.value = 'groq';
+      }
+
       const cfg = {
-        provider: providerSelect ? providerSelect.value : 'builtin',
-        groqModel: groqModelSelect ? groqModelSelect.value : 'llama-3.3-70b-versatile',
-        groqApiKey: groqApiKeyInput ? groqApiKeyInput.value.trim() : '',
+        provider,
+        groqModel: normalizeGroqModel(groqModelSelect ? groqModelSelect.value : 'groq/compound-mini'),
+        groqApiKey: groqKey,
         openrouterApiKey: openrouterApiKeyInput ? openrouterApiKeyInput.value.trim() : '',
         customEndpoint: customEndpointInput ? customEndpointInput.value.trim() : '',
         customModel: customModelInput ? customModelInput.value.trim() : ''
@@ -360,7 +395,12 @@ function initAiConfigUI() {
 
   if (testBtn) {
     testBtn.addEventListener('click', async () => {
-      const provider = providerSelect ? providerSelect.value : 'builtin';
+      let provider = providerSelect ? providerSelect.value : 'builtin';
+      if (provider === 'builtin' && groqApiKeyInput && groqApiKeyInput.value.trim().startsWith('gsk_')) {
+        provider = 'groq';
+        if (providerSelect) providerSelect.value = 'groq';
+      }
+
       if (msg) {
         msg.textContent = 'Testing connection...';
         msg.className = 'admin-storage-config__msg';
@@ -376,7 +416,7 @@ function initAiConfigUI() {
 
       if (provider === 'groq') {
         const key = groqApiKeyInput ? groqApiKeyInput.value.trim() : '';
-        const model = groqModelSelect ? groqModelSelect.value : 'llama-3.3-70b-versatile';
+        const model = normalizeGroqModel(groqModelSelect ? groqModelSelect.value : 'groq/compound-mini');
         if (!key) {
           if (msg) {
             msg.textContent = 'Please enter your Groq API key first.';
@@ -407,7 +447,7 @@ function initAiConfigUI() {
           const data = await resp.json();
           const reply = data.choices?.[0]?.message?.content || 'Connection OK';
           if (msg) {
-            msg.textContent = `✓ Groq Connected! Model answered: "${reply.trim()}"`;
+            msg.textContent = `✓ Groq Connected (${model})! Model answered: "${reply.trim()}"`;
             msg.className = 'admin-storage-config__msg is-success';
           }
         } catch (err) {

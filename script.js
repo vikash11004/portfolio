@@ -2063,7 +2063,12 @@ function getActiveAiConfig() {
 
 async function callCloudAiProvider(userQuery, kb) {
   const aiConfig = getActiveAiConfig();
-  const provider = aiConfig.provider || 'builtin';
+  let provider = aiConfig.provider || 'builtin';
+
+  // If a valid Groq API key exists and provider was defaulted to builtin, activate groq
+  if (provider === 'builtin' && aiConfig.groqApiKey && aiConfig.groqApiKey.startsWith('gsk_')) {
+    provider = 'groq';
+  }
 
   if (provider === 'builtin') {
     return null;
@@ -2077,7 +2082,11 @@ async function callCloudAiProvider(userQuery, kb) {
     apiKey = aiConfig.groqApiKey || '';
     if (!apiKey) return null;
     endpoint = 'https://api.groq.com/openai/v1/chat/completions';
-    model = aiConfig.groqModel || 'llama-3.3-70b-versatile';
+    let rawModel = aiConfig.groqModel || 'groq/compound-mini';
+    if (!rawModel || rawModel.includes('llama-3') || rawModel.includes('mixtral')) {
+      rawModel = 'groq/compound-mini';
+    }
+    model = rawModel;
   } else if (provider === 'openrouter') {
     apiKey = aiConfig.openrouterApiKey || '';
     if (!apiKey) return null;

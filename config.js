@@ -20,7 +20,7 @@ window.PORTFOLIO_CONFIG = {
   AI_CONFIG: {
     provider: 'builtin', // 'builtin' | 'groq' | 'openrouter' | 'custom'
     groqApiKey: '',
-    groqModel: 'llama-3.3-70b-versatile',
+    groqModel: 'groq/compound-mini',
     openrouterApiKey: '',
     openrouterModel: 'meta-llama/llama-3.3-70b-instruct:free',
     customEndpoint: '',

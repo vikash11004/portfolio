@@ -87,5 +87,5 @@ JavaScript, TypeScript, React, Next.js, Node.js, Python, C++, HTML, CSS, Bootstr
 - **Description**: AI-powered dual-mode resume analyzer that provides personalized feedback for students and batch candidate screening for recruiters using Groq's Llama 3.3 model.
 
 ## 5. Resume & Contact
-- **Resume**: assets/resume/VikashThyadi_Resume.pdf
+- **Resume**: https://res.cloudinary.com/ucebpoei/image/upload/v1790084680/portfolio/ge3nxsl8q2o3mfawydm1.pdf
 - **Email**: 

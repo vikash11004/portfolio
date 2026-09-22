@@ -1156,13 +1156,40 @@ function setupAssetCardDropzone({
         fileNameInput.value = file.name;
       }
 
+      // Auto-save to Firestore immediately so changes publish live instantly!
+      let saveError = null;
+      try {
+        const patch = {};
+        if (kind === 'hero') {
+          patch.hero = { imageUrl: uploadedUrl };
+        } else if (kind === 'about') {
+          patch.about = { imageUrl: uploadedUrl };
+        } else if (kind === 'logo') {
+          patch.brand = { logoUrl: uploadedUrl };
+        } else if (kind === 'resume') {
+          patch.brand = {
+            resumeUrl: uploadedUrl,
+            resumeFileName: (fileNameInput && fileNameInput.value) ? fileNameInput.value : file.name
+          };
+        }
+        const updated = deepMerge(siteContentState, patch);
+        await saveSiteContentToFirestore(updated);
+      } catch (err) {
+        console.warn('Auto-save to Firestore failed:', err);
+        saveError = err;
+      }
+
       dropzone.classList.remove('is-uploading', 'is-error');
       dropzone.classList.add('is-success');
       if (statusEl) {
         statusEl.style.display = 'block';
-        statusEl.textContent = '✓ Uploaded to Cloudinary!';
+        statusEl.textContent = saveError ? '✓ Uploaded to Cloudinary (click Save below)' : '✓ Uploaded & Published to live site!';
       }
-      setAssetsMessage(kind === 'resume' ? 'Resume document uploaded! Click "Save Photo & Asset Changes" below to publish.' : 'Asset uploaded! Click "Save Photo & Asset Changes" below to publish.');
+      setAssetsMessage(
+        saveError
+          ? `${kind === 'resume' ? 'Resume' : 'Asset'} uploaded to Cloudinary! Click "Save Photo & Asset Changes" below to publish.`
+          : `✓ ${kind === 'resume' ? 'Resume' : 'Asset'} uploaded to Cloudinary and live on your portfolio!`
+      );
     } catch (err) {
       dropzone.classList.remove('is-uploading', 'is-success');
       dropzone.classList.add('is-error');
@@ -1469,7 +1496,7 @@ async function restoreAuthSession() {
 }
 
 function mapProjectToViewModel(docId, row) {
-  const screenshotUrls = parseUrlList(row.screenshot_urls || row.screenshotUrls, []);
+  const screenshotUrls = parseUrlList(row.screenshot_urls || row.screenshotUrls || row.screenshots, []);
   const categories = Array.isArray(row.categories)
     ? row.categories
     : row.category
@@ -1485,7 +1512,7 @@ function mapProjectToViewModel(docId, row) {
     categoryLabel: formatCategoryLabel(categories),
     year: String(row.year || ''),
     role: row.role,
-    thumbnail: row.thumbnail_url || row.thumbnailUrl || DEFAULT_THUMBNAIL,
+    thumbnail: row.thumbnail_url || row.thumbnailUrl || row.thumbnail || DEFAULT_THUMBNAIL,
     screenshotUrls,
     description: row.description_html || row.descriptionHtml || '<p>No description provided.</p>',
     shortDescription: row.short_description || row.shortDescription || row.excerpt || '',
@@ -1805,11 +1832,27 @@ function initAdminTabs() {
   const tabPanels = document.querySelectorAll('.admin-tab-panel');
   if (!tabBtns.length) return;
 
+  function switchTab(targetId) {
+    tabBtns.forEach((b) => b.classList.toggle('active', b.dataset.tab === targetId));
+    tabPanels.forEach((p) => p.classList.toggle('active', p.id === targetId));
+  }
+
   tabBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
-      const targetId = btn.dataset.tab;
-      tabBtns.forEach((b) => b.classList.toggle('active', b === btn));
-      tabPanels.forEach((p) => p.classList.toggle('active', p.id === targetId));
+      switchTab(btn.dataset.tab);
+    });
+  });
+
+  // Support contextual links across tabs: e.g. <a href="#" data-admin-tab-link="assetsTab">
+  document.querySelectorAll('[data-admin-tab-link]').forEach((link) => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetId = link.getAttribute('data-admin-tab-link');
+      if (targetId) {
+        switchTab(targetId);
+        const panel = document.getElementById(targetId);
+        if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     });
   });
 }
@@ -1940,19 +1983,27 @@ async function handleAssetsSave(event) {
   }
 
   try {
+    const heroImgVal = String((($('#heroImageUrl') || {}).value || '')).trim();
+    const heroAltVal = String((($('#heroImageAlt') || {}).value || '')).trim();
+    const aboutImgVal = String((($('#aboutImageUrl') || {}).value || '')).trim();
+    const aboutAltVal = String((($('#aboutImageAlt') || {}).value || '')).trim();
+    const logoUrlVal = String((($('#siteLogoUrl') || {}).value || '')).trim();
+    const resumeUrlVal = String((($('#brandResumeUrl') || {}).value || '')).trim();
+    const resumeFileNameVal = String((($('#brandResumeFileName') || {}).value || '')).trim();
+
     const patch = {
       hero: {
-        imageUrl: String((($('#heroImageUrl') || {}).value || '')).trim() || DEFAULT_SITE_CONTENT.hero.imageUrl,
-        imageAlt: String((($('#heroImageAlt') || {}).value || '')).trim() || DEFAULT_SITE_CONTENT.hero.imageAlt
+        imageUrl: heroImgVal || siteContentState.hero?.imageUrl || DEFAULT_SITE_CONTENT.hero.imageUrl,
+        imageAlt: heroAltVal || siteContentState.hero?.imageAlt || DEFAULT_SITE_CONTENT.hero.imageAlt
       },
       about: {
-        imageUrl: String((($('#aboutImageUrl') || {}).value || '')).trim() || DEFAULT_SITE_CONTENT.about.imageUrl,
-        imageAlt: String((($('#aboutImageAlt') || {}).value || '')).trim() || DEFAULT_SITE_CONTENT.about.imageAlt
+        imageUrl: aboutImgVal || siteContentState.about?.imageUrl || DEFAULT_SITE_CONTENT.about.imageUrl,
+        imageAlt: aboutAltVal || siteContentState.about?.imageAlt || DEFAULT_SITE_CONTENT.about.imageAlt
       },
       brand: {
-        logoUrl: String((($('#siteLogoUrl') || {}).value || '')).trim() || DEFAULT_SITE_CONTENT.brand.logoUrl,
-        resumeUrl: String((($('#brandResumeUrl') || {}).value || '')).trim() || DEFAULT_SITE_CONTENT.brand.resumeUrl,
-        resumeFileName: String((($('#brandResumeFileName') || {}).value || '')).trim() || DEFAULT_SITE_CONTENT.brand.resumeFileName
+        logoUrl: logoUrlVal || siteContentState.brand?.logoUrl || DEFAULT_SITE_CONTENT.brand.logoUrl,
+        resumeUrl: resumeUrlVal || siteContentState.brand?.resumeUrl || DEFAULT_SITE_CONTENT.brand.resumeUrl,
+        resumeFileName: resumeFileNameVal || siteContentState.brand?.resumeFileName || DEFAULT_SITE_CONTENT.brand.resumeFileName
       }
     };
 
@@ -1972,6 +2023,14 @@ async function handleSiteContentSave(event) {
   }
 
   try {
+    const heroImgVal = String((($('#heroImageUrl') || {}).value || '')).trim();
+    const heroAltVal = String((($('#heroImageAlt') || {}).value || '')).trim();
+    const aboutImgVal = String((($('#aboutImageUrl') || {}).value || '')).trim();
+    const aboutAltVal = String((($('#aboutImageAlt') || {}).value || '')).trim();
+    const logoUrlVal = String((($('#siteLogoUrl') || {}).value || '')).trim();
+    const resumeUrlVal = String((($('#brandResumeUrl') || {}).value || '')).trim();
+    const resumeFileNameVal = String((($('#brandResumeFileName') || {}).value || '')).trim();
+
     const patch = {
       hero: {
         label: String((($('#heroLabelInput') || {}).value || '')).trim(),
@@ -1980,14 +2039,18 @@ async function handleSiteContentSave(event) {
         subtitle: String((($('#heroSubtitleInput') || {}).value || '')).trim(),
         primaryButtonText: String((($('#heroPrimaryButtonText') || {}).value || '')).trim(),
         secondaryButtonText: String((($('#heroSecondaryButtonText') || {}).value || '')).trim(),
-        scrollCueText: String((($('#heroScrollCueText') || {}).value || '')).trim()
+        scrollCueText: String((($('#heroScrollCueText') || {}).value || '')).trim(),
+        imageUrl: heroImgVal || siteContentState.hero?.imageUrl || DEFAULT_SITE_CONTENT.hero.imageUrl,
+        imageAlt: heroAltVal || siteContentState.hero?.imageAlt || DEFAULT_SITE_CONTENT.hero.imageAlt
       },
       about: {
         sectionLabel: String((($('#aboutSectionLabelInput') || {}).value || '')).trim(),
         headingLine1: String((($('#aboutHeadingLine1Input') || {}).value || '')).trim(),
         headingLine2: String((($('#aboutHeadingLine2Input') || {}).value || '')).trim(),
         bio: String((($('#aboutBioInput') || {}).value || '')).trim(),
-        educationItems: getEducationItemsFromDOM()
+        educationItems: getEducationItemsFromDOM(),
+        imageUrl: aboutImgVal || siteContentState.about?.imageUrl || DEFAULT_SITE_CONTENT.about.imageUrl,
+        imageAlt: aboutAltVal || siteContentState.about?.imageAlt || DEFAULT_SITE_CONTENT.about.imageAlt
       },
       projectsPreview: {
         sectionLabel: String((($('#featuredSectionLabelInput') || {}).value || '')).trim(),
@@ -2017,6 +2080,12 @@ async function handleSiteContentSave(event) {
         githubUrl: String((($('#contactGithubUrl') || {}).value || '')).trim(),
         linkedinText: String((($('#contactLinkedinText') || {}).value || '')).trim(),
         linkedinUrl: String((($('#contactLinkedinUrl') || {}).value || '')).trim()
+      },
+      brand: {
+        name: siteContentState.brand?.name || DEFAULT_SITE_CONTENT.brand.name,
+        logoUrl: logoUrlVal || siteContentState.brand?.logoUrl || DEFAULT_SITE_CONTENT.brand.logoUrl,
+        resumeUrl: resumeUrlVal || siteContentState.brand?.resumeUrl || DEFAULT_SITE_CONTENT.brand.resumeUrl,
+        resumeFileName: resumeFileNameVal || siteContentState.brand?.resumeFileName || DEFAULT_SITE_CONTENT.brand.resumeFileName
       },
       navbar: {
         homeLabel: String((($('#navHomeText') || {}).value || '')).trim(),

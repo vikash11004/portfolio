@@ -22,18 +22,66 @@ const SITE_CONTENT_ROW_ID = 'portfolio_site';
 const SITE_CONTENT_SYNC_KEY = 'portfolio-site-content-sync';
 
 const DEFAULT_SITE_CONTENT = {
-  "seo": {
-    "projectsTitle": "Projects — Vikash Thyadi",
-    "detailTitleTemplate": "{project} — Vikash Thyadi",
-    "homeTitle": "Vikash Thyadi — Portfolio",
-    "faviconEmoji": "⚡",
-    "themeColor": "#2A2529",
-    "description": "Vikash Thyadi — Developer & Designer. A refined brutalist portfolio showcasing projects, skills, and creative work."
+  "aiConfig": {
+    "groqModel": "llama-3.3-70b-versatile",
+    "provider": "builtin",
+    "customModel": "",
+    "groqApiKey": "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",
+    "openrouterApiKey": "",
+    "customEndpoint": ""
+  },
+  "about": {
+    "sectionLabel": "Background",
+    "educationItems": [
+      {
+        "title": "B.Tech in Computer Science & Engineering (Data Science)",
+        "year": "2023 — Present",
+        "detail": "Aditya Institute of Technology and Management, Tekkali, Andhra Pradesh<br>CGPA: 7.99<br>Focus Areas: Web Development, Data Analysis, Data Engineering, Artificial Intelligence, Machine Learning"
+      },
+      {
+        "title": "Hackathons & Competitive Work",
+        "year": "Achievements",
+        "detail": "Secured 2nd place in a 24-hour hackathon conducted by AITAM, building under time pressure with real constraints.<br>Awarded a medal at a 7-hour hackathon conducted by V Cube Software Solutions."
+      },
+      {
+        "title": "Professional Certifications",
+        "detail": "Earned the ServiceNow Certified System Administrator (CSA) and Certified Application Developer (CAD) certifications, validating expertise in platform administration and application development.<br>Successfully completed NPTEL Python for Data Science, strengthening skills in Python, data analysis, and machine learning fundamentals.",
+        "year": "Certifications"
+      }
+    ],
+    "headingLine2": "Experience",
+    "imageAlt": "Vikash working at desk",
+    "bio": "I'm a developer and designer who believes great software should feel inevitable intuitive, precise, and expressive. I approach every project with the discipline of an engineer and the curiosity of a craftsman, turning complex problems into clean, purposeful interfaces.",
+    "imageUrl": "assets/images/about.jpeg",
+    "headingLine1": "Education &"
+  },
+  "projectsPage": {
+    "titleLine1": "All",
+    "titleLine2": "Projects",
+    "sectionLabel": "Archive",
+    "subtitle": "A collection of work spanning web applications, design systems, creative coding, and open-source contributions."
+  },
+  "hero": {
+    "scrollCueText": "About Me",
+    "titleLine2": "Thyadi",
+    "imageUrl": "assets/images/profile.jpeg",
+    "primaryButtonText": "View Work",
+    "imageAlt": "Vikash Thyadi — Portrait",
+    "subtitle": "Highly motivated and curious engineering student.",
+    "label": "Developer & Designer",
+    "titleLine1": "Vikash",
+    "secondaryButtonText": "Download Resume"
+  },
+  "projectsPreview": {
+    "sectionLabel": "Selected Work",
+    "ctaText": "See All Projects",
+    "titleLine1": "Featured",
+    "titleLine2": "Projects"
   },
   "skills": {
-    "resumeButtonText": "Download Resume",
+    "headingLine1": "Tools & Technologies",
     "sectionLabel": "Capabilities",
-    "headingLine2": "I Work With",
+    "resumeButtonText": "Download Resume",
     "items": [
       "JavaScript",
       "TypeScript",
@@ -62,83 +110,43 @@ const DEFAULT_SITE_CONTENT = {
       "Vercel",
       "Linux"
     ],
-    "headingLine1": "Tools & Technologies"
+    "headingLine2": "I Work With"
   },
   "contact": {
-    "headingLine1": "Let's Work",
-    "sectionLabel": "Get In Touch",
-    "instagramText": "Instagram →",
-    "instagramUrl": "https://www.instagram.com/vikash.thyadi/",
-    "headingLine2": "Together",
-    "githubText": "GitHub →",
-    "subtext": "Have a project in mind, or just want to say hello? I'm always open to discussing new ideas and opportunities.",
     "linkedinUrl": "https://www.linkedin.com/in/vikashthyadi/",
+    "instagramUrl": "https://www.instagram.com/vikash.thyadi/",
+    "subtext": "Have a project in mind, or just want to say hello? I'm always open to discussing new ideas and opportunities.",
+    "githubText": "GitHub →",
     "githubUrl": "https://github.com/vikash11004",
+    "instagramText": "Instagram →",
     "linkedinText": "LinkedIn →",
-    "recipientEmail": ""
+    "headingLine1": "Let's Work",
+    "recipientEmail": "",
+    "sectionLabel": "Get In Touch",
+    "headingLine2": "Together"
   },
-  "about": {
-    "imageAlt": "Vikash working at desk",
-    "imageUrl": "assets/images/about.jpeg",
-    "bio": "I'm a developer and designer who believes great software should feel inevitable intuitive, precise, and expressive. I approach every project with the discipline of an engineer and the curiosity of a craftsman, turning complex problems into clean, purposeful interfaces.",
-    "headingLine1": "Education &",
-    "educationItems": [
-      {
-        "year": "2023 — Present",
-        "title": "B.Tech in Computer Science & Engineering (Data Science)",
-        "detail": "Aditya Institute of Technology and Management, Tekkali, Andhra Pradesh<br>CGPA: 7.99<br>Focus Areas: Web Development, Data Analysis, Data Engineering, Artificial Intelligence, Machine Learning"
-      },
-      {
-        "year": "Achievements",
-        "title": "Hackathons & Competitive Work",
-        "detail": "Secured 2nd place in a 24-hour hackathon conducted by AITAM, building under time pressure with real constraints.<br>Awarded a medal at a 7-hour hackathon conducted by V Cube Software Solutions."
-      },
-      {
-        "year": "Certifications",
-        "title": "Professional Certifications",
-        "detail": "Earned the ServiceNow Certified System Administrator (CSA) and Certified Application Developer (CAD) certifications, validating expertise in platform administration and application development.<br>Successfully completed NPTEL Python for Data Science, strengthening skills in Python, data analysis, and machine learning fundamentals."
-      }
-    ],
-    "headingLine2": "Experience",
-    "sectionLabel": "Background"
+  "seo": {
+    "projectsTitle": "Projects — Vikash Thyadi",
+    "description": "Vikash Thyadi — Developer & Designer. A refined brutalist portfolio showcasing projects, skills, and creative work.",
+    "themeColor": "#2A2529",
+    "detailTitleTemplate": "{project} — Vikash Thyadi",
+    "faviconEmoji": "⚡",
+    "homeTitle": "Vikash Thyadi — Portfolio"
   },
   "navbar": {
     "homeLabel": "Home",
     "contactLabel": "Contact",
     "projectsLabel": "Projects"
   },
-  "brand": {
-    "name": "Vikash Thyadi",
-    "logoUrl": "assets/images/logo1.png",
-    "resumeUrl": "assets/resume/VikashThyadi_Resume.pdf",
-    "resumeFileName": "Vikash-Thyadi-Resume.pdf"
-  },
   "footer": {
     "copyright": "© 2026 Vikash Thyadi. All rights reserved.",
     "backToTopLabel": "↑ Back to Top"
   },
-  "hero": {
-    "imageUrl": "assets/images/profile.jpeg",
-    "scrollCueText": "About Me",
-    "subtitle": "Highly motivated and curious engineering student.",
-    "secondaryButtonText": "Download Resume",
-    "label": "Developer & Designer",
-    "imageAlt": "Vikash Thyadi — Portrait",
-    "primaryButtonText": "View Work",
-    "titleLine2": "Thyadi",
-    "titleLine1": "Vikash"
-  },
-  "projectsPage": {
-    "sectionLabel": "Archive",
-    "titleLine1": "All",
-    "subtitle": "A collection of work spanning web applications, design systems, creative coding, and open-source contributions.",
-    "titleLine2": "Projects"
-  },
-  "projectsPreview": {
-    "titleLine1": "Featured",
-    "sectionLabel": "Selected Work",
-    "ctaText": "See All Projects",
-    "titleLine2": "Projects"
+  "brand": {
+    "name": "Vikash Thyadi",
+    "resumeUrl": "https://res.cloudinary.com/ucebpoei/image/upload/v1790084680/portfolio/ge3nxsl8q2o3mfawydm1.pdf",
+    "logoUrl": "assets/images/logo1.png",
+    "resumeFileName": "Vikash-Thyadi-Resume.pdf"
   }
 };
 
@@ -262,13 +270,16 @@ async function init() {
     });
   }
 
-  await loadSiteContent();
+  // 1. Optimistically display cached site content immediately if available
   try {
     const cachedSync = localStorage.getItem(SITE_CONTENT_SYNC_KEY);
     if (cachedSync) applySyncedSiteContent(cachedSync);
   } catch (_error) {
-    // Ignore storage access errors; Firestore load still runs.
+    // Ignore storage access errors; network fetch will run.
   }
+
+  // 2. Fetch fresh live data from Firestore / REST and render
+  await loadSiteContent();
   applySiteContent();
   setupContactForm();
 
@@ -358,6 +369,11 @@ function setupFirebase() {
     currentUser = user || null;
     adminSessionChecked = true;
   });
+}
+
+function getCurrentFilter() {
+  const activeTab = document.querySelector('#projectsFilter .filter-tab.active');
+  return activeTab?.dataset?.filter || 'all';
 }
 
 function startLiveSync() {
@@ -742,7 +758,7 @@ async function loadProjects() {
 }
 
 function mapDbProjectToViewModel(row) {
-  const screenshotUrls = parseUrlList(row.screenshot_urls || row.screenshotUrls, []);
+  const screenshotUrls = parseUrlList(row.screenshot_urls || row.screenshotUrls || row.screenshots, []);
   const categories = parseCategoryList(row.categories, row.category ? [row.category] : []);
   const techStack = Array.isArray(row.tech_stack) ? row.tech_stack : Array.isArray(row.techStack) ? row.techStack : [];
   const slug = row.slug || row.id || row.docId || '';
@@ -756,7 +772,7 @@ function mapDbProjectToViewModel(row) {
     categoryLabel: formatCategoryLabel(categories),
     year: String(row.year || ''),
     role: row.role,
-    thumbnail: row.thumbnail_url || row.thumbnailUrl || DEFAULT_THUMBNAIL,
+    thumbnail: row.thumbnail_url || row.thumbnailUrl || row.thumbnail || DEFAULT_THUMBNAIL,
     screenshotUrls,
     description: row.description_html || row.descriptionHtml || '<p>No description provided.</p>',
     shortDescription: row.short_description || row.shortDescription || row.excerpt || '',

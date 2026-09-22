@@ -9,19 +9,19 @@
   },
   "education": [
     {
-      "year": "2023 — Present",
       "title": "B.Tech in Computer Science & Engineering (Data Science)",
+      "year": "2023 — Present",
       "detail": "Aditya Institute of Technology and Management, Tekkali, Andhra Pradesh<br>CGPA: 7.99<br>Focus Areas: Web Development, Data Analysis, Data Engineering, Artificial Intelligence, Machine Learning"
     },
     {
-      "year": "Achievements",
       "title": "Hackathons & Competitive Work",
+      "year": "Achievements",
       "detail": "Secured 2nd place in a 24-hour hackathon conducted by AITAM, building under time pressure with real constraints.<br>Awarded a medal at a 7-hour hackathon conducted by V Cube Software Solutions."
     },
     {
-      "year": "Certifications",
       "title": "Professional Certifications",
-      "detail": "Earned the ServiceNow Certified System Administrator (CSA) and Certified Application Developer (CAD) certifications, validating expertise in platform administration and application development.<br>Successfully completed NPTEL Python for Data Science, strengthening skills in Python, data analysis, and machine learning fundamentals."
+      "detail": "Earned the ServiceNow Certified System Administrator (CSA) and Certified Application Developer (CAD) certifications, validating expertise in platform administration and application development.<br>Successfully completed NPTEL Python for Data Science, strengthening skills in Python, data analysis, and machine learning fundamentals.",
+      "year": "Certifications"
     }
   ],
   "skills": [
@@ -154,20 +154,20 @@
     }
   ],
   "resume": {
-    "url": "assets/resume/VikashThyadi_Resume.pdf",
+    "url": "https://res.cloudinary.com/ucebpoei/image/upload/v1790084680/portfolio/ge3nxsl8q2o3mfawydm1.pdf",
     "fileName": "Vikash-Thyadi-Resume.pdf"
   },
   "contact": {
-    "headingLine1": "Let's Work",
-    "sectionLabel": "Get In Touch",
-    "instagramText": "Instagram →",
-    "instagramUrl": "https://www.instagram.com/vikash.thyadi/",
-    "headingLine2": "Together",
-    "githubText": "GitHub →",
-    "subtext": "Have a project in mind, or just want to say hello? I'm always open to discussing new ideas and opportunities.",
     "linkedinUrl": "https://www.linkedin.com/in/vikashthyadi/",
+    "instagramUrl": "https://www.instagram.com/vikash.thyadi/",
+    "subtext": "Have a project in mind, or just want to say hello? I'm always open to discussing new ideas and opportunities.",
+    "githubText": "GitHub →",
     "githubUrl": "https://github.com/vikash11004",
+    "instagramText": "Instagram →",
     "linkedinText": "LinkedIn →",
-    "recipientEmail": ""
+    "headingLine1": "Let's Work",
+    "recipientEmail": "",
+    "sectionLabel": "Get In Touch",
+    "headingLine2": "Together"
   }
 }

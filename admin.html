@@ -108,8 +108,7 @@
                     </div>
                     <input type="text" id="projectThumbnail"
                       placeholder="https://res.cloudinary.com/... or assets/images/project-1.png">
-                    <span class="project-form__asset-hint">Drop an image to auto-upload via Cloudinary, or paste a URL
-                      directly.</span>
+                    <span class="project-form__asset-hint">Drop an image to upload via Cloudinary. Uploaded thumbnails publish when you click "Save Project" / "Update Project" below.</span>
                   </div>
                   <div class="project-form__asset-field" data-asset-dropzone="screenshots">
                     <label for="projectScreenshots">Project Screenshots</label>
@@ -345,7 +344,9 @@
               <div class="admin-section-divider">
                 <div>
                   <h3>Hero Section</h3>
-                  <p>Main title, subtitle, and buttons shown on the landing page.</p>
+                  <p>Main title, subtitle, and buttons shown on the landing page.
+                    <em>(To update Hero portrait photo or site logo, visit <a href="#" data-admin-tab-link="assetsTab" style="color: var(--accent); font-weight: 600; text-decoration: underline;">Photos & Assets ↗</a>)</em>
+                  </p>
                 </div>
               </div>
               <div class="project-form__grid">
@@ -376,7 +377,9 @@
               <div class="admin-section-divider">
                 <div>
                   <h3>About Section</h3>
-                  <p>Your personal story, background, and philosophy.</p>
+                  <p>Your personal story, background, and philosophy.
+                    <em>(To update About working photo, visit <a href="#" data-admin-tab-link="assetsTab" style="color: var(--accent); font-weight: 600; text-decoration: underline;">Photos & Assets ↗</a>)</em>
+                  </p>
                 </div>
               </div>
               <div class="project-form__grid">
@@ -697,7 +700,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
-  <script src="admin.js?v=14"></script>
+  <script src="admin.js?v=15"></script>
 </body>
 
 </html>

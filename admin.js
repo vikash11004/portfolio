@@ -263,7 +263,7 @@ function getAiConfig() {
         return merged;
       }
     }
-  } catch (_) {}
+  } catch (_) { }
 
   if (siteContentState && siteContentState.aiConfig) {
     const merged = deepMerge(DEFAULT_AI_CONFIG, siteContentState.aiConfig);
@@ -283,7 +283,7 @@ function getAiConfig() {
 function saveAiConfig(cfg) {
   try {
     localStorage.setItem(AI_STORAGE_KEY, JSON.stringify(cfg));
-  } catch (_) {}
+  } catch (_) { }
 
   siteContentState = siteContentState || {};
   siteContentState.aiConfig = { ...cfg };
@@ -382,7 +382,7 @@ function initAiConfigUI() {
         try {
           const updated = deepMerge(siteContentState, { aiConfig: cfg });
           await saveSiteContentToFirestore(updated);
-        } catch (_) {}
+        } catch (_) { }
       }
 
       if (msg) {
@@ -2509,4 +2509,5 @@ window.addEventListener('drop', (e) => {
   if (e.dataTransfer?.types?.includes('Files')) {
     e.preventDefault();
   }
+});
 });

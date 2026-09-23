@@ -526,7 +526,7 @@ async function loadSiteContent() {
         updatedAt: new Date().toISOString(),
         content: siteContentState
       }));
-    } catch (_) {}
+    } catch (_) { }
   }
 }
 
@@ -1323,7 +1323,7 @@ function setActiveNavLink(targetNav) {
       link.classList.remove('active');
     }
   });
-  
+
   // Add active class to target with a small delay to prevent overlap
   const targetLink = $$(`.navbar__link[data-nav="${targetNav}"]`)[0];
   if (targetLink) {
@@ -1730,6 +1730,25 @@ function setContactFormStatus(message, isError = false, isSuccess = false) {
 
 // ─── AI Chatbot & Live Knowledge Base ───────────
 
+let masterKnowledgeBaseCache = null;
+
+async function loadMasterKnowledgeBase() {
+  if (masterKnowledgeBaseCache) return masterKnowledgeBaseCache;
+  try {
+    const res = await fetch('knowledge-base.json');
+    if (res.ok) {
+      masterKnowledgeBaseCache = await res.json();
+      return masterKnowledgeBaseCache;
+    }
+  } catch (err) {
+    console.debug('Master knowledge-base.json fetch note:', err);
+  }
+  return null;
+}
+
+// Immediately initiate background prefetch of master knowledge base
+loadMasterKnowledgeBase();
+
 function buildLiveKnowledgeBase() {
   const content = siteContentState || DEFAULT_SITE_CONTENT;
   const brand = content.brand || DEFAULT_SITE_CONTENT.brand;
@@ -1758,20 +1777,29 @@ function buildLiveKnowledgeBase() {
     },
     education: educationItems,
     skills: skills,
-    projects: projects.map(p => ({
-      id: p.id || p.slug,
-      slug: p.slug,
-      title: p.title,
-      role: p.role,
-      year: p.year,
-      category: p.categoryLabel || p.category,
-      tech: Array.isArray(p.tech) ? p.tech : (typeof p.tech === 'string' ? p.tech.split(',').map(s => s.trim()) : []),
-      shortDescription: p.shortDescription || getProjectExcerpt(p),
-      description: extractTextFromDescription(p.description),
-      liveUrl: p.liveUrl || null,
-      githubUrl: p.githubUrl || null,
-      featured: !!p.featured
-    })),
+    projects: projects.map(p => {
+      const slug = p.slug || p.id || makeSlug(p.title);
+      const cached = (masterKnowledgeBaseCache?.projects || []).find(cp => cp.slug === slug || (cp.title && cp.title.toLowerCase() === (p.title || '').toLowerCase()));
+      const techList = Array.isArray(p.tech) && p.tech.length ? p.tech : (Array.isArray(p.tech_stack) ? p.tech_stack : (cached?.tech_stack || []));
+      const fullReadme = cached?.readme_markdown || p.description_html || p.description || '';
+
+      return {
+        id: p.id || slug,
+        slug: slug,
+        title: p.title,
+        role: p.role || cached?.role || 'Contributor',
+        year: p.year || cached?.year,
+        category: p.categoryLabel || p.category || cached?.category,
+        categories: p.categories || cached?.categories || [p.category || 'web'],
+        tech: techList,
+        shortDescription: p.shortDescription || p.short_description || cached?.short_description || getProjectExcerpt(p),
+        description: extractTextFromDescription(p.description || cached?.short_description || ''),
+        readmeMarkdown: fullReadme,
+        liveUrl: p.liveUrl || p.live_url || cached?.live_url || null,
+        githubUrl: p.githubUrl || p.github_url || cached?.github_url || null,
+        featured: !!p.featured
+      };
+    }),
     resume: {
       url: brand.resumeUrl || DEFAULT_SITE_CONTENT.brand.resumeUrl,
       fileName: brand.resumeFileName || DEFAULT_SITE_CONTENT.brand.resumeFileName
@@ -1785,7 +1813,7 @@ function buildLiveKnowledgeBase() {
   };
 }
 
-function exportKnowledgeBaseAsMarkdown(kb) {
+function exportKnowledgeBaseAsMarkdown(kb, userQuery = '') {
   let md = `# ${kb.identity.name} — Live Portfolio Knowledge Base\n\n`;
   md += `## 1. Profile & Bio\n`;
   md += `- **Name**: ${kb.identity.name}\n`;
@@ -1793,24 +1821,38 @@ function exportKnowledgeBaseAsMarkdown(kb) {
   md += `- **Location**: ${kb.identity.location}\n`;
   md += `- **Bio**: ${kb.identity.bio}\n\n`;
 
-  md += `## 2. Education & Milestones\n`;
-  kb.education.forEach((item, idx) => {
-    md += `### ${idx + 1}. ${item.year || 'Period'}: ${item.title || 'Milestone'}\n`;
+  md += `## 2. Education, Milestones & Certifications\n`;
+  const milestones = masterKnowledgeBaseCache?.education_and_milestones || kb.education || [];
+  milestones.forEach((item, idx) => {
+    md += `### ${idx + 1}. ${item.period || item.year || 'Period'}: ${item.title || item.degree || 'Milestone'}\n`;
     md += `${(item.detail || '').replace(/<br\s*\/?>/gi, '\n')}\n\n`;
   });
 
   md += `## 3. Skills & Technologies\n`;
   md += `${kb.skills.join(', ')}\n\n`;
 
+  const qLower = String(userQuery || '').toLowerCase();
+  const matchedProject = kb.projects.find(p => {
+    const titleMatch = (p.title || '').toLowerCase();
+    const slugMatch = (p.slug || '').toLowerCase();
+    return (titleMatch && qLower.includes(titleMatch)) || (slugMatch && qLower.includes(slugMatch));
+  });
+
   md += `## 4. Projects Directory (${kb.projects.length} Projects)\n`;
   kb.projects.forEach((p, idx) => {
     md += `### ${idx + 1}. ${p.title} (${p.year || ''}) — ${p.role || ''}\n`;
+    md += `- **Slug**: \`${p.slug}\`\n`;
     md += `- **Category**: ${p.category}\n`;
     md += `- **Tech Stack**: ${p.tech.join(', ')}\n`;
     if (p.githubUrl) md += `- **GitHub**: ${p.githubUrl}\n`;
     if (p.liveUrl) md += `- **Live Site**: ${p.liveUrl}\n`;
-    md += `- **Description**: ${p.shortDescription || p.description}\n\n`;
+    md += `- **Overview**: ${p.shortDescription || p.description}\n\n`;
   });
+
+  if (matchedProject && matchedProject.readmeMarkdown && matchedProject.readmeMarkdown.length > 50) {
+    md += `\n---\n### 🌟 IN-DEPTH PROJECT README & DOCUMENTATION FOR: "${matchedProject.title}" (\`${matchedProject.slug}/README.md\`)\n\n`;
+    md += matchedProject.readmeMarkdown + `\n\n`;
+  }
 
   md += `## 5. Resume & Contact\n`;
   md += `- **Resume URL**: ${kb.resume.url} (${kb.resume.fileName})\n`;
@@ -1924,6 +1966,20 @@ function queryLiveKnowledgeBase(userQuery) {
     }
     reply += `- **Category**: ${foundProject.category}\n`;
     reply += `- **Tech Stack**: ${foundProject.tech.join(', ')}\n`;
+
+    if (q.includes('feature') || q.includes('how') || q.includes('work') || q.includes('detail') || q.includes('readme') || q.includes('setup') || q.includes('install')) {
+      if (foundProject.readmeMarkdown && foundProject.readmeMarkdown.length > 50) {
+        const cleanPreview = foundProject.readmeMarkdown
+          .split('\n')
+          .filter(l => !l.startsWith('#'))
+          .slice(0, 10)
+          .join('\n')
+          .trim();
+        if (cleanPreview) {
+          reply += `\n**Documentation Highlights:**\n${cleanPreview}\n\n`;
+        }
+      }
+    }
 
     return {
       reply,
@@ -2064,7 +2120,7 @@ function getActiveAiConfig() {
       const parsed = JSON.parse(local);
       if (parsed && typeof parsed === 'object') return parsed;
     }
-  } catch (_) {}
+  } catch (_) { }
 
   if (siteContentState && siteContentState.aiConfig) {
     return siteContentState.aiConfig;
@@ -2124,7 +2180,7 @@ If asked about contact or hiring, provide his email (${kb.contact.email}) and li
 Use clear markdown formatting (**bold**, *italic*, - bullet lists). Keep answers direct and helpful.
 
 --- LIVE PORTFOLIO KNOWLEDGE BASE ---
-${exportKnowledgeBaseAsMarkdown(kb)}`;
+${exportKnowledgeBaseAsMarkdown(kb, userQuery)}`;
 
   const response = await fetch(endpoint, {
     method: 'POST',
@@ -2331,6 +2387,7 @@ function initAiChatbot() {
     showTypingIndicator();
 
     try {
+      await loadMasterKnowledgeBase();
       const kb = buildLiveKnowledgeBase();
       let result = null;
 
@@ -2398,4 +2455,5 @@ function initAiChatbot() {
   // Initial welcome message
   resetChat();
 }
+
 

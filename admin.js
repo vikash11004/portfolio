@@ -1407,7 +1407,7 @@ function setEditState(project) {
 }
 
 function isOwnerLoggedIn() {
-  return !!currentUser && currentUser.email === OWNER_EMAIL;
+  return !!currentUser && !!currentUser.email && currentUser.email.trim().toLowerCase() === OWNER_EMAIL.trim().toLowerCase();
 }
 
 function updateAdminAvailability() {
@@ -1423,7 +1423,7 @@ function updateAdminAvailability() {
   if (!firebaseReady) {
     disabledBox.hidden = false;
     panel.hidden = true;
-    setAuthStatus('Admin disabled until config.local.js is configured.');
+    setAuthStatus('Admin disabled until Firebase configuration is added in config.js.');
     return;
   }
 
@@ -1437,12 +1437,12 @@ function updateAdminAvailability() {
       if (btn) btn.disabled = false;
     });
     setAuthStatus(`Signed in as ${currentUser.email}`);
-  } else if (currentUser && currentUser.email !== OWNER_EMAIL) {
+  } else if (currentUser && (!currentUser.email || currentUser.email.trim().toLowerCase() !== OWNER_EMAIL.trim().toLowerCase())) {
     panel.hidden = true;
     allSaveButtons.forEach((btn) => {
       if (btn) btn.disabled = true;
     });
-    setAuthStatus('This account is not authorized for admin access.');
+    setAuthStatus(`This account (${currentUser.email}) is not authorized for admin access.`);
   } else {
     panel.hidden = true;
     allSaveButtons.forEach((btn) => {
@@ -1728,26 +1728,71 @@ async function handleProjectSave(event) {
 
 async function handleAdminLogin(event) {
   event.preventDefault();
-  if (!firebaseReady || !firebaseAuth) return;
+  if (!firebaseReady || !firebaseAuth) {
+    setAuthStatus('Firebase is not ready. Please verify config.js.');
+    setFormMessage('Firebase is not ready. Please verify config.js.', true);
+    return;
+  }
 
-  const email = ($('#adminEmail') || {}).value || '';
+  const email = (($('#adminEmail') || {}).value || '').trim();
   const password = ($('#adminPassword') || {}).value || '';
 
-  if (email.trim() !== OWNER_EMAIL) {
-    setAuthStatus('Only the configured owner email can access admin.');
-    setFormMessage('Only the configured owner email can access admin.', true);
+  if (email.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
+    const msg = `Only the configured owner email (${OWNER_EMAIL}) can access admin.`;
+    setAuthStatus(msg);
+    setFormMessage(msg, true);
     return;
   }
 
   try {
-    await firebaseAuth.signInWithEmailAndPassword(email.trim(), password);
+    setAuthStatus('Signing in...');
+    await firebaseAuth.signInWithEmailAndPassword(email, password);
     setAuthStatus('Signed in successfully.');
     setFormMessage('Signed in successfully.');
     await refreshProjects();
     if (isOwnerLoggedIn()) await ensureSeedProjects();
   } catch (error) {
-    setAuthStatus(error.message || 'Sign in failed.');
-    setFormMessage(error.message || 'Sign in failed.', true);
+    console.error('Admin login error:', error);
+    let errorMsg = error.message || 'Sign in failed.';
+    if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+      errorMsg = 'Incorrect password or credentials. If you forgot your password, click "Reset Password" below.';
+    } else if (error.code === 'auth/user-not-found') {
+      errorMsg = `User account not found for ${email}. Please create this user in Firebase Console -> Authentication -> Users.`;
+    } else if (error.code === 'auth/operation-not-allowed') {
+      errorMsg = 'Email/Password sign-in method is disabled in Firebase. Enable it in Firebase Console -> Authentication -> Sign-in method.';
+    } else if (error.code === 'auth/too-many-requests') {
+      errorMsg = 'Access blocked due to multiple failed login attempts. Please wait a few minutes or click "Reset Password".';
+    } else if (error.code === 'auth/network-request-failed') {
+      errorMsg = 'Network connection failed. Please check your internet connection or ad-blocker.';
+    }
+    setAuthStatus(errorMsg);
+    setFormMessage(errorMsg, true);
+  }
+}
+
+async function handlePasswordReset() {
+  if (!firebaseReady || !firebaseAuth) {
+    setAuthStatus('Firebase is not ready. Please verify config.js.');
+    return;
+  }
+  const email = (($('#adminEmail') || {}).value || OWNER_EMAIL || '').trim();
+  if (!email) {
+    setAuthStatus('Please enter your owner email to send password reset link.');
+    return;
+  }
+  try {
+    setAuthStatus(`Sending password reset email to ${email}...`);
+    await firebaseAuth.sendPasswordResetEmail(email);
+    setAuthStatus(`Password reset link sent to ${email}! Check your inbox and spam folder.`);
+    setFormMessage(`Password reset link sent to ${email}! Check your inbox.`);
+  } catch (error) {
+    console.error('Password reset error:', error);
+    let msg = error.message || 'Unable to send password reset email.';
+    if (error.code === 'auth/user-not-found') {
+      msg = `No Firebase user found for ${email}. Please create the user in Firebase Console first.`;
+    }
+    setAuthStatus(msg);
+    setFormMessage(msg, true);
   }
 }
 
@@ -2179,7 +2224,7 @@ async function loadSiteContent() {
 
 async function seedDatabaseWithProjects() {
   console.log('Seeding database with projects...');
-  if (!db) {
+  if (!firebaseDb) {
     console.error('Firestore database is not initialized.');
     return;
   }
@@ -2188,10 +2233,11 @@ async function seedDatabaseWithProjects() {
     return;
   }
 
-  const projectsCollection = collection(db, 'projects');
+  const projectsCollection = firebaseDb.collection('projects');
   const promises = PROJECT_SEED.map(project => {
-    const docRef = doc(projectsCollection, project.slug);
-    return setDoc(docRef, project);
+    const slug = project.slug || makeSlug(project.title || 'project');
+    const docRef = projectsCollection.doc(slug);
+    return docRef.set(project, { merge: true });
   });
 
   try {
@@ -2210,6 +2256,7 @@ window.seedDatabaseWithProjects = seedDatabaseWithProjects;
 function setupEvents() {
   const loginForm = $('#adminLoginForm');
   const signOutBtn = $('#adminSignOutBtn');
+  const forgotBtn = $('#adminForgotBtn');
   const projectForm = $('#projectForm');
   const clearBtn = $('#clearProjectForm');
   const titleField = $('#projectTitle');
@@ -2222,8 +2269,15 @@ function setupEvents() {
 
   initAdminTabs();
 
+  // Pre-fill owner email if available and empty
+  const emailInput = $('#adminEmail');
+  if (emailInput && !emailInput.value && OWNER_EMAIL) {
+    emailInput.value = OWNER_EMAIL;
+  }
+
   if (loginForm) loginForm.addEventListener('submit', handleAdminLogin);
   if (signOutBtn) signOutBtn.addEventListener('click', handleAdminSignOut);
+  if (forgotBtn) forgotBtn.addEventListener('click', handlePasswordReset);
   if (projectForm) projectForm.addEventListener('submit', handleProjectSave);
   if (clearBtn) clearBtn.addEventListener('click', clearProjectForm);
   if (assetsForm) assetsForm.addEventListener('submit', handleAssetsSave);
@@ -2509,5 +2563,4 @@ window.addEventListener('drop', (e) => {
   if (e.dataTransfer?.types?.includes('Files')) {
     e.preventDefault();
   }
-});
 });

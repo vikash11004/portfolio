@@ -654,7 +654,7 @@ function applySiteContent() {
 }
 
 function isOwnerLoggedIn() {
-  return !!currentUser && currentUser.email === OWNER_EMAIL;
+  return !!currentUser && !!currentUser.email && currentUser.email.trim().toLowerCase() === OWNER_EMAIL.trim().toLowerCase();
 }
 
 function updateAdminVisibility() {
@@ -680,7 +680,7 @@ function updateAdminAvailability() {
   if (isOwnerLoggedIn()) {
     panel.hidden = false;
     authStatus.textContent = `Signed in as ${currentUser.email}`;
-  } else if (adminSessionChecked && currentUser && currentUser.email !== OWNER_EMAIL) {
+  } else if (adminSessionChecked && currentUser && (!currentUser.email || currentUser.email.trim().toLowerCase() !== OWNER_EMAIL.trim().toLowerCase())) {
     panel.hidden = true;
     authStatus.textContent = 'This account is not authorized for admin access.';
   } else {

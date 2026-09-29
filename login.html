@@ -155,12 +155,6 @@
       gap: 0.5rem;
     }
 
-    .login-field__label-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
     .login-field label {
       font-family: var(--font-mono, 'JetBrains Mono', monospace);
       font-size: 0.75rem;
@@ -168,29 +162,6 @@
       letter-spacing: 0.08em;
       color: rgba(243, 240, 231, 0.75);
       font-weight: 500;
-    }
-
-    .login-field__forgot {
-      font-family: var(--font-mono, 'JetBrains Mono', monospace);
-      font-size: 0.72rem;
-      color: #F25623;
-      background: none;
-      border: none;
-      cursor: pointer;
-      text-decoration: underline;
-      text-underline-offset: 3px;
-      padding: 0;
-      transition: color 0.2s ease;
-    }
-
-    .login-field__forgot:hover {
-      color: #ff6b3d;
-    }
-
-    .login-field__input-wrap {
-      position: relative;
-      display: flex;
-      align-items: center;
     }
 
     .login-field input {
@@ -214,26 +185,6 @@
 
     .login-field input::placeholder {
       color: rgba(243, 240, 231, 0.3);
-    }
-
-    .login-password-toggle {
-      position: absolute;
-      right: 0.75rem;
-      background: none;
-      border: none;
-      color: rgba(243, 240, 231, 0.6);
-      font-family: var(--font-mono, 'JetBrains Mono', monospace);
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      cursor: pointer;
-      padding: 0.35rem 0.5rem;
-      border-radius: 2px;
-      transition: color 0.2s ease;
-    }
-
-    .login-password-toggle:hover {
-      color: #F3F0E7;
     }
 
     .login-alert {
@@ -369,20 +320,12 @@
       <form class="login-form" id="loginForm" autocomplete="on">
         <div class="login-field">
           <label for="loginEmail">Owner Email</label>
-          <div class="login-field__input-wrap">
-            <input type="email" id="loginEmail" name="email" placeholder="owner@gmail.com" required autocomplete="username">
-          </div>
+          <input type="email" id="loginEmail" name="email" placeholder="name@example.com" required autocomplete="username">
         </div>
 
         <div class="login-field">
-          <div class="login-field__label-row">
-            <label for="loginPassword">Password</label>
-            <button type="button" class="login-field__forgot" id="forgotPasswordBtn">Forgot Password?</button>
-          </div>
-          <div class="login-field__input-wrap">
-            <input type="password" id="loginPassword" name="password" placeholder="••••••••••••" required autocomplete="current-password">
-            <button type="button" class="login-password-toggle" id="togglePasswordBtn" aria-label="Toggle password visibility">Show</button>
-          </div>
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" name="password" placeholder="••••••••••••" required autocomplete="current-password">
         </div>
 
         <button type="submit" class="login-submit-btn" id="loginSubmitBtn">
@@ -412,17 +355,10 @@
       const passwordInput = document.getElementById('loginPassword');
       const form = document.getElementById('loginForm');
       const submitBtn = document.getElementById('loginSubmitBtn');
-      const forgotBtn = document.getElementById('forgotPasswordBtn');
-      const togglePasswordBtn = document.getElementById('togglePasswordBtn');
       const alertError = document.getElementById('loginAlertError');
       const alertSuccess = document.getElementById('loginAlertSuccess');
       const loadingOverlay = document.getElementById('loginLoadingOverlay');
       const loadingText = document.getElementById('loginLoadingText');
-
-      // Pre-fill owner email if available
-      if (OWNER_EMAIL && emailInput && !emailInput.value) {
-        emailInput.value = OWNER_EMAIL;
-      }
 
       function showError(msg) {
         alertSuccess.style.display = 'none';
@@ -445,15 +381,6 @@
         loadingText.textContent = text;
         loadingOverlay.style.display = isLoading ? 'flex' : 'none';
         submitBtn.disabled = isLoading;
-      }
-
-      // Password visibility toggle
-      if (togglePasswordBtn && passwordInput) {
-        togglePasswordBtn.addEventListener('click', () => {
-          const isPassword = passwordInput.type === 'password';
-          passwordInput.type = isPassword ? 'text' : 'password';
-          togglePasswordBtn.textContent = isPassword ? 'Hide' : 'Show';
-        });
       }
 
       // Verify Firebase initialization
@@ -496,7 +423,7 @@
         }
 
         if (OWNER_EMAIL && email.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
-          showError(`Access denied: Only the owner account (${OWNER_EMAIL}) is permitted.`);
+          showError('Access denied: You do not have owner access privileges.');
           return;
         }
 
@@ -521,45 +448,17 @@
           console.error('Sign in error:', error);
           let msg = error.message || 'Sign in failed.';
           if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-            msg = 'Invalid credentials. If you forgot your password, click "Forgot Password?" above.';
+            msg = 'Invalid email or password.';
           } else if (error.code === 'auth/user-not-found') {
-            msg = `No account found for ${email}. Please check your owner email.`;
+            msg = 'Account not found. Please verify your email.';
           } else if (error.code === 'auth/too-many-requests') {
-            msg = 'Temporarily locked due to multiple failed attempts. Please wait a few minutes or reset your password.';
+            msg = 'Temporarily locked due to multiple failed attempts. Please try again later.';
           } else if (error.code === 'auth/network-request-failed') {
             msg = 'Network connection failed. Please check your internet connection.';
           }
           showError(msg);
         }
       });
-
-      // Handle Forgot Password
-      if (forgotBtn) {
-        forgotBtn.addEventListener('click', async () => {
-          hideAlerts();
-          const email = (emailInput.value || OWNER_EMAIL || '').trim();
-          if (!email) {
-            showError('Please enter your owner email in the input above first.');
-            emailInput.focus();
-            return;
-          }
-
-          try {
-            setLoading(true, 'Sending reset email...');
-            await firebaseAuth.sendPasswordResetEmail(email);
-            setLoading(false);
-            showSuccess(`Password reset link sent to ${email}! Check your inbox and spam folder.`);
-          } catch (error) {
-            setLoading(false);
-            console.error('Password reset error:', error);
-            let msg = error.message || 'Unable to send password reset email.';
-            if (error.code === 'auth/user-not-found') {
-              msg = `No Firebase user exists for ${email}.`;
-            }
-            showError(msg);
-          }
-        });
-      }
     })();
   </script>
 </body>

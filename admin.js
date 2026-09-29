@@ -2461,9 +2461,7 @@ async function seedDatabaseWithProjects() {
 window.seedDatabaseWithProjects = seedDatabaseWithProjects;
 
 function setupEvents() {
-  const loginForm = $('#adminLoginForm');
   const signOutBtn = $('#adminSignOutBtn');
-  const forgotBtn = $('#adminForgotBtn');
   const projectForm = $('#projectForm');
   const clearBtn = $('#clearProjectForm');
   const titleField = $('#projectTitle');
@@ -2476,15 +2474,7 @@ function setupEvents() {
 
   initAdminTabs();
 
-  // Pre-fill owner email if available and empty
-  const emailInput = $('#adminEmail');
-  if (emailInput && !emailInput.value && OWNER_EMAIL) {
-    emailInput.value = OWNER_EMAIL;
-  }
-
-  if (loginForm) loginForm.addEventListener('submit', handleAdminLogin);
   if (signOutBtn) signOutBtn.addEventListener('click', handleAdminSignOut);
-  if (forgotBtn) forgotBtn.addEventListener('click', handlePasswordReset);
   if (projectForm) projectForm.addEventListener('submit', handleProjectSave);
   if (clearBtn) clearBtn.addEventListener('click', clearProjectForm);
   if (assetsForm) assetsForm.addEventListener('submit', handleAssetsSave);

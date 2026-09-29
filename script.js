@@ -1970,7 +1970,7 @@ function queryLiveKnowledgeBase(userQuery) {
 
   // 0. GVEN IDENTITY & SELF-INTRODUCTION
   if (q.includes('who are you') || q.includes('what are you') || q.includes('gven') || q.includes('your name') || q.includes('what is gven')) {
-    let reply = `I am **GVEN** (**Generative Virtual Extension of Vikash Thyadi**), an interactive AI assistant built directly into this portfolio.\n\n`;
+    let reply = `I am **GVEN** (**Guided Virtual Extension of Vikash Thyadi**), an interactive AI assistant built directly into this portfolio.\n\n`;
     reply += `I have real-time access to Vikash's live knowledge base, projects, tech stack, certifications, education, and contact channels. You can ask me any question about his work, or ask me to download his resume!`;
     return { reply };
   }
@@ -2125,7 +2125,7 @@ function queryLiveKnowledgeBase(userQuery) {
   }
 
   // 10. GENERAL FALLBACK WITH RELEVANCE SEARCH
-  let reply = `I'm **GVEN** (**Generative Virtual Extension of Vikash Thyadi**), and I'm happy to help you explore Vikash's work!\n\nVikash is a **${kb.identity.label}** specializing in full-stack web applications, AI/RAG solutions, and responsive UI design.\n\n`;
+  let reply = `I'm **GVEN** (**Guided Virtual Extension of Vikash Thyadi**), and I'm happy to help you explore Vikash's work!\n\nVikash is a **${kb.identity.label}** specializing in full-stack web applications, AI/RAG solutions, and responsive UI design.\n\n`;
   reply += `Here are some popular topics you can ask me about:\n`;
   reply += `- **Projects**: *"Tell me about FinPath or Xpenso"*, *"Show me featured projects"*\n`;
   reply += `- **Skills**: *"What languages and frameworks does he use?"*\n`;
@@ -2207,7 +2207,7 @@ async function callCloudAiProvider(userQuery, kb) {
     return null;
   }
 
-  const systemPrompt = `You are GVEN (Generative Virtual Extension of Vikash Thyadi), the personal AI assistant for Vikash Thyadi on his portfolio website.
+  const systemPrompt = `You are GVEN (Guided Virtual Extension of Vikash Thyadi), the personal AI assistant for Vikash Thyadi on his portfolio website.
 Answer concisely, warmly, and accurately using strictly the verified portfolio knowledge base provided below.
 If asked about downloading his resume or CV, mention that his verified resume PDF can be downloaded directly right here in the widget.
 If asked about contact or hiring, provide his email (${kb.contact.email}) and links.
@@ -2413,6 +2413,38 @@ function initAiChatbot() {
     if (typingEl) typingEl.remove();
   }
 
+  function getOrCreateChatSessionId() {
+    try {
+      let sid = sessionStorage.getItem('gven_session_id');
+      if (!sid) {
+        sid = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
+        sessionStorage.setItem('gven_session_id', sid);
+      }
+      return sid;
+    } catch (_e) {
+      return 'sess_' + Date.now().toString(36);
+    }
+  }
+
+  async function logGvenInteraction(question, reply, providerUsed) {
+    try {
+      if (!firebaseDb) return;
+      await firebaseDb.collection('chat_logs').add({
+        question: String(question || '').trim(),
+        answer: String(reply || '').trim(),
+        provider: String(providerUsed || 'built-in'),
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        clientTimestamp: new Date().toISOString(),
+        sessionId: getOrCreateChatSessionId(),
+        userAgent: navigator.userAgent || '',
+        platform: navigator.platform || '',
+        language: navigator.language || 'en'
+      });
+    } catch (err) {
+      console.warn('GVEN logging failed (non-blocking):', err.message || err);
+    }
+  }
+
   async function handleUserMessage(queryText) {
     const q = String(queryText || '').trim();
     if (!q) return;
@@ -2426,10 +2458,12 @@ function initAiChatbot() {
       await loadMasterKnowledgeBase();
       const kb = buildLiveKnowledgeBase();
       let result = null;
+      let providerUsed = 'built-in';
 
       // 1. Attempt Cloud AI provider if configured with API key
       try {
         result = await callCloudAiProvider(q, kb);
+        if (result) providerUsed = 'cloud-proxy';
       } catch (cloudErr) {
         console.warn('Cloud AI failed, falling back to live knowledge base:', cloudErr.message || cloudErr);
         result = null;
@@ -2439,10 +2473,14 @@ function initAiChatbot() {
       if (!result) {
         await new Promise(r => setTimeout(r, 380));
         result = queryLiveKnowledgeBase(q);
+        providerUsed = 'built-in-kb';
       }
 
       hideTypingIndicator();
       appendMessage('bot', result.reply, result.projectCards, result.resumeCard);
+
+      // Log question & answer to Firestore for Admin Panel
+      logGvenInteraction(q, result.reply, providerUsed);
     } catch (err) {
       hideTypingIndicator();
       appendMessage('bot', "I encountered a momentary issue. Please try asking again!");
@@ -2451,7 +2489,7 @@ function initAiChatbot() {
 
   function resetChat() {
     messagesContainer.innerHTML = '';
-    const welcome = `Hello! 👋 I'm **GVEN** (*Generative Virtual Extension of Vikash Thyadi*).\n\nI have real-time access to everything on this portfolio. Ask me about Vikash's **projects**, **skills & tech stack**, **education**, **certifications**, or how to **download his resume** and **get in touch**!`;
+    const welcome = `Hello! 👋 I'm **GVEN** (*Guided Virtual Extension of Vikash Thyadi*).\n\nI have real-time access to everything on this portfolio. Ask me about Vikash's **projects**, **skills & tech stack**, **education**, **certifications**, or how to **download his resume** and **get in touch**!`;
     appendMessage('bot', welcome);
   }
 

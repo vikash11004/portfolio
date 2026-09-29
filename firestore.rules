@@ -18,6 +18,11 @@ service cloud.firestore {
       allow create, update, delete: if isOwner();
     }
 
+    match /chat_logs/{logId} {
+      allow create: if true;
+      allow read, update, delete: if isOwner();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

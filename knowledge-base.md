@@ -129,7 +129,7 @@ The site uses a lightweight client-side SPA hash router without heavy framework 
    - Administrative portal allowing Vikash to manage projects, edit website text, upload photos/resumes directly to Cloudinary, and export synced knowledge bases.
 
 ### Embedded AI Chatbot Assistant: GVEN
-- **Identity**: GVEN (*Generative Virtual Extension of Vikash Thyadi*)
+- **Identity**: GVEN (*Guided Virtual Extension of Vikash Thyadi*)
 - **Core Engine**: Powered by **Groq Cloud API** running **LLaMA 3.3 70B Versatile** for sub-second inference, with graceful fallbacks to OpenRouter and local knowledge rules.
 - **Context Grounding**: GVEN is dynamically injected with the complete live portfolio knowledge base (projects, resume URL, contact channels, education, hackathons).
 - **Interactive Resume Card**: When visitors ask to download Vikash's CV or resume, GVEN automatically generates an embedded interactive download card with a direct `fl_attachment` Cloudinary link that initiates an immediate download.

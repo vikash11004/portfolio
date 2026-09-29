@@ -111,7 +111,7 @@ async function syncFallbackFiles() {
     skills: liveContent?.skills?.items || [],
     site_architecture: {
       design_style: "Refined Brutalism",
-      ai_assistant: "GVEN (Generative Virtual Extension of Vikash Thyadi) powered by Groq LLaMA 3.3 70B",
+      ai_assistant: "GVEN (Guided Virtual Extension of Vikash Thyadi) powered by Groq LLaMA 3.3 70B",
       media_storage: "Cloudinary (25GB Free Tier CDN)"
     },
     resume: {

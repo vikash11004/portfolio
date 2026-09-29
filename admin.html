@@ -56,6 +56,7 @@
           <button type="button" class="admin-tab-btn" data-tab="assetsTab">📸 Photos &amp; Assets</button>
           <button type="button" class="admin-tab-btn" data-tab="contentTab">📝 Website Content</button>
           <button type="button" class="admin-tab-btn" data-tab="settingsTab">⚙️ Settings &amp; SEO</button>
+          <button type="button" class="admin-tab-btn" data-tab="gvenLogsTab">🤖 GVEN Chat Logs <span class="gven-log-count-badge" id="gvenLogCountBadge" style="display:none;">0</span></button>
         </div>
 
         <!-- ============================================
@@ -770,6 +771,79 @@
               </div>
               <p class="project-form__message" id="seoFormMessage"></p>
             </form>
+          </div>
+        </div>
+
+        <!-- ============================================
+             TAB 5: GVEN CHAT LOGS
+             ============================================ -->
+        <div class="admin-tab-panel" id="gvenLogsTab">
+          <div class="admin-editor" style="max-width: 100%;">
+            <div class="admin-editor__header" style="flex-wrap: wrap; gap: 1rem;">
+              <div class="admin-editor__title-group">
+                <h2 class="admin-panel__heading">🤖 GVEN Chat Interactions &amp; Inquiries</h2>
+                <div class="admin-mode-badge admin-mode-badge--edit" id="gvenLiveSyncBadge">
+                  <span class="admin-mode-badge__dot"></span>
+                  <span id="gvenLiveSyncText">Live Sync Active</span>
+                </div>
+              </div>
+              <div class="admin-editor__quick-actions">
+                <button type="button" class="admin-btn admin-btn--outline admin-btn--sm" id="exportChatLogsBtn" title="Export all chat logs as JSON">📥 Export JSON</button>
+                <button type="button" class="admin-btn admin-btn--outline admin-btn--sm" id="refreshChatLogsBtn" title="Refresh logs">↻ Refresh</button>
+                <button type="button" class="admin-btn admin-btn--secondary admin-btn--sm" id="clearChatLogsBtn" title="Clear all stored logs">🗑️ Clear All Logs</button>
+              </div>
+            </div>
+
+            <!-- Live Metrics Overview -->
+            <div class="gven-stats-grid">
+              <div class="gven-stat-card">
+                <span class="gven-stat-card__number" id="gvenStatTotalQueries">0</span>
+                <span class="gven-stat-card__label">Total Queries</span>
+              </div>
+              <div class="gven-stat-card">
+                <span class="gven-stat-card__number" id="gvenStatUniqueSessions">0</span>
+                <span class="gven-stat-card__label">Visitor Sessions</span>
+              </div>
+              <div class="gven-stat-card">
+                <span class="gven-stat-card__number" id="gvenStatTodayQueries">0</span>
+                <span class="gven-stat-card__label">Queries Today</span>
+              </div>
+              <div class="gven-stat-card">
+                <span class="gven-stat-card__number" id="gvenStatLastTime">—</span>
+                <span class="gven-stat-card__label">Latest Interaction</span>
+              </div>
+            </div>
+
+            <!-- Search and Filter Bar -->
+            <div class="gven-logs-filter-bar">
+              <div class="gven-logs-search-wrapper">
+                <span class="gven-logs-search-icon">🔍</span>
+                <input type="text" id="gvenLogsSearchInput" class="gven-logs-search-input" placeholder="Search by visitor question, answer text, or session ID...">
+              </div>
+              <div class="gven-logs-filter-group">
+                <select id="gvenLogsFilterProvider" class="gven-logs-filter-select">
+                  <option value="all">All Providers</option>
+                  <option value="cloud-proxy">Cloud AI (Groq Proxy)</option>
+                  <option value="built-in-kb">Built-in Knowledge Base</option>
+                </select>
+                <button type="button" class="admin-btn admin-btn--ghost admin-btn--sm" id="gvenClearSearchBtn">Clear Filter</button>
+              </div>
+            </div>
+
+            <!-- Logs Stream Container -->
+            <div class="gven-logs-container">
+              <div class="gven-logs-loading" id="gvenLogsLoading">
+                <span>⚡ Connecting to live chat stream...</span>
+              </div>
+              <div class="gven-logs-empty" id="gvenLogsEmpty" style="display: none;">
+                <span class="gven-logs-empty__icon">💬</span>
+                <h3>No Chat Interactions Yet</h3>
+                <p>When visitors ask GVEN questions on your portfolio, every single question, AI answer, and session detail will appear here in real time.</p>
+              </div>
+              <div class="gven-logs-list" id="gvenLogsList">
+                <!-- Dynamically populated from Firestore -->
+              </div>
+            </div>
           </div>
         </div>
       </section>

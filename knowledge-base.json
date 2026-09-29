@@ -175,7 +175,7 @@
     ],
     "ai_assistant_gven": {
       "name": "GVEN",
-      "description": "Generative Virtual Extension of Vikash Thyadi — an interactive AI portfolio chatbot assistant embedded on the site.",
+      "description": "Guided Virtual Extension of Vikash Thyadi — an interactive AI portfolio chatbot assistant embedded on the site.",
       "primary_provider": "Groq Cloud API (model: llama-3.3-70b-versatile) with fallback to OpenRouter and built-in knowledge retrieval.",
       "capabilities": [
         "Answers in-depth technical questions about Vikash's projects, architecture decisions, and codebases.",

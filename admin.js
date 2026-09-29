@@ -1581,6 +1581,9 @@ function setupFirebase() {
     authResolved = true;
     updateAdminAvailability();
     renderAdminProjectsList();
+    if (isOwnerLoggedIn()) {
+      initGvenChatLogs();
+    }
   });
 }
 
@@ -2836,6 +2839,388 @@ function setupKnowledgeBaseExporter() {
   }
 }
 
+// ─── GVEN Chat Logs (Live Inquiries & Responses) ───────────────
+let gvenChatLogs = [];
+let gvenChatLogsUnsubscribe = null;
+let gvenChatLogsInitialized = false;
+
+function formatGvenMarkdown(text) {
+  if (!text) return '';
+  let html = escapeHtml(text);
+
+  // Markdown links: [text](url)
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, label, rawUrl) => {
+    return `<a href="${rawUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--orange); text-decoration: underline;">${label}</a>`;
+  });
+
+  // Bold **text**
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+  // Italic *text*
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+  // Bullet points
+  const lines = html.split('\n');
+  let inList = false;
+  let formattedLines = [];
+
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+      if (!inList) {
+        formattedLines.push('<ul style="margin: 0.4rem 0; padding-left: 1.25rem;">');
+        inList = true;
+      }
+      formattedLines.push(`<li>${trimmed.substring(2)}</li>`);
+    } else {
+      if (inList) {
+        formattedLines.push('</ul>');
+        inList = false;
+      }
+      if (trimmed) {
+        formattedLines.push(`<p style="margin: 0.35rem 0;">${trimmed}</p>`);
+      }
+    }
+  });
+  if (inList) formattedLines.push('</ul>');
+
+  return formattedLines.join('');
+}
+
+function initGvenChatLogs() {
+  if (gvenChatLogsInitialized || !firebaseReady || !firebaseDb) return;
+  gvenChatLogsInitialized = true;
+
+  const searchInput = $('#gvenLogsSearchInput');
+  const providerFilter = $('#gvenLogsFilterProvider');
+  const clearSearchBtn = $('#gvenClearSearchBtn');
+  const refreshBtn = $('#refreshChatLogsBtn');
+  const exportBtn = $('#exportChatLogsBtn');
+  const clearAllBtn = $('#clearChatLogsBtn');
+
+  if (searchInput) {
+    searchInput.addEventListener('input', () => renderGvenChatLogs());
+  }
+
+  if (providerFilter) {
+    providerFilter.addEventListener('change', () => renderGvenChatLogs());
+  }
+
+  if (clearSearchBtn) {
+    clearSearchBtn.addEventListener('click', () => {
+      if (searchInput) searchInput.value = '';
+      if (providerFilter) providerFilter.value = 'all';
+      renderGvenChatLogs();
+    });
+  }
+
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = '↻ Syncing...';
+      fetchGvenChatLogsOnce().finally(() => {
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = '↻ Refresh';
+      });
+    });
+  }
+
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      exportGvenChatLogsAsJson();
+    });
+  }
+
+  if (clearAllBtn) {
+    clearAllBtn.addEventListener('click', async () => {
+      if (!gvenChatLogs.length) {
+        alert('There are no chat logs to clear.');
+        return;
+      }
+      const confirmed = window.confirm(`Are you sure you want to permanently clear all ${gvenChatLogs.length} GVEN chat logs? This cannot be undone.`);
+      if (!confirmed) return;
+
+      clearAllBtn.disabled = true;
+      clearAllBtn.textContent = 'Clearing...';
+
+      try {
+        const batch = firebaseDb.batch();
+        const snap = await firebaseDb.collection('chat_logs').get();
+        snap.docs.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+        gvenChatLogs = [];
+        updateGvenStats([]);
+        renderGvenChatLogs();
+      } catch (err) {
+        alert('Failed to clear logs: ' + (err.message || err));
+      } finally {
+        clearAllBtn.disabled = false;
+        clearAllBtn.textContent = '🗑️ Clear All Logs';
+      }
+    });
+  }
+
+  startGvenChatLogsListener();
+}
+
+function startGvenChatLogsListener() {
+  if (!firebaseDb) return;
+  if (gvenChatLogsUnsubscribe) gvenChatLogsUnsubscribe();
+
+  const loadingEl = $('#gvenLogsLoading');
+
+  try {
+    gvenChatLogsUnsubscribe = firebaseDb.collection('chat_logs')
+      .onSnapshot((snapshot) => {
+        if (loadingEl) loadingEl.style.display = 'none';
+
+        const logs = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data() || {};
+          logs.push({
+            id: doc.id,
+            question: data.question || '',
+            answer: data.answer || '',
+            provider: data.provider || 'built-in',
+            sessionId: data.sessionId || '',
+            userAgent: data.userAgent || '',
+            platform: data.platform || '',
+            language: data.language || '',
+            clientTimestamp: data.clientTimestamp || '',
+            timestamp: data.timestamp ? (data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp)) : (data.clientTimestamp ? new Date(data.clientTimestamp) : new Date(0))
+          });
+        });
+
+        logs.sort((a, b) => b.timestamp - a.timestamp);
+
+        gvenChatLogs = logs;
+        updateGvenStats(logs);
+        renderGvenChatLogs();
+      }, (err) => {
+        console.warn('Real-time chat log listener encountered an issue, trying one-time fetch:', err.message || err);
+        if (loadingEl) loadingEl.style.display = 'none';
+        fetchGvenChatLogsOnce();
+      });
+  } catch (err) {
+    console.error('Failed to attach chat_logs listener:', err);
+    fetchGvenChatLogsOnce();
+  }
+}
+
+async function fetchGvenChatLogsOnce() {
+  if (!firebaseDb) return;
+  try {
+    const snap = await firebaseDb.collection('chat_logs').get();
+    const logs = [];
+    snap.forEach((doc) => {
+      const data = doc.data() || {};
+      logs.push({
+        id: doc.id,
+        question: data.question || '',
+        answer: data.answer || '',
+        provider: data.provider || 'built-in',
+        sessionId: data.sessionId || '',
+        userAgent: data.userAgent || '',
+        platform: data.platform || '',
+        language: data.language || '',
+        clientTimestamp: data.clientTimestamp || '',
+        timestamp: data.timestamp ? (data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp)) : (data.clientTimestamp ? new Date(data.clientTimestamp) : new Date(0))
+      });
+    });
+    logs.sort((a, b) => b.timestamp - a.timestamp);
+    gvenChatLogs = logs;
+    updateGvenStats(logs);
+    renderGvenChatLogs();
+  } catch (e) {
+    console.error('One-time fetch of chat logs failed:', e);
+  }
+}
+
+function updateGvenStats(logs) {
+  const totalEl = $('#gvenStatTotalQueries');
+  const sessionsEl = $('#gvenStatUniqueSessions');
+  const todayEl = $('#gvenStatTodayQueries');
+  const lastTimeEl = $('#gvenStatLastTime');
+  const badgeEl = $('#gvenLogCountBadge');
+
+  const total = logs.length;
+  if (totalEl) totalEl.textContent = total;
+  if (badgeEl) {
+    badgeEl.textContent = total;
+    badgeEl.style.display = total > 0 ? 'inline-block' : 'none';
+  }
+
+  const uniqueSessions = new Set(logs.map(l => l.sessionId).filter(Boolean)).size;
+  if (sessionsEl) sessionsEl.textContent = uniqueSessions;
+
+  const now = new Date();
+  const todayCount = logs.filter(l => {
+    const d = l.timestamp;
+    return d.getDate() === now.getDate() &&
+           d.getMonth() === now.getMonth() &&
+           d.getFullYear() === now.getFullYear();
+  }).length;
+  if (todayEl) todayEl.textContent = todayCount;
+
+  if (lastTimeEl) {
+    if (logs.length > 0 && logs[0].timestamp && logs[0].timestamp.getTime() > 0) {
+      lastTimeEl.textContent = logs[0].timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else {
+      lastTimeEl.textContent = '—';
+    }
+  }
+}
+
+function renderGvenChatLogs() {
+  const listEl = $('#gvenLogsList');
+  const emptyEl = $('#gvenLogsEmpty');
+  const loadingEl = $('#gvenLogsLoading');
+  if (!listEl) return;
+
+  if (loadingEl) loadingEl.style.display = 'none';
+
+  const searchQuery = String(($('#gvenLogsSearchInput') || {}).value || '').trim().toLowerCase();
+  const providerFilter = String(($('#gvenLogsFilterProvider') || {}).value || 'all').toLowerCase();
+
+  const filtered = gvenChatLogs.filter((log) => {
+    if (providerFilter !== 'all') {
+      const p = (log.provider || '').toLowerCase();
+      if (providerFilter === 'cloud-proxy' && !p.includes('cloud') && !p.includes('proxy') && !p.includes('groq')) return false;
+      if (providerFilter === 'built-in-kb' && (p.includes('cloud') || p.includes('proxy') || p.includes('groq'))) return false;
+    }
+
+    if (!searchQuery) return true;
+
+    return (log.question || '').toLowerCase().includes(searchQuery) ||
+           (log.answer || '').toLowerCase().includes(searchQuery) ||
+           (log.sessionId || '').toLowerCase().includes(searchQuery) ||
+           (log.provider || '').toLowerCase().includes(searchQuery);
+  });
+
+  if (!filtered.length) {
+    listEl.innerHTML = '';
+    if (emptyEl) emptyEl.style.display = 'block';
+    return;
+  }
+
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  listEl.innerHTML = filtered.map((log) => {
+    const timeFormatted = log.timestamp && log.timestamp.getTime() > 0
+      ? log.timestamp.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      : 'Recent';
+
+    const isCloud = (log.provider || '').toLowerCase().includes('cloud') || (log.provider || '').toLowerCase().includes('proxy') || (log.provider || '').toLowerCase().includes('groq');
+    const providerBadgeClass = isCloud ? 'gven-log-badge--cloud' : 'gven-log-badge--builtin';
+    const providerLabel = isCloud ? '⚡ Groq LLaMA 3.3' : '📘 Built-in Knowledge Base';
+
+    const shortSession = log.sessionId ? (log.sessionId.length > 14 ? log.sessionId.slice(0, 14) + '…' : log.sessionId) : 'guest';
+
+    return `
+      <div class="gven-log-card" data-log-id="${escapeHtml(log.id)}">
+        <div class="gven-log-card__header">
+          <div class="gven-log-card__meta-group">
+            <span class="gven-log-card__time">🕒 ${escapeHtml(timeFormatted)}</span>
+            <span class="gven-log-badge gven-log-badge--session" title="Session ID: ${escapeHtml(log.sessionId || 'N/A')}">👤 ${escapeHtml(shortSession)}</span>
+            <span class="gven-log-badge ${providerBadgeClass}">🤖 ${escapeHtml(providerLabel)}</span>
+          </div>
+          <div class="gven-log-card__actions">
+            <button type="button" class="admin-btn admin-btn--ghost admin-btn--sm btn-copy-qa" title="Copy question and answer">📋 Copy</button>
+            <button type="button" class="admin-btn admin-btn--ghost admin-btn--sm btn-delete-log" style="color: #ef4444;" title="Delete this inquiry">🗑️</button>
+          </div>
+        </div>
+
+        <div class="gven-log-entry">
+          <div class="gven-log-question-row">
+            <div class="gven-log-row-label gven-log-row-label--user">
+              <span>👤</span> Visitor Asked:
+            </div>
+            <div class="gven-log-row-content"><strong>${escapeHtml(log.question)}</strong></div>
+          </div>
+
+          <div class="gven-log-answer-row">
+            <div class="gven-log-row-label gven-log-row-label--gven">
+              <span>⚡</span> GVEN (Guided Virtual Extension) Response:
+            </div>
+            <div class="gven-log-row-content">${formatGvenMarkdown(log.answer)}</div>
+          </div>
+        </div>
+
+        <div class="gven-log-device-meta">
+          <span>🖥️ Platform: ${escapeHtml(log.platform || 'Unknown')}</span>
+          <span>🌐 Language: ${escapeHtml(log.language || 'en')}</span>
+          ${log.userAgent ? `<span>📱 Browser: ${escapeHtml(formatUserAgent(log.userAgent))}</span>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Wire up per-card actions
+  listEl.querySelectorAll('.gven-log-card').forEach((card) => {
+    const logId = card.dataset.logId;
+    const log = gvenChatLogs.find(l => l.id === logId);
+    if (!log) return;
+
+    const copyBtn = card.querySelector('.btn-copy-qa');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', async () => {
+        const text = `Q: ${log.question}\n\nA (GVEN): ${log.answer}\n\nTime: ${log.timestamp}\nSession: ${log.sessionId}`;
+        try {
+          await navigator.clipboard.writeText(text);
+          copyBtn.textContent = '✓ Copied';
+          setTimeout(() => { copyBtn.textContent = '📋 Copy'; }, 2000);
+        } catch (_e) {
+          copyBtn.textContent = 'Failed';
+        }
+      });
+    }
+
+    const delBtn = card.querySelector('.btn-delete-log');
+    if (delBtn) {
+      delBtn.addEventListener('click', async () => {
+        if (!window.confirm('Delete this chat log entry?')) return;
+        delBtn.disabled = true;
+        delBtn.textContent = '...';
+        try {
+          await firebaseDb.collection('chat_logs').doc(logId).delete();
+          gvenChatLogs = gvenChatLogs.filter(l => l.id !== logId);
+          updateGvenStats(gvenChatLogs);
+          renderGvenChatLogs();
+        } catch (err) {
+          alert('Delete failed: ' + (err.message || err));
+          delBtn.disabled = false;
+          delBtn.textContent = '🗑️';
+        }
+      });
+    }
+  });
+}
+
+function formatUserAgent(ua) {
+  if (!ua) return 'Browser';
+  if (ua.includes('iPhone') || ua.includes('iPad')) return 'iOS Safari';
+  if (ua.includes('Android')) return 'Android';
+  if (ua.includes('Chrome') && !ua.includes('Edg')) return 'Google Chrome';
+  if (ua.includes('Edg')) return 'Microsoft Edge';
+  if (ua.includes('Firefox')) return 'Mozilla Firefox';
+  if (ua.includes('Safari') && !ua.includes('Chrome')) return 'Apple Safari';
+  return 'Desktop';
+}
+
+function exportGvenChatLogsAsJson() {
+  if (!gvenChatLogs.length) {
+    alert('No chat logs to export.');
+    return;
+  }
+  const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(gvenChatLogs, null, 2));
+  const dlAnchor = document.createElement('a');
+  dlAnchor.setAttribute('href', dataStr);
+  dlAnchor.setAttribute('download', `gven-chat-logs-${new Date().toISOString().slice(0, 10)}.json`);
+  document.body.appendChild(dlAnchor);
+  dlAnchor.click();
+  dlAnchor.remove();
+}
+
 async function initAdmin() {
   setupEvents();
   setupFirebase();
@@ -2849,6 +3234,7 @@ async function initAdmin() {
     if (isOwnerLoggedIn()) {
       await ensureSeedProjects();
       await scrubLeakedSecretsFromFirestore();
+      initGvenChatLogs();
     }
   }
 }

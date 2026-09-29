@@ -1718,17 +1718,9 @@ function setupContactForm() {
           name: name,
           email: email,
           replyto: email,
-          subject: `⚡ [Portfolio Inquiry] ${name}`,
-          from_name: 'Vikash Thyadi Portfolio',
-          "// ─── SENDER": "────────────────────────",
-          "Sender Name": name,
-          "Sender Email": email,
-          "// ─── MESSAGE": "────────────────────────",
-          "Message": message,
-          "// ─── SYSTEM METADATA": "────────────────────────",
-          "Received At": new Date().toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' }),
-          "Source": "vikashthyadi.me (Refined Brutalism)",
-          "Direct Reply": `Click Reply to respond directly to ${email}`
+          message: message,
+          subject: `Portfolio Message from ${name}`,
+          from_name: 'Vikash Thyadi Portfolio'
         })
       });
 

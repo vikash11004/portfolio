@@ -126,9 +126,21 @@ let firebaseAuth = null;
 let firebaseStorage = null;
 let firebaseReady = false;
 let currentUser = null;
+let authResolved = false;
 let projectsState = [];
+let projectSearchQuery = '';
 let siteContentState = deepMerge(DEFAULT_SITE_CONTENT, {});
 let siteRawJsonBaseline = '';
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
 const CLOUDINARY_STORAGE_KEY = 'portfolio_cloudinary_config';
 
@@ -1334,14 +1346,6 @@ function parseUrlList(value, fallback = []) {
   return fallback;
 }
 
-function escapeHtml(value) {
-  return String(value || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
 
 function renderEducationItems(items) {
   const container = $('#educationItemsContainer');
@@ -1463,13 +1467,38 @@ function setAuthStatus(message) {
 }
 
 function setEditState(project) {
-  const stateEl = $('#adminEditState');
-  const titleEl = $('#adminEditingTitle');
+  const modeBadge = $('#adminModeBadge');
+  const modeText = $('#adminModeText');
+  const topCancelBtn = $('#topCancelEditBtn');
+  const bottomCancelBtn = $('#bottomCancelEditBtn');
   const saveBtn = $('#saveProjectBtn');
+  const topSaveBtn = $('#topSaveProjectBtn');
 
-  if (stateEl) stateEl.hidden = !project;
-  if (titleEl) titleEl.textContent = project ? project.title : '';
-  if (saveBtn) saveBtn.textContent = project ? 'Update Project' : 'Save Project';
+  if (project) {
+    if (modeText) modeText.textContent = `Editing: "${project.title}"`;
+    if (modeBadge) {
+      modeBadge.className = 'admin-mode-badge admin-mode-badge--editing';
+    }
+    if (topCancelBtn) topCancelBtn.style.display = 'inline-flex';
+    if (bottomCancelBtn) bottomCancelBtn.style.display = 'inline-flex';
+    if (saveBtn) saveBtn.textContent = '💾 Update Project';
+    if (topSaveBtn) topSaveBtn.textContent = '💾 Update Project';
+  } else {
+    if (modeText) modeText.textContent = 'Creating New Project';
+    if (modeBadge) {
+      modeBadge.className = 'admin-mode-badge admin-mode-badge--new';
+    }
+    if (topCancelBtn) topCancelBtn.style.display = 'none';
+    if (bottomCancelBtn) bottomCancelBtn.style.display = 'none';
+    if (saveBtn) saveBtn.textContent = '💾 Save Project';
+    if (topSaveBtn) topSaveBtn.textContent = '💾 Save Project';
+  }
+
+  // Highlight active editing item in list
+  document.querySelectorAll('.admin-project-item').forEach(el => {
+    const isThis = !!(project && (el.dataset.rowId === project.rowId || el.dataset.rowId === project.id));
+    el.classList.toggle('is-editing', isThis);
+  });
 }
 
 function isOwnerLoggedIn() {
@@ -1479,42 +1508,30 @@ function isOwnerLoggedIn() {
 function updateAdminAvailability() {
   const disabledBox = $('#adminDisabled');
   const panel = $('#adminPanel');
-  const siteSaveBtn = $('#saveSiteContentBtn');
-  const assetsSaveBtn = $('#saveAssetsBtn');
-  const seoSaveBtn = $('#saveSeoBtn');
-  const projectSaveBtn = $('#saveProjectBtn');
+  const userEmailSpan = $('#adminUserEmail');
 
   if (!disabledBox || !panel) return;
 
   if (!firebaseReady) {
     disabledBox.hidden = false;
     panel.hidden = true;
-    setAuthStatus('Admin disabled until Firebase configuration is added in config.js.');
+    if (userEmailSpan) userEmailSpan.textContent = 'Firebase Not Ready';
     return;
   }
 
   disabledBox.hidden = true;
 
-  const allSaveButtons = [siteSaveBtn, assetsSaveBtn, seoSaveBtn, projectSaveBtn];
-
   if (isOwnerLoggedIn()) {
     panel.hidden = false;
-    allSaveButtons.forEach((btn) => {
-      if (btn) btn.disabled = false;
-    });
-    setAuthStatus(`Signed in as ${currentUser.email}`);
-  } else if (currentUser && (!currentUser.email || currentUser.email.trim().toLowerCase() !== OWNER_EMAIL.trim().toLowerCase())) {
-    panel.hidden = true;
-    allSaveButtons.forEach((btn) => {
-      if (btn) btn.disabled = true;
-    });
-    setAuthStatus(`This account (${currentUser.email}) is not authorized for admin access.`);
+    if (userEmailSpan) userEmailSpan.textContent = currentUser.email;
   } else {
     panel.hidden = true;
-    allSaveButtons.forEach((btn) => {
-      if (btn) btn.disabled = true;
-    });
-    setAuthStatus('Sign in as the owner to manage projects and website content.');
+    if (userEmailSpan) userEmailSpan.textContent = 'Redirecting...';
+    // If Firebase Auth has finished resolving and user is not authenticated as owner, redirect to dedicated login page
+    if (authResolved) {
+      console.log('Unauthenticated access to Owner Console. Redirecting to login.html...');
+      window.location.replace('login.html');
+    }
   }
 }
 
@@ -1550,6 +1567,7 @@ function setupFirebase() {
 
   firebaseAuth.onAuthStateChanged((user) => {
     currentUser = user || null;
+    authResolved = true;
     updateAdminAvailability();
     renderAdminProjectsList();
   });
@@ -1558,6 +1576,7 @@ function setupFirebase() {
 async function restoreAuthSession() {
   if (!firebaseReady || !firebaseAuth) return;
   currentUser = firebaseAuth.currentUser || null;
+  authResolved = true;
   updateAdminAvailability();
 }
 
@@ -1634,6 +1653,17 @@ function clearProjectForm() {
   setSelectedCategories([]);
   setEditState(null);
   setFormMessage('');
+
+  // Clear thumbnail dropzone preview
+  const thumbPreview = $('#thumbnailDropzonePreview');
+  const thumbContent = $('#thumbnailDropzoneContent');
+  const thumbStatus = $('#thumbnailDropzoneStatus');
+  if (thumbPreview) thumbPreview.style.display = 'none';
+  if (thumbContent) thumbContent.style.display = 'flex';
+  if (thumbStatus) {
+    thumbStatus.textContent = '';
+    thumbStatus.style.display = 'none';
+  }
 }
 
 function fillProjectForm(project) {
@@ -1866,10 +1896,14 @@ async function handlePasswordReset() {
 }
 
 async function handleAdminSignOut() {
-  if (!firebaseReady || !firebaseAuth) return;
-  await firebaseAuth.signOut();
-  clearProjectForm();
-  setFormMessage('Signed out.');
+  if (firebaseReady && firebaseAuth) {
+    try {
+      await firebaseAuth.signOut();
+    } catch (e) {
+      console.error('Sign out error:', e);
+    }
+  }
+  window.location.replace('login.html');
 }
 
 async function handleAdminListAction(event) {
@@ -1890,7 +1924,7 @@ async function handleAdminListAction(event) {
   }
 
   if (action === 'delete') {
-    const ok = window.confirm(`Delete ${project.title}? This cannot be undone.`);
+    const ok = window.confirm(`Delete "${project.title}"? This cannot be undone.`);
     if (!ok) return;
 
     try {
@@ -1905,36 +1939,75 @@ async function handleAdminListAction(event) {
 
 function renderAdminProjectsList() {
   const list = $('#adminProjectList');
+  const countBadge = $('#adminProjectCount');
   if (!list) return;
 
   if (!firebaseReady) {
     list.innerHTML = '';
+    if (countBadge) countBadge.textContent = 'Offline';
     return;
   }
 
   if (!isOwnerLoggedIn()) {
     list.innerHTML = '<p class="admin-list__empty">Sign in to view and manage projects.</p>';
+    if (countBadge) countBadge.textContent = 'Protected';
     return;
   }
 
   if (!projectsState.length) {
     list.innerHTML = '<p class="admin-list__empty">No projects found. Add your first project.</p>';
+    if (countBadge) countBadge.textContent = '0 Projects';
     return;
   }
 
-  list.innerHTML = projectsState.map(project => `
-    <article class="admin-project-item" data-row-id="${project.rowId || ''}">
-      <div>
-        <h3>${project.title}</h3>
-        <p>${project.categoryLabel} · ${project.year || 'N/A'} · Featured: ${project.featured ? 'Yes' : 'No'}</p>
-      </div>
-      <div class="admin-project-item__actions">
-        <button class="btn btn--secondary" data-action="edit" data-id="${project.id}">Edit</button>
-        <button class="btn btn--secondary" data-action="feature" data-id="${project.id}">${project.featured ? 'Unfeature' : 'Feature'}</button>
-        <button class="btn btn--secondary" data-action="delete" data-id="${project.id}">Delete</button>
-      </div>
-    </article>
-  `).join('');
+  const query = (projectSearchQuery || '').trim().toLowerCase();
+  const filtered = query
+    ? projectsState.filter(p => {
+        const title = (p.title || '').toLowerCase();
+        const cat = (p.categoryLabel || p.category || '').toLowerCase();
+        const tech = (Array.isArray(p.tech) ? p.tech.join(' ') : String(p.tech || '')).toLowerCase();
+        const slug = (p.slug || '').toLowerCase();
+        return title.includes(query) || cat.includes(query) || tech.includes(query) || slug.includes(query);
+      })
+    : projectsState;
+
+  if (countBadge) {
+    if (query) {
+      countBadge.textContent = `${filtered.length} of ${projectsState.length} matching`;
+    } else {
+      countBadge.textContent = `${projectsState.length} Projects`;
+    }
+  }
+
+  if (!filtered.length) {
+    list.innerHTML = `<p class="admin-list__empty">No projects match "${escapeHtml(query)}".</p>`;
+    return;
+  }
+
+  const currentEditingRowId = $('#projectRowId')?.value || '';
+
+  list.innerHTML = filtered.map(project => {
+    const isEditing = !!(currentEditingRowId && (project.rowId === currentEditingRowId || project.slug === currentEditingRowId));
+    return `
+      <article class="admin-project-item ${isEditing ? 'is-editing' : ''}" data-row-id="${project.rowId || project.id || ''}">
+        <div class="admin-project-item__left">
+          <img src="${escapeHtml(project.thumbnail || DEFAULT_THUMBNAIL)}" alt="${escapeHtml(project.title)}" class="admin-project-item__thumb" onerror="this.src='${DEFAULT_THUMBNAIL}'">
+          <div class="admin-project-item__info">
+            <div class="admin-project-item__title-row">
+              <h3 title="${escapeHtml(project.title)}">${escapeHtml(project.title)}</h3>
+              ${project.featured ? '<span class="admin-project-item__featured-pill">★ Featured</span>' : ''}
+            </div>
+            <p>${escapeHtml(project.categoryLabel || 'General')} · ${escapeHtml(project.year || 'N/A')}</p>
+          </div>
+        </div>
+        <div class="admin-project-item__actions">
+          <button type="button" class="admin-btn admin-btn--dark admin-btn--sm" data-action="edit" data-id="${project.id}" title="Edit project details">✏️ Edit</button>
+          <button type="button" class="admin-btn admin-btn--feature admin-btn--sm ${project.featured ? 'is-featured' : ''}" data-action="feature" data-id="${project.id}" title="${project.featured ? 'Remove from landing page' : 'Feature on landing page'}">${project.featured ? '★ Featured' : '☆ Feature'}</button>
+          <button type="button" class="admin-btn admin-btn--danger admin-btn--sm" data-action="delete" data-id="${project.id}" title="Delete project">🗑️</button>
+        </div>
+      </article>
+    `;
+  }).join('');
 
   list.querySelectorAll('button[data-action]').forEach(button => {
     button.addEventListener('click', handleAdminListAction);
@@ -2417,6 +2490,101 @@ function setupEvents() {
   if (assetsForm) assetsForm.addEventListener('submit', handleAssetsSave);
   if (siteForm) siteForm.addEventListener('submit', handleSiteContentSave);
   if (seoForm) seoForm.addEventListener('submit', handleSeoSave);
+
+  // Quick Action & Cancel Handlers for Projects
+  const topSaveProjectBtn = $('#topSaveProjectBtn');
+  if (topSaveProjectBtn) {
+    topSaveProjectBtn.addEventListener('click', () => {
+      if (projectForm) {
+        if (typeof projectForm.requestSubmit === 'function') {
+          projectForm.requestSubmit();
+        } else {
+          projectForm.dispatchEvent(new Event('submit', { cancelable: true }));
+        }
+      }
+    });
+  }
+
+  const topClearProjectBtn = $('#topClearProjectBtn');
+  if (topClearProjectBtn) topClearProjectBtn.addEventListener('click', clearProjectForm);
+
+  const topCancelEditBtn = $('#topCancelEditBtn');
+  if (topCancelEditBtn) topCancelEditBtn.addEventListener('click', clearProjectForm);
+
+  const bottomCancelEditBtn = $('#bottomCancelEditBtn');
+  if (bottomCancelEditBtn) bottomCancelEditBtn.addEventListener('click', clearProjectForm);
+
+  const newProjectBtn = $('#newProjectBtn');
+  if (newProjectBtn) {
+    newProjectBtn.addEventListener('click', () => {
+      clearProjectForm();
+      const editor = $('#projectEditorCard');
+      if (editor) editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      $('#projectTitle')?.focus();
+    });
+  }
+
+  // Live Project Search Filter
+  const projectSearchInput = $('#adminProjectSearch');
+  const clearSearchBtn = $('#adminClearSearch');
+  if (projectSearchInput) {
+    projectSearchInput.addEventListener('input', (e) => {
+      projectSearchQuery = e.target.value || '';
+      if (clearSearchBtn) {
+        clearSearchBtn.style.display = projectSearchQuery ? 'inline-flex' : 'none';
+      }
+      renderAdminProjectsList();
+    });
+  }
+  if (clearSearchBtn) {
+    clearSearchBtn.addEventListener('click', () => {
+      if (projectSearchInput) projectSearchInput.value = '';
+      projectSearchQuery = '';
+      clearSearchBtn.style.display = 'none';
+      renderAdminProjectsList();
+      projectSearchInput?.focus();
+    });
+  }
+
+  // Quick Action Buttons for Photos & Assets, Content, and SEO
+  const topSaveAssetsBtn = $('#topSaveAssetsBtn');
+  if (topSaveAssetsBtn) {
+    topSaveAssetsBtn.addEventListener('click', () => {
+      if (assetsForm) {
+        if (typeof assetsForm.requestSubmit === 'function') assetsForm.requestSubmit();
+        else assetsForm.dispatchEvent(new Event('submit', { cancelable: true }));
+      }
+    });
+  }
+
+  const topSaveSiteContentBtn = $('#topSaveSiteContentBtn');
+  if (topSaveSiteContentBtn) {
+    topSaveSiteContentBtn.addEventListener('click', () => {
+      if (siteForm) {
+        if (typeof siteForm.requestSubmit === 'function') siteForm.requestSubmit();
+        else siteForm.dispatchEvent(new Event('submit', { cancelable: true }));
+      }
+    });
+  }
+
+  const topReloadSiteContentBtn = $('#topReloadSiteContentBtn');
+  if (topReloadSiteContentBtn) {
+    topReloadSiteContentBtn.addEventListener('click', () => {
+      loadSiteContent().catch((error) => {
+        setSiteMessage(error.message || 'Unable to reload site content.', true);
+      });
+    });
+  }
+
+  const topSaveSeoBtn = $('#topSaveSeoBtn');
+  if (topSaveSeoBtn) {
+    topSaveSeoBtn.addEventListener('click', () => {
+      if (seoForm) {
+        if (typeof seoForm.requestSubmit === 'function') seoForm.requestSubmit();
+        else seoForm.dispatchEvent(new Event('submit', { cancelable: true }));
+      }
+    });
+  }
 
   if (addEducationBtn) {
     addEducationBtn.addEventListener('click', () => {

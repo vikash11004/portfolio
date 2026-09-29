@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Owner Sign In — Portfolio CMS Console">
+  <meta name="theme-color" content="#171717">
+  <title>Sign In — Vikash Thyadi</title>
+  <link rel="stylesheet" href="styles.css?v=9">
+  <style>
+    /* Standalone Brutalist Sign In Page */
+    .login-body {
+      min-height: 100vh;
+      background-color: #171717;
+      color: #F3F0E7;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow-x: hidden;
+      font-family: var(--font-body, 'Inter', sans-serif);
+    }
+
+    /* Ambient background grid */
+    .login-bg-grid {
+      position: absolute;
+      inset: 0;
+      background-size: 40px 40px;
+      background-image:
+        linear-gradient(to right, rgba(243, 240, 231, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(243, 240, 231, 0.03) 1px, transparent 1px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .login-header {
+      position: relative;
+      z-index: 10;
+      padding: 2rem var(--section-pad-x, 2rem);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: var(--max-width, 1280px);
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .login-header__brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: #F3F0E7;
+    }
+
+    .login-header__logo-img {
+      height: 38px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .login-header__brand-text {
+      font-family: var(--font-display, 'Space Grotesk', sans-serif);
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .login-header__back-link {
+      font-family: var(--font-mono, 'JetBrains Mono', monospace);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #F25623;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: transform 0.2s ease, color 0.2s ease;
+    }
+
+    .login-header__back-link:hover {
+      transform: translateX(-4px);
+      color: #ff6b3d;
+    }
+
+    .login-main {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+      flex: 1;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 460px;
+      background: #201C1E;
+      border: 1px solid rgba(243, 240, 231, 0.14);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(242, 86, 35, 0.1);
+      border-radius: 4px;
+      padding: clamp(2rem, 5vw, 2.75rem);
+      position: relative;
+    }
+
+    .login-card__top-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono, 'JetBrains Mono', monospace);
+      font-size: 0.75rem;
+      color: #F25623;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 1.25rem;
+    }
+
+    .login-card__top-badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #F25623;
+      box-shadow: 0 0 8px #F25623;
+    }
+
+    .login-card__title {
+      font-family: var(--font-display, 'Space Grotesk', sans-serif);
+      font-size: clamp(1.85rem, 3.5vw, 2.35rem);
+      font-weight: 700;
+      color: #F3F0E7;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 0.75rem;
+    }
+
+    .login-card__desc {
+      font-size: 0.95rem;
+      color: rgba(243, 240, 231, 0.65);
+      line-height: 1.55;
+      margin-bottom: 2rem;
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .login-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .login-field__label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .login-field label {
+      font-family: var(--font-mono, 'JetBrains Mono', monospace);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(243, 240, 231, 0.75);
+      font-weight: 500;
+    }
+
+    .login-field__forgot {
+      font-family: var(--font-mono, 'JetBrains Mono', monospace);
+      font-size: 0.72rem;
+      color: #F25623;
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      padding: 0;
+      transition: color 0.2s ease;
+    }
+
+    .login-field__forgot:hover {
+      color: #ff6b3d;
+    }
+
+    .login-field__input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .login-field input {
+      width: 100%;
+      background: #171717;
+      border: 1px solid rgba(243, 240, 231, 0.2);
+      color: #F3F0E7;
+      padding: 0.85rem 1rem;
+      font-family: var(--font-body, 'Inter', sans-serif);
+      font-size: 0.95rem;
+      border-radius: 3px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .login-field input:focus {
+      outline: none;
+      border-color: #F25623;
+      box-shadow: 0 0 0 2px rgba(242, 86, 35, 0.25);
+      background: #1a1719;
+    }
+
+    .login-field input::placeholder {
+      color: rgba(243, 240, 231, 0.3);
+    }
+
+    .login-password-toggle {
+      position: absolute;
+      right: 0.75rem;
+      background: none;
+      border: none;
+      color: rgba(243, 240, 231, 0.6);
+      font-family: var(--font-mono, 'JetBrains Mono', monospace);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      padding: 0.35rem 0.5rem;
+      border-radius: 2px;
+      transition: color 0.2s ease;
+    }
+
+    .login-password-toggle:hover {
+      color: #F3F0E7;
+    }
+
+    .login-alert {
+      padding: 0.85rem 1rem;
+      border-radius: 3px;
+      font-size: 0.85rem;
+      font-family: var(--font-body, 'Inter', sans-serif);
+      line-height: 1.45;
+      display: none;
+    }
+
+    .login-alert--error {
+      background: rgba(217, 64, 0, 0.15);
+      border: 1px solid rgba(217, 64, 0, 0.5);
+      color: #ff7849;
+    }
+
+    .login-alert--success {
+      background: rgba(46, 125, 50, 0.15);
+      border: 1px solid rgba(46, 125, 50, 0.5);
+      color: #66bb6a;
+    }
+
+    .login-submit-btn {
+      margin-top: 0.5rem;
+      width: 100%;
+      background: #F25623;
+      color: #FFFFFF;
+      border: none;
+      font-family: var(--font-mono, 'JetBrains Mono', monospace);
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 1rem 1.5rem;
+      border-radius: 3px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .login-submit-btn:hover:not(:disabled) {
+      background: #ff6b3d;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(242, 86, 35, 0.35);
+    }
+
+    .login-submit-btn:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    .login-footer {
+      position: relative;
+      z-index: 10;
+      padding: 1.5rem var(--section-pad-x, 2rem);
+      text-align: center;
+      font-family: var(--font-mono, 'JetBrains Mono', monospace);
+      font-size: 0.72rem;
+      color: rgba(243, 240, 231, 0.35);
+    }
+
+    .login-loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(32, 28, 30, 0.85);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 1rem;
+      border-radius: 4px;
+      z-index: 20;
+    }
+
+    .login-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(243, 240, 231, 0.2);
+      border-top-color: #F25623;
+      border-radius: 50%;
+      animation: loginSpin 0.8s linear infinite;
+    }
+
+    @keyframes loginSpin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body class="login-body">
+  <div class="login-bg-grid" aria-hidden="true"></div>
+
+  <!-- Header -->
+  <header class="login-header">
+    <a href="index.html" class="login-header__brand" title="Return to home page">
+      <img src="assets/images/logo1.png" alt="Vikash Thyadi" class="login-header__logo-img"
+        onerror="this.style.display='none'">
+      <span class="login-header__brand-text">VIKASH THYADI</span>
+    </a>
+    <a href="index.html" class="login-header__back-link">
+      <span>←</span> Back to Portfolio
+    </a>
+  </header>
+
+  <!-- Main Sign In Card -->
+  <main class="login-main">
+    <div class="login-card">
+      <div class="login-loading-overlay" id="loginLoadingOverlay">
+        <div class="login-spinner"></div>
+        <span style="font-family: var(--font-mono); font-size: 0.8rem; color: #F3F0E7;" id="loginLoadingText">Authenticating...</span>
+      </div>
+
+      <div class="login-card__top-badge">
+        <span class="login-card__top-badge-dot"></span>
+        <span>Owner Authentication</span>
+      </div>
+
+      <h1 class="login-card__title">Sign In</h1>
+      <p class="login-card__desc">
+        Welcome back. Enter your owner credentials to access the portfolio content management console.
+      </p>
+
+      <div class="login-alert login-alert--error" id="loginAlertError" role="alert"></div>
+      <div class="login-alert login-alert--success" id="loginAlertSuccess" role="status"></div>
+
+      <form class="login-form" id="loginForm" autocomplete="on">
+        <div class="login-field">
+          <label for="loginEmail">Owner Email</label>
+          <div class="login-field__input-wrap">
+            <input type="email" id="loginEmail" name="email" placeholder="owner@gmail.com" required autocomplete="username">
+          </div>
+        </div>
+
+        <div class="login-field">
+          <div class="login-field__label-row">
+            <label for="loginPassword">Password</label>
+            <button type="button" class="login-field__forgot" id="forgotPasswordBtn">Forgot Password?</button>
+          </div>
+          <div class="login-field__input-wrap">
+            <input type="password" id="loginPassword" name="password" placeholder="••••••••••••" required autocomplete="current-password">
+            <button type="button" class="login-password-toggle" id="togglePasswordBtn" aria-label="Toggle password visibility">Show</button>
+          </div>
+        </div>
+
+        <button type="submit" class="login-submit-btn" id="loginSubmitBtn">
+          <span>Sign In to Console</span>
+          <span>→</span>
+        </button>
+      </form>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="login-footer">
+    <span>© 2026 Vikash Thyadi · Protected Management Console</span>
+  </footer>
+
+  <!-- Firebase & Authentication Scripts -->
+  <script src="config.js?v=3"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script>
+    (function () {
+      const APP_CONFIG = window.PORTFOLIO_CONFIG || {};
+      const FIREBASE_CONFIG = APP_CONFIG.FIREBASE_CONFIG || null;
+      const OWNER_EMAIL = (APP_CONFIG.OWNER_EMAIL || '').trim();
+
+      const emailInput = document.getElementById('loginEmail');
+      const passwordInput = document.getElementById('loginPassword');
+      const form = document.getElementById('loginForm');
+      const submitBtn = document.getElementById('loginSubmitBtn');
+      const forgotBtn = document.getElementById('forgotPasswordBtn');
+      const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+      const alertError = document.getElementById('loginAlertError');
+      const alertSuccess = document.getElementById('loginAlertSuccess');
+      const loadingOverlay = document.getElementById('loginLoadingOverlay');
+      const loadingText = document.getElementById('loginLoadingText');
+
+      // Pre-fill owner email if available
+      if (OWNER_EMAIL && emailInput && !emailInput.value) {
+        emailInput.value = OWNER_EMAIL;
+      }
+
+      function showError(msg) {
+        alertSuccess.style.display = 'none';
+        alertError.textContent = msg;
+        alertError.style.display = 'block';
+      }
+
+      function showSuccess(msg) {
+        alertError.style.display = 'none';
+        alertSuccess.textContent = msg;
+        alertSuccess.style.display = 'block';
+      }
+
+      function hideAlerts() {
+        alertError.style.display = 'none';
+        alertSuccess.style.display = 'none';
+      }
+
+      function setLoading(isLoading, text = 'Authenticating...') {
+        loadingText.textContent = text;
+        loadingOverlay.style.display = isLoading ? 'flex' : 'none';
+        submitBtn.disabled = isLoading;
+      }
+
+      // Password visibility toggle
+      if (togglePasswordBtn && passwordInput) {
+        togglePasswordBtn.addEventListener('click', () => {
+          const isPassword = passwordInput.type === 'password';
+          passwordInput.type = isPassword ? 'text' : 'password';
+          togglePasswordBtn.textContent = isPassword ? 'Hide' : 'Show';
+        });
+      }
+
+      // Verify Firebase initialization
+      if (!FIREBASE_CONFIG || !FIREBASE_CONFIG.apiKey || !window.firebase) {
+        showError('Firebase configuration is missing or incomplete in config.js.');
+        submitBtn.disabled = true;
+        return;
+      }
+
+      const firebaseApp = window.firebase.apps.length
+        ? window.firebase.app()
+        : window.firebase.initializeApp(FIREBASE_CONFIG);
+      const firebaseAuth = firebaseApp.auth();
+
+      // If user is already signed in and is the owner, redirect immediately to admin.html
+      firebaseAuth.onAuthStateChanged((user) => {
+        if (user && user.email) {
+          const userEmail = user.email.trim().toLowerCase();
+          if (userEmail === OWNER_EMAIL.toLowerCase()) {
+            showSuccess(`Already authenticated as ${user.email}. Redirecting to Console...`);
+            setLoading(true, 'Redirecting to Console...');
+            setTimeout(() => {
+              window.location.replace('admin.html');
+            }, 500);
+          }
+        }
+      });
+
+      // Handle Sign In submission
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideAlerts();
+
+        const email = (emailInput.value || '').trim();
+        const password = passwordInput.value || '';
+
+        if (!email || !password) {
+          showError('Please provide both email and password.');
+          return;
+        }
+
+        if (OWNER_EMAIL && email.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
+          showError(`Access denied: Only the owner account (${OWNER_EMAIL}) is permitted.`);
+          return;
+        }
+
+        try {
+          setLoading(true, 'Verifying credentials...');
+          const cred = await firebaseAuth.signInWithEmailAndPassword(email, password);
+          const user = cred.user;
+
+          if (user && user.email && user.email.trim().toLowerCase() === OWNER_EMAIL.toLowerCase()) {
+            showSuccess('Authentication successful! Opening Admin Console...');
+            setLoading(true, 'Loading Admin Console...');
+            setTimeout(() => {
+              window.location.replace('admin.html');
+            }, 600);
+          } else {
+            setLoading(false);
+            showError('This account does not have owner access privileges.');
+            await firebaseAuth.signOut();
+          }
+        } catch (error) {
+          setLoading(false);
+          console.error('Sign in error:', error);
+          let msg = error.message || 'Sign in failed.';
+          if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+            msg = 'Invalid credentials. If you forgot your password, click "Forgot Password?" above.';
+          } else if (error.code === 'auth/user-not-found') {
+            msg = `No account found for ${email}. Please check your owner email.`;
+          } else if (error.code === 'auth/too-many-requests') {
+            msg = 'Temporarily locked due to multiple failed attempts. Please wait a few minutes or reset your password.';
+          } else if (error.code === 'auth/network-request-failed') {
+            msg = 'Network connection failed. Please check your internet connection.';
+          }
+          showError(msg);
+        }
+      });
+
+      // Handle Forgot Password
+      if (forgotBtn) {
+        forgotBtn.addEventListener('click', async () => {
+          hideAlerts();
+          const email = (emailInput.value || OWNER_EMAIL || '').trim();
+          if (!email) {
+            showError('Please enter your owner email in the input above first.');
+            emailInput.focus();
+            return;
+          }
+
+          try {
+            setLoading(true, 'Sending reset email...');
+            await firebaseAuth.sendPasswordResetEmail(email);
+            setLoading(false);
+            showSuccess(`Password reset link sent to ${email}! Check your inbox and spam folder.`);
+          } catch (error) {
+            setLoading(false);
+            console.error('Password reset error:', error);
+            let msg = error.message || 'Unable to send password reset email.';
+            if (error.code === 'auth/user-not-found') {
+              msg = `No Firebase user exists for ${email}.`;
+            }
+            showError(msg);
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+
+</html>

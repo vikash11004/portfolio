@@ -2160,9 +2160,8 @@ function sanitizeSiteContentForFirestore(content) {
     clone.aiConfig.groqApiKey = '';
     clone.aiConfig.openrouterApiKey = '';
     clone.aiConfig.customApiKey = '';
-    clone.aiConfig.customEndpoint = '';
-    // Public visitors should always use the built-in offline engine by default
-    clone.aiConfig.provider = 'builtin';
+    // If a secure Cloudflare Worker proxy URL is present, allow proxy provider for public visitors
+    clone.aiConfig.provider = clone.aiConfig.proxyUrl ? 'proxy' : 'builtin';
   }
   return clone;
 }

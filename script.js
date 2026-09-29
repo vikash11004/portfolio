@@ -2137,34 +2137,45 @@ function queryLiveKnowledgeBase(userQuery) {
 }
 
 function getActiveAiConfig() {
+  const globalAi = (window.PORTFOLIO_CONFIG && window.PORTFOLIO_CONFIG.AI_CONFIG) || {};
+  const siteAi = (siteContentState && siteContentState.aiConfig) || {};
+
+  let localAi = {};
   try {
     const local = localStorage.getItem('portfolio_ai_config_override');
     if (local) {
       const parsed = JSON.parse(local);
-      if (parsed && typeof parsed === 'object') return parsed;
+      if (parsed && typeof parsed === 'object') localAi = parsed;
     }
   } catch (_) { }
 
-  if (siteContentState && siteContentState.aiConfig) {
-    return siteContentState.aiConfig;
+  const merged = { ...globalAi, ...siteAi, ...localAi };
+
+  // Always resolve proxyUrl from any available source (global config, site content, or fallback)
+  const proxyUrl = merged.proxyUrl || globalAi.proxyUrl || 'https://gven-ai-proxy.vikashthyadi1104.workers.dev/';
+  if (proxyUrl) {
+    merged.proxyUrl = proxyUrl;
+    if (!merged.provider || merged.provider === 'builtin' || merged.provider === 'proxy') {
+      merged.provider = 'proxy';
+    }
   }
 
-  if (window.PORTFOLIO_CONFIG && window.PORTFOLIO_CONFIG.AI_CONFIG) {
-    return window.PORTFOLIO_CONFIG.AI_CONFIG;
-  }
-
-  return { provider: 'builtin' };
+  return merged;
 }
 
 async function callCloudAiProvider(userQuery, kb) {
   const aiConfig = getActiveAiConfig();
-  let provider = aiConfig.provider || 'builtin';
+  const proxyUrl = aiConfig.proxyUrl || (window.PORTFOLIO_CONFIG && window.PORTFOLIO_CONFIG.AI_CONFIG && window.PORTFOLIO_CONFIG.AI_CONFIG.proxyUrl) || 'https://gven-ai-proxy.vikashthyadi1104.workers.dev/';
 
-  // If a secure serverless proxy URL is provided, prioritize it
-  if (provider === 'proxy' || (aiConfig.proxyUrl && provider !== 'builtin')) {
+  let provider = aiConfig.provider || (proxyUrl ? 'proxy' : 'builtin');
+
+  // If a serverless proxy URL is available, route to Cloud AI proxy
+  if (proxyUrl && (provider === 'proxy' || provider === 'builtin')) {
     provider = 'proxy';
-  } else if (provider === 'builtin' && aiConfig.groqApiKey && aiConfig.groqApiKey.startsWith('gsk_')) {
+  } else if (provider === 'groq' || (aiConfig.groqApiKey && aiConfig.groqApiKey.startsWith('gsk_'))) {
     provider = 'groq';
+  } else if (provider === 'openrouter' || (aiConfig.openrouterApiKey && aiConfig.openrouterApiKey.startsWith('sk-or-'))) {
+    provider = 'openrouter';
   }
 
   if (provider === 'builtin') {

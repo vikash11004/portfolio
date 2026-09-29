@@ -49,7 +49,7 @@ async function syncFallbackFiles() {
     liveContent.aiConfig.groqApiKey = '';
     liveContent.aiConfig.openrouterApiKey = '';
     liveContent.aiConfig.customApiKey = '';
-    liveContent.aiConfig.provider = 'builtin';
+    liveContent.aiConfig.provider = liveContent.aiConfig.proxyUrl ? 'proxy' : 'builtin';
   }
 
   // 1. Update projects-data.js

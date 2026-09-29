@@ -2138,8 +2138,10 @@ async function callCloudAiProvider(userQuery, kb) {
   const aiConfig = getActiveAiConfig();
   let provider = aiConfig.provider || 'builtin';
 
-  // If a valid Groq API key exists and provider was defaulted to builtin, activate groq
-  if (provider === 'builtin' && aiConfig.groqApiKey && aiConfig.groqApiKey.startsWith('gsk_')) {
+  // If a secure serverless proxy URL is provided, prioritize it
+  if (provider === 'proxy' || (aiConfig.proxyUrl && provider !== 'builtin')) {
+    provider = 'proxy';
+  } else if (provider === 'builtin' && aiConfig.groqApiKey && aiConfig.groqApiKey.startsWith('gsk_')) {
     provider = 'groq';
   }
 
@@ -2151,7 +2153,12 @@ async function callCloudAiProvider(userQuery, kb) {
   let apiKey = '';
   let model = '';
 
-  if (provider === 'groq') {
+  if (provider === 'proxy') {
+    endpoint = aiConfig.proxyUrl || '';
+    if (!endpoint) return null;
+    model = aiConfig.groqModel || 'llama-3.3-70b-versatile';
+    apiKey = ''; // Handled securely on the server/Cloudflare edge
+  } else if (provider === 'groq') {
     apiKey = aiConfig.groqApiKey || '';
     if (!apiKey) return null;
     endpoint = 'https://api.groq.com/openai/v1/chat/completions';
@@ -2183,12 +2190,14 @@ Use clear markdown formatting (**bold**, *italic*, - bullet lists). Keep answers
 --- LIVE PORTFOLIO KNOWLEDGE BASE ---
 ${exportKnowledgeBaseAsMarkdown(kb, userQuery)}`;
 
+  const headers = { 'Content-Type': 'application/json' };
+  if (apiKey) {
+    headers['Authorization'] = `Bearer ${apiKey}`;
+  }
+
   const response = await fetch(endpoint, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
+    headers,
     body: JSON.stringify({
       model,
       messages: [

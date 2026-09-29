@@ -236,8 +236,9 @@ const AI_STORAGE_KEY = 'portfolio_ai_config_override';
 
 const DEFAULT_AI_CONFIG = {
   provider: 'builtin',
+  proxyUrl: '',
   groqApiKey: '',
-  groqModel: 'groq/compound-mini',
+  groqModel: 'llama-3.3-70b-versatile',
   openrouterApiKey: '',
   openrouterModel: 'meta-llama/llama-3.3-70b-instruct:free',
   customEndpoint: '',
@@ -246,8 +247,8 @@ const DEFAULT_AI_CONFIG = {
 };
 
 function normalizeGroqModel(model) {
-  if (!model || model.includes('llama-3') || model.includes('mixtral')) {
-    return 'groq/compound-mini';
+  if (!model) {
+    return 'llama-3.3-70b-versatile';
   }
   return model;
 }
@@ -286,7 +287,7 @@ function saveAiConfig(cfg) {
   } catch (_) { }
 
   siteContentState = siteContentState || {};
-  // SECURITY: Never keep raw secrets in public siteContentState
+  // SECURITY: Never keep raw secrets in public siteContentState (proxyUrl is safe)
   const safeAiConfig = { ...cfg, groqApiKey: '', openrouterApiKey: '', customApiKey: '', customEndpoint: '' };
   siteContentState.aiConfig = safeAiConfig;
 }
@@ -296,6 +297,8 @@ function initAiConfigUI() {
   const groqModelSelect = $('#aiGroqModelSelect');
   const groqApiKeyInput = $('#aiGroqApiKey');
   const openrouterApiKeyInput = $('#aiOpenrouterApiKey');
+  const proxyUrlInput = $('#aiProxyUrl');
+  const proxyFields = $('#proxyAiEndpointFields');
   const customEndpointInput = $('#aiCustomEndpoint');
   const customModelInput = $('#aiCustomModel');
   const customFields = $('#customAiEndpointFields');
@@ -310,15 +313,22 @@ function initAiConfigUI() {
     if (groqModelSelect) groqModelSelect.value = normalizeGroqModel(cfg.groqModel);
     if (groqApiKeyInput) groqApiKeyInput.value = cfg.groqApiKey || '';
     if (openrouterApiKeyInput) openrouterApiKeyInput.value = cfg.openrouterApiKey || '';
+    if (proxyUrlInput) proxyUrlInput.value = cfg.proxyUrl || '';
     if (customEndpointInput) customEndpointInput.value = cfg.customEndpoint || '';
     if (customModelInput) customModelInput.value = cfg.customModel || '';
 
+    if (proxyFields) {
+      proxyFields.style.display = cfg.provider === 'proxy' ? 'grid' : 'none';
+    }
     if (customFields) {
       customFields.style.display = cfg.provider === 'custom' ? 'grid' : 'none';
     }
 
     if (badge) {
-      if (cfg.provider === 'groq') {
+      if (cfg.provider === 'proxy') {
+        badge.textContent = cfg.proxyUrl ? '✓ Proxy Ready' : 'Proxy URL Needed';
+        badge.className = `admin-storage-config__status ${cfg.proxyUrl ? 'is-connected' : ''}`;
+      } else if (cfg.provider === 'groq') {
         badge.textContent = cfg.groqApiKey ? `✓ Groq Ready` : 'Groq Key Needed';
         badge.className = `admin-storage-config__status ${cfg.groqApiKey ? 'is-connected' : ''}`;
       } else if (cfg.provider === 'openrouter') {
@@ -336,6 +346,9 @@ function initAiConfigUI() {
 
   if (providerSelect) {
     providerSelect.addEventListener('change', () => {
+      if (proxyFields) {
+        proxyFields.style.display = providerSelect.value === 'proxy' ? 'grid' : 'none';
+      }
       if (customFields) {
         customFields.style.display = providerSelect.value === 'custom' ? 'grid' : 'none';
       }
@@ -370,7 +383,8 @@ function initAiConfigUI() {
 
       const cfg = {
         provider,
-        groqModel: normalizeGroqModel(groqModelSelect ? groqModelSelect.value : 'groq/compound-mini'),
+        proxyUrl: proxyUrlInput ? proxyUrlInput.value.trim() : '',
+        groqModel: normalizeGroqModel(groqModelSelect ? groqModelSelect.value : 'llama-3.3-70b-versatile'),
         groqApiKey: groqKey,
         openrouterApiKey: openrouterApiKeyInput ? openrouterApiKeyInput.value.trim() : '',
         customEndpoint: customEndpointInput ? customEndpointInput.value.trim() : '',
@@ -383,9 +397,10 @@ function initAiConfigUI() {
 
       if (firebaseReady && isOwnerLoggedIn() && firebaseDb) {
         try {
-          // SECURITY: Only save public model preferences to Firestore. NEVER upload API keys.
+          // SECURITY: Only save public model and proxy preferences to Firestore. NEVER upload API keys.
           const publicAiConfig = {
-            provider: 'builtin',
+            provider: cfg.provider === 'proxy' ? 'proxy' : 'builtin',
+            proxyUrl: cfg.proxyUrl,
             groqModel: cfg.groqModel,
             openrouterModel: cfg.openrouterModel,
             groqApiKey: '',
@@ -400,7 +415,7 @@ function initAiConfigUI() {
       }
 
       if (msg) {
-        msg.textContent = '✓ AI settings saved! (API keys stored safely in browser only)';
+        msg.textContent = '✓ AI settings saved! (Proxy URL & public settings synced; API keys kept safe)';
         msg.className = 'admin-storage-config__msg is-success';
         setTimeout(() => { if (msg) msg.textContent = ''; }, 4000);
       }
@@ -424,6 +439,43 @@ function initAiConfigUI() {
         if (msg) {
           msg.textContent = '✓ Built-in Knowledge Base engine is active and ready (no API key needed).';
           msg.className = 'admin-storage-config__msg is-success';
+        }
+        return;
+      }
+
+      if (provider === 'proxy') {
+        const pUrl = proxyUrlInput ? proxyUrlInput.value.trim() : '';
+        if (!pUrl) {
+          if (msg) {
+            msg.textContent = 'Please enter your Cloudflare / Vercel proxy URL first.';
+            msg.className = 'admin-storage-config__msg is-error';
+          }
+          return;
+        }
+        try {
+          const testRes = await fetch(pUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: groqModelSelect ? groqModelSelect.value : 'llama-3.3-70b-versatile',
+              messages: [{ role: 'user', content: 'Say hello in 5 words.' }]
+            })
+          });
+          if (testRes.ok) {
+            const data = await testRes.json();
+            const reply = data.choices?.[0]?.message?.content || 'OK';
+            if (msg) {
+              msg.textContent = `✓ Proxy connected to Groq! ("${reply.trim()}")`;
+              msg.className = 'admin-storage-config__msg is-success';
+            }
+          } else {
+            throw new Error(`HTTP ${testRes.status}`);
+          }
+        } catch (err) {
+          if (msg) {
+            msg.textContent = `✗ Proxy test failed: ${err.message}`;
+            msg.className = 'admin-storage-config__msg is-error';
+          }
         }
         return;
       }

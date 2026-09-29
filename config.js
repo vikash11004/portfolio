@@ -18,7 +18,8 @@ window.PORTFOLIO_CONFIG = {
   },
   // Cloud AI Provider configuration for GVEN Assistant (Groq, OpenRouter, etc.)
   AI_CONFIG: {
-    provider: 'builtin', // 'builtin' | 'groq' | 'openrouter' | 'custom'
+    provider: 'builtin', // 'builtin' | 'proxy' | 'groq' | 'openrouter' | 'custom'
+    proxyUrl: '', // Optional: Secure Cloudflare Worker or Vercel proxy URL (e.g. https://gven-ai-proxy.your-name.workers.dev)
     groqApiKey: '',
     groqModel: 'groq/compound-mini',
     openrouterApiKey: '',

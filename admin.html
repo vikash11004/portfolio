@@ -632,25 +632,32 @@
                     <label>Active AI Provider
                       <select id="aiProviderSelect">
                         <option value="builtin">Built-in Knowledge Base Engine (Offline &amp; Free)</option>
-                        <option value="groq">Groq Cloud API (Recommended Free &amp; Fast)</option>
+                        <option value="proxy">⚡ Secure Serverless Proxy (Public Natural Language via Groq)</option>
+                        <option value="groq">Groq Cloud API (Direct / Local Testing)</option>
                         <option value="openrouter">OpenRouter (Free Tier Models)</option>
                         <option value="custom">Custom OpenAI-Compatible Endpoint</option>
                       </select>
                     </label>
                     <label>Groq Model
                       <select id="aiGroqModelSelect">
-                        <option value="groq/compound-mini">groq/compound-mini (Fast &amp; Smart - Recommended)</option>
+                        <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile (Smartest Natural Language - Recommended)</option>
+                        <option value="groq/compound-mini">groq/compound-mini (Fast &amp; Smart)</option>
                         <option value="qwen/qwen3.8-27b">qwen/qwen3.8-27b (Ultra-Fast 800ms)</option>
                         <option value="groq/compound">groq/compound (Comprehensive)</option>
-                        <option value="openai/gpt-oss-120b">openai/gpt-oss-120b</option>
-                        <option value="openai/gpt-oss-20b">openai/gpt-oss-20b</option>
                       </select>
                     </label>
                     <label>Groq API Key (gsk_...)
-                      <input type="password" id="aiGroqApiKey" placeholder="Enter your free Groq API key">
+                      <input type="password" id="aiGroqApiKey" placeholder="Enter key (stored safely in local browser only)">
                     </label>
                     <label>OpenRouter API Key (sk-or-...)
                       <input type="password" id="aiOpenrouterApiKey" placeholder="Enter OpenRouter API key (Optional)">
+                    </label>
+                  </div>
+                  <div class="project-form__grid" id="proxyAiEndpointFields" style="display: none;">
+                    <label style="grid-column: 1 / -1;">Cloudflare Worker / Vercel Proxy URL
+                      <input type="text" id="aiProxyUrl"
+                        placeholder="https://gven-ai-proxy.<your-subdomain>.workers.dev">
+                      <small style="color: var(--text-muted); display: block; margin-top: 4px;">Public visitors will use this proxy to talk to Groq with full natural language. Zero API keys are leaked.</small>
                     </label>
                   </div>
                   <div class="project-form__grid" id="customAiEndpointFields" style="display: none;">

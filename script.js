@@ -1716,9 +1716,10 @@ function setupContactForm() {
           access_key: currentKey,
           name: name,
           email: email,
+          replyto: email,
           message: message,
           subject: `Portfolio Message from ${name}`,
-          from_name: 'Portfolio Contact'
+          from_name: 'Vikash Thyadi Portfolio'
         })
       });
 

@@ -2036,6 +2036,16 @@ function initAdminTabs() {
   function switchTab(targetId) {
     tabBtns.forEach((b) => b.classList.toggle('active', b.dataset.tab === targetId));
     tabPanels.forEach((p) => p.classList.toggle('active', p.id === targetId));
+
+    if (targetId === 'gvenLogsTab') {
+      if (typeof initGvenChatLogs === 'function') {
+        if (!gvenChatLogsInitialized) {
+          initGvenChatLogs();
+        } else if (typeof fetchGvenChatLogsOnce === 'function') {
+          fetchGvenChatLogsOnce();
+        }
+      }
+    }
   }
 
   tabBtns.forEach((btn) => {
@@ -2886,8 +2896,112 @@ function formatGvenMarkdown(text) {
   return formattedLines.join('');
 }
 
+function showGvenLogsError(err) {
+  const loadingEl = $('#gvenLogsLoading');
+  const errorEl = $('#gvenLogsError');
+  const errorTitle = $('#gvenLogsErrorTitle');
+  const errorMsg = $('#gvenLogsErrorMessage');
+  const errorHint = $('#gvenLogsErrorHint');
+  const emptyEl = $('#gvenLogsEmpty');
+  const listEl = $('#gvenLogsList');
+
+  if (loadingEl) loadingEl.style.display = 'none';
+  if (emptyEl) emptyEl.style.display = 'none';
+  if (listEl) listEl.innerHTML = '';
+
+  if (!errorEl) return;
+  errorEl.style.display = 'block';
+
+  const msg = err?.message || String(err || 'Unknown error');
+  const isPermission = msg.toLowerCase().includes('permission') || err?.code === 'permission-denied';
+
+  if (errorTitle) {
+    errorTitle.textContent = isPermission ? '⚠️ Firestore Permission Denied' : '⚠️ Unable to Load Chat Logs';
+  }
+  if (errorMsg) {
+    errorMsg.textContent = msg;
+  }
+  if (errorHint) {
+    if (isPermission) {
+      errorHint.innerHTML = `
+        Your Firebase Admin account is logged in as <strong>${escapeHtml(currentUser?.email || 'Unknown')}</strong>.<br>
+        Firestore rejected reading the <code>chat_logs</code> collection.<br>
+        <strong>Fix:</strong> In Firebase Console -> Firestore Database -> Rules, check if <code>isOwner()</code> has <code>request.auth.token.email_verified == true</code>.<br>
+        Because email/password accounts in Firebase are unverified by default, please update <code>firestore.rules</code> to:
+        <pre style="background: rgba(0,0,0,0.6); padding: 0.6rem; text-align: left; overflow-x: auto; margin-top: 0.5rem; border: 1px solid #444; border-radius: 4px; font-family: monospace; font-size: 0.8rem; color: #fff;">function isOwner() {
+  return request.auth != null
+    &amp;&amp; request.auth.token.email != null
+    &amp;&amp; request.auth.token.email.lower() == 'vikashthyadi1104@gmail.com';
+}</pre>
+      `;
+    } else {
+      errorHint.textContent = 'Check your internet connection and Firebase configuration.';
+    }
+  }
+}
+
+function hideGvenLogsError() {
+  const errorEl = $('#gvenLogsError');
+  if (errorEl) errorEl.style.display = 'none';
+}
+
+async function sendTestChatLog() {
+  if (!firebaseDb) {
+    alert('Firebase is not ready yet.');
+    return;
+  }
+  const testBtns = [$('#testChatLogBtn'), $('#gvenLogsTestWriteBtn')].filter(Boolean);
+  testBtns.forEach(btn => {
+    btn.disabled = true;
+    btn.textContent = '⚡ Sending...';
+  });
+
+  try {
+    const firestoreModule = window.firebase && window.firebase.firestore;
+    const ts = (firestoreModule && firestoreModule.FieldValue && firestoreModule.FieldValue.serverTimestamp)
+      ? firestoreModule.FieldValue.serverTimestamp()
+      : new Date();
+
+    const sampleQueries = [
+      { q: "What are Vikash's primary technical skills?", a: "Vikash is proficient in JavaScript, React, Python, Web development, and AI engineering." },
+      { q: "Can I download Vikash's latest resume?", a: "Yes! You can download his resume directly from the portfolio header or ask GVEN for the link." },
+      { q: "What featured projects has Vikash built?", a: "Vikash has built impressive web applications, interactive software tools, and portfolio systems." }
+    ];
+    const picked = sampleQueries[Math.floor(Math.random() * sampleQueries.length)];
+
+    const docRef = await firebaseDb.collection('chat_logs').add({
+      question: picked.q,
+      answer: picked.a,
+      provider: 'cloud-proxy',
+      sessionId: 'admin_test_' + Date.now().toString(36),
+      userAgent: navigator.userAgent || 'Admin Panel Diagnostic',
+      platform: navigator.platform || 'Admin',
+      language: navigator.language || 'en',
+      timestamp: ts,
+      clientTimestamp: new Date().toISOString()
+    });
+
+    console.log('✓ Test chat log created successfully with ID:', docRef.id);
+    hideGvenLogsError();
+    await fetchGvenChatLogsOnce();
+  } catch (err) {
+    console.error('Test chat log write failed:', err);
+    showGvenLogsError(err);
+    alert('Could not write test log to Firestore: ' + (err.message || err));
+  } finally {
+    testBtns.forEach(btn => {
+      btn.disabled = false;
+      btn.textContent = btn.id === 'testChatLogBtn' ? '⚡ Test Log' : '⚡ Send Test Interaction';
+    });
+  }
+}
+
 function initGvenChatLogs() {
-  if (gvenChatLogsInitialized || !firebaseReady || !firebaseDb) return;
+  if (!firebaseReady || !firebaseDb) return;
+  if (gvenChatLogsInitialized) {
+    if (!gvenChatLogsUnsubscribe) startGvenChatLogsListener();
+    return;
+  }
   gvenChatLogsInitialized = true;
 
   const searchInput = $('#gvenLogsSearchInput');
@@ -2896,6 +3010,24 @@ function initGvenChatLogs() {
   const refreshBtn = $('#refreshChatLogsBtn');
   const exportBtn = $('#exportChatLogsBtn');
   const clearAllBtn = $('#clearChatLogsBtn');
+  const testChatLogBtn = $('#testChatLogBtn');
+  const testWriteBtn = $('#gvenLogsTestWriteBtn');
+  const retryBtn = $('#gvenLogsRetryBtn');
+
+  if (testChatLogBtn) {
+    testChatLogBtn.addEventListener('click', sendTestChatLog);
+  }
+  if (testWriteBtn) {
+    testWriteBtn.addEventListener('click', sendTestChatLog);
+  }
+  if (retryBtn) {
+    retryBtn.addEventListener('click', () => {
+      hideGvenLogsError();
+      const loadingEl = $('#gvenLogsLoading');
+      if (loadingEl) loadingEl.style.display = 'block';
+      startGvenChatLogsListener();
+    });
+  }
 
   if (searchInput) {
     searchInput.addEventListener('input', () => renderGvenChatLogs());
@@ -2964,13 +3096,18 @@ function initGvenChatLogs() {
 
 function startGvenChatLogsListener() {
   if (!firebaseDb) return;
-  if (gvenChatLogsUnsubscribe) gvenChatLogsUnsubscribe();
+  if (gvenChatLogsUnsubscribe) {
+    try { gvenChatLogsUnsubscribe(); } catch (_) {}
+    gvenChatLogsUnsubscribe = null;
+  }
 
   const loadingEl = $('#gvenLogsLoading');
+  if (loadingEl && !gvenChatLogs.length) loadingEl.style.display = 'block';
 
   try {
     gvenChatLogsUnsubscribe = firebaseDb.collection('chat_logs')
       .onSnapshot((snapshot) => {
+        hideGvenLogsError();
         if (loadingEl) loadingEl.style.display = 'none';
 
         const logs = [];
@@ -2996,20 +3133,24 @@ function startGvenChatLogsListener() {
         updateGvenStats(logs);
         renderGvenChatLogs();
       }, (err) => {
-        console.warn('Real-time chat log listener encountered an issue, trying one-time fetch:', err.message || err);
-        if (loadingEl) loadingEl.style.display = 'none';
+        console.warn('Real-time chat log listener encountered an issue:', err);
+        showGvenLogsError(err);
         fetchGvenChatLogsOnce();
       });
   } catch (err) {
     console.error('Failed to attach chat_logs listener:', err);
+    showGvenLogsError(err);
     fetchGvenChatLogsOnce();
   }
 }
 
 async function fetchGvenChatLogsOnce() {
   if (!firebaseDb) return;
+  const loadingEl = $('#gvenLogsLoading');
   try {
     const snap = await firebaseDb.collection('chat_logs').get();
+    hideGvenLogsError();
+    if (loadingEl) loadingEl.style.display = 'none';
     const logs = [];
     snap.forEach((doc) => {
       const data = doc.data() || {};
@@ -3032,6 +3173,7 @@ async function fetchGvenChatLogsOnce() {
     renderGvenChatLogs();
   } catch (e) {
     console.error('One-time fetch of chat logs failed:', e);
+    showGvenLogsError(e);
   }
 }
 

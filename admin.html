@@ -788,6 +788,7 @@
                 </div>
               </div>
               <div class="admin-editor__quick-actions">
+                <button type="button" class="admin-btn admin-btn--outline admin-btn--sm" id="testChatLogBtn" title="Send a test chat interaction to verify Firestore connectivity">⚡ Test Log</button>
                 <button type="button" class="admin-btn admin-btn--outline admin-btn--sm" id="exportChatLogsBtn" title="Export all chat logs as JSON">📥 Export JSON</button>
                 <button type="button" class="admin-btn admin-btn--outline admin-btn--sm" id="refreshChatLogsBtn" title="Refresh logs">↻ Refresh</button>
                 <button type="button" class="admin-btn admin-btn--secondary admin-btn--sm" id="clearChatLogsBtn" title="Clear all stored logs">🗑️ Clear All Logs</button>
@@ -835,6 +836,16 @@
               <div class="gven-logs-loading" id="gvenLogsLoading">
                 <span>⚡ Connecting to live chat stream...</span>
               </div>
+              <div class="gven-logs-error" id="gvenLogsError" style="display: none; padding: 2rem 1.5rem; text-align: center; border: 2px dashed #f25623; background: rgba(242, 86, 35, 0.05); margin-bottom: 1rem;">
+                <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">⚠️</span>
+                <h3 id="gvenLogsErrorTitle" style="color: #f25623; margin-bottom: 0.5rem; font-family: 'Space Grotesk', sans-serif;">Unable to Load Chat Logs</h3>
+                <p id="gvenLogsErrorMessage" style="color: #fff; max-width: 550px; margin: 0 auto; font-size: 0.95rem;">Firestore returned an error.</p>
+                <div id="gvenLogsErrorHint" style="margin-top: 0.85rem; font-size: 0.85rem; color: #a1a1aa; line-height: 1.5; max-width: 580px; margin-left: auto; margin-right: auto;"></div>
+                <div style="margin-top: 1.25rem; display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+                  <button type="button" class="admin-btn admin-btn--primary admin-btn--sm" id="gvenLogsRetryBtn">↻ Retry Connection</button>
+                  <button type="button" class="admin-btn admin-btn--outline admin-btn--sm" id="gvenLogsTestWriteBtn">⚡ Send Test Interaction</button>
+                </div>
+              </div>
               <div class="gven-logs-empty" id="gvenLogsEmpty" style="display: none;">
                 <span class="gven-logs-empty__icon">💬</span>
                 <h3>No Chat Interactions Yet</h3>
@@ -856,7 +867,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
-  <script src="admin.js?v=16"></script>
+  <script src="admin.js?v=17"></script>
 </body>
 
 </html>

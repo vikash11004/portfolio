@@ -2439,18 +2439,30 @@ function initAiChatbot() {
 
   async function logGvenInteraction(question, reply, providerUsed) {
     try {
-      if (!firebaseDb) return;
+      if (!firebaseDb && typeof setupFirebase === 'function') {
+        setupFirebase();
+      }
+      if (!firebaseDb) {
+        console.warn('GVEN logging: Firestore is not ready.');
+        return;
+      }
+      const firestoreModule = window.firebase && window.firebase.firestore;
+      const ts = (firestoreModule && firestoreModule.FieldValue && firestoreModule.FieldValue.serverTimestamp)
+        ? firestoreModule.FieldValue.serverTimestamp()
+        : new Date();
+
       await firebaseDb.collection('chat_logs').add({
         question: String(question || '').trim(),
         answer: String(reply || '').trim(),
         provider: String(providerUsed || 'built-in'),
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        timestamp: ts,
         clientTimestamp: new Date().toISOString(),
         sessionId: getOrCreateChatSessionId(),
         userAgent: navigator.userAgent || '',
         platform: navigator.platform || '',
         language: navigator.language || 'en'
       });
+      console.log('✓ GVEN interaction logged to Firestore successfully.');
     } catch (err) {
       console.warn('GVEN logging failed (non-blocking):', err.message || err);
     }

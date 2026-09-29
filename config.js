@@ -18,10 +18,10 @@ window.PORTFOLIO_CONFIG = {
   },
   // Cloud AI Provider configuration for GVEN Assistant (Groq, OpenRouter, etc.)
   AI_CONFIG: {
-    provider: 'builtin', // 'builtin' | 'proxy' | 'groq' | 'openrouter' | 'custom'
-    proxyUrl: '', // Optional: Secure Cloudflare Worker or Vercel proxy URL (e.g. https://gven-ai-proxy.your-name.workers.dev)
+    provider: 'proxy', // 'builtin' | 'proxy' | 'groq' | 'openrouter' | 'custom'
+    proxyUrl: 'https://gven-ai-proxy.vikashthyadi1104.workers.dev/', // Secure Cloudflare Worker proxy
     groqApiKey: '',
-    groqModel: 'groq/compound-mini',
+    groqModel: 'openai/gpt-oss-120b',
     openrouterApiKey: '',
     openrouterModel: 'meta-llama/llama-3.3-70b-instruct:free',
     customEndpoint: '',

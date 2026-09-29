@@ -28,6 +28,19 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders });
     }
 
+    // Health check on GET
+    if (request.method === 'GET') {
+      const apiKey = String(env.GROQ_API_KEY || '').trim().replace(/^["']|["']$/g, '');
+      return new Response(JSON.stringify({
+        status: 'ok',
+        service: 'GVEN Portfolio AI Proxy',
+        groqConfigured: !!apiKey
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     if (request.method !== 'POST') {
       return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
         status: 405,
@@ -37,7 +50,7 @@ export default {
 
     try {
       const body = await request.json();
-      const apiKey = env.GROQ_API_KEY;
+      const apiKey = String(env.GROQ_API_KEY || '').trim().replace(/^["']|["']$/g, '');
 
       if (!apiKey) {
         return new Response(
@@ -46,8 +59,11 @@ export default {
         );
       }
 
-      // Default to fast, intelligent Groq model
-      const model = body.model || 'llama-3.3-70b-versatile';
+      // Default to fast, active Groq flagship model
+      let model = body.model || 'openai/gpt-oss-120b';
+      if (!model || model.includes('llama-3') || model.includes('llama3') || model.includes('gemma') || model === 'groq/compound-mini') {
+        model = 'openai/gpt-oss-120b';
+      }
       const messages = body.messages || [];
 
       // Forward request to Groq with secure server-side authorization

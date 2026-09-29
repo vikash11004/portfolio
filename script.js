@@ -75,8 +75,9 @@ const DEFAULT_SITE_CONTENT = {
   "aiConfig": {
     "groqApiKey": "",
     "customEndpoint": "",
-    "groqModel": "llama-3.3-70b-versatile",
-    "provider": "builtin",
+    "groqModel": "openai/gpt-oss-120b",
+    "provider": "proxy",
+    "proxyUrl": "https://gven-ai-proxy.vikashthyadi1104.workers.dev/",
     "openrouterApiKey": "",
     "customModel": "",
     "customApiKey": ""
@@ -2156,15 +2157,19 @@ async function callCloudAiProvider(userQuery, kb) {
   if (provider === 'proxy') {
     endpoint = aiConfig.proxyUrl || '';
     if (!endpoint) return null;
-    model = aiConfig.groqModel || 'llama-3.3-70b-versatile';
+    let rawModel = aiConfig.groqModel || 'openai/gpt-oss-120b';
+    if (!rawModel || rawModel.includes('llama-3') || rawModel.includes('llama3') || rawModel.includes('mixtral') || rawModel === 'groq/compound-mini') {
+      rawModel = 'openai/gpt-oss-120b';
+    }
+    model = rawModel;
     apiKey = ''; // Handled securely on the server/Cloudflare edge
   } else if (provider === 'groq') {
     apiKey = aiConfig.groqApiKey || '';
     if (!apiKey) return null;
     endpoint = 'https://api.groq.com/openai/v1/chat/completions';
-    let rawModel = aiConfig.groqModel || 'groq/compound-mini';
-    if (!rawModel || rawModel.includes('llama-3') || rawModel.includes('mixtral')) {
-      rawModel = 'groq/compound-mini';
+    let rawModel = aiConfig.groqModel || 'openai/gpt-oss-120b';
+    if (!rawModel || rawModel.includes('llama-3') || rawModel.includes('llama3') || rawModel.includes('mixtral') || rawModel === 'groq/compound-mini') {
+      rawModel = 'openai/gpt-oss-120b';
     }
     model = rawModel;
   } else if (provider === 'openrouter') {

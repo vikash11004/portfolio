@@ -250,7 +250,7 @@ const DEFAULT_AI_CONFIG = {
   provider: 'builtin',
   proxyUrl: '',
   groqApiKey: '',
-  groqModel: 'llama-3.3-70b-versatile',
+  groqModel: 'openai/gpt-oss-120b',
   openrouterApiKey: '',
   openrouterModel: 'meta-llama/llama-3.3-70b-instruct:free',
   customEndpoint: '',
@@ -259,8 +259,8 @@ const DEFAULT_AI_CONFIG = {
 };
 
 function normalizeGroqModel(model) {
-  if (!model) {
-    return 'llama-3.3-70b-versatile';
+  if (!model || model === 'llama-3.3-70b-versatile' || model === 'groq/compound-mini' || model.includes('llama-3') || model.includes('llama3') || model.includes('gemma')) {
+    return 'openai/gpt-oss-120b';
   }
   return model;
 }
@@ -469,7 +469,7 @@ function initAiConfigUI() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              model: groqModelSelect ? groqModelSelect.value : 'llama-3.3-70b-versatile',
+              model: normalizeGroqModel(groqModelSelect ? groqModelSelect.value : 'openai/gpt-oss-120b'),
               messages: [{ role: 'user', content: 'Say hello in 5 words.' }]
             })
           });
@@ -481,7 +481,17 @@ function initAiConfigUI() {
               msg.className = 'admin-storage-config__msg is-success';
             }
           } else {
-            throw new Error(`HTTP ${testRes.status}`);
+            let detail = '';
+            try {
+              const errJson = await testRes.json();
+              detail = errJson.error?.message || errJson.error || (typeof errJson === 'string' ? errJson : '');
+            } catch (_) {
+              try {
+                const text = await testRes.text();
+                detail = text ? text.replace(/<[^>]+>/g, '').trim().slice(0, 100) : '';
+              } catch (_) { }
+            }
+            throw new Error(`HTTP ${testRes.status}${detail ? ` — ${detail}` : ''}`);
           }
         } catch (err) {
           if (msg) {

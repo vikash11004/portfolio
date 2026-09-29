@@ -44,6 +44,14 @@ async function syncFallbackFiles() {
   const siteContentDoc = parseFirestoreDoc(sData.fields);
   const liveContent = siteContentDoc.content;
 
+  // SECURITY: Always sanitize secrets before injecting into fallback code
+  if (liveContent && liveContent.aiConfig) {
+    liveContent.aiConfig.groqApiKey = '';
+    liveContent.aiConfig.openrouterApiKey = '';
+    liveContent.aiConfig.customApiKey = '';
+    liveContent.aiConfig.provider = 'builtin';
+  }
+
   // 1. Update projects-data.js
   const projectsDataPath = path.join(rootDir, 'projects-data.js');
   const projectsDataContent = `window.PORTFOLIO_PROJECT_SEED = ${JSON.stringify(projects, null, 2)};\n`;

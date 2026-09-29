@@ -22,16 +22,25 @@ const SITE_CONTENT_ROW_ID = 'portfolio_site';
 const SITE_CONTENT_SYNC_KEY = 'portfolio-site-content-sync';
 
 const DEFAULT_SITE_CONTENT = {
-  "aiConfig": {
-    "groqModel": "llama-3.3-70b-versatile",
-    "provider": "builtin",
-    "customModel": "",
-    "groqApiKey": "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",
-    "openrouterApiKey": "",
-    "customEndpoint": ""
+  "footer": {
+    "backToTopLabel": "↑ Back to Top",
+    "copyright": "© 2026 Vikash Thyadi. All rights reserved."
+  },
+  "contact": {
+    "instagramText": "Instagram →",
+    "linkedinUrl": "https://www.linkedin.com/in/vikashthyadi/",
+    "githubUrl": "https://github.com/vikash11004",
+    "linkedinText": "LinkedIn →",
+    "headingLine1": "Let's Work",
+    "subtext": "Have a project in mind, or just want to say hello? I'm always open to discussing new ideas and opportunities.",
+    "sectionLabel": "Get In Touch",
+    "githubText": "GitHub →",
+    "recipientEmail": "",
+    "headingLine2": "Together",
+    "instagramUrl": "https://www.instagram.com/vikash.thyadi/"
   },
   "about": {
-    "sectionLabel": "Background",
+    "imageUrl": "assets/images/about.jpeg",
     "educationItems": [
       {
         "title": "B.Tech in Computer Science & Engineering (Data Science)",
@@ -44,44 +53,69 @@ const DEFAULT_SITE_CONTENT = {
         "detail": "Secured 2nd place in a 24-hour hackathon conducted by AITAM, building under time pressure with real constraints.<br>Awarded a medal at a 7-hour hackathon conducted by V Cube Software Solutions."
       },
       {
-        "title": "Professional Certifications",
+        "year": "Certifications",
         "detail": "Earned the ServiceNow Certified System Administrator (CSA) and Certified Application Developer (CAD) certifications, validating expertise in platform administration and application development.<br>Successfully completed NPTEL Python for Data Science, strengthening skills in Python, data analysis, and machine learning fundamentals.",
-        "year": "Certifications"
+        "title": "Professional Certifications"
       }
     ],
+    "sectionLabel": "Background",
     "headingLine2": "Experience",
     "imageAlt": "Vikash working at desk",
     "bio": "I'm a developer and designer who believes great software should feel inevitable intuitive, precise, and expressive. I approach every project with the discipline of an engineer and the curiosity of a craftsman, turning complex problems into clean, purposeful interfaces.",
-    "imageUrl": "assets/images/about.jpeg",
     "headingLine1": "Education &"
   },
-  "projectsPage": {
-    "titleLine1": "All",
-    "titleLine2": "Projects",
-    "sectionLabel": "Archive",
-    "subtitle": "A collection of work spanning web applications, design systems, creative coding, and open-source contributions."
+  "seo": {
+    "detailTitleTemplate": "{project} — Vikash Thyadi",
+    "homeTitle": "Vikash Thyadi — Portfolio",
+    "themeColor": "#2A2529",
+    "faviconEmoji": "⚡",
+    "projectsTitle": "Projects — Vikash Thyadi",
+    "description": "Vikash Thyadi — Developer & Designer. A refined brutalist portfolio showcasing projects, skills, and creative work."
   },
-  "hero": {
-    "scrollCueText": "About Me",
-    "titleLine2": "Thyadi",
-    "imageUrl": "assets/images/profile.jpeg",
-    "primaryButtonText": "View Work",
-    "imageAlt": "Vikash Thyadi — Portrait",
-    "subtitle": "Highly motivated and curious engineering student.",
-    "label": "Developer & Designer",
-    "titleLine1": "Vikash",
-    "secondaryButtonText": "Download Resume"
+  "aiConfig": {
+    "groqApiKey": "",
+    "customEndpoint": "",
+    "groqModel": "llama-3.3-70b-versatile",
+    "provider": "builtin",
+    "openrouterApiKey": "",
+    "customModel": "",
+    "customApiKey": ""
+  },
+  "navbar": {
+    "contactLabel": "Contact",
+    "projectsLabel": "Projects",
+    "homeLabel": "Home"
   },
   "projectsPreview": {
     "sectionLabel": "Selected Work",
     "ctaText": "See All Projects",
-    "titleLine1": "Featured",
-    "titleLine2": "Projects"
+    "titleLine2": "Projects",
+    "titleLine1": "Featured"
+  },
+  "projectsPage": {
+    "titleLine2": "Projects",
+    "titleLine1": "All",
+    "subtitle": "A collection of work spanning web applications, design systems, creative coding, and open-source contributions.",
+    "sectionLabel": "Archive"
+  },
+  "brand": {
+    "resumeUrl": "https://res.cloudinary.com/ucebpoei/image/upload/v1790170808/portfolio/eibnyyt4dli6txy1pthf.pdf",
+    "resumeFileName": "Vikash-Thyadi-Resume.pdf",
+    "name": "Vikash Thyadi",
+    "logoUrl": "assets/images/logo1.png"
+  },
+  "hero": {
+    "imageAlt": "Vikash Thyadi — Portrait",
+    "titleLine2": "Thyadi",
+    "scrollCueText": "About Me",
+    "label": "Developer & Designer",
+    "subtitle": "Highly motivated and curious engineering student.",
+    "secondaryButtonText": "Download Resume",
+    "titleLine1": "Vikash",
+    "primaryButtonText": "View Work",
+    "imageUrl": "assets/images/profile.jpeg"
   },
   "skills": {
-    "headingLine1": "Tools & Technologies",
-    "sectionLabel": "Capabilities",
-    "resumeButtonText": "Download Resume",
     "items": [
       "JavaScript",
       "TypeScript",
@@ -110,43 +144,10 @@ const DEFAULT_SITE_CONTENT = {
       "Vercel",
       "Linux"
     ],
+    "sectionLabel": "Capabilities",
+    "headingLine1": "Tools & Technologies",
+    "resumeButtonText": "Download Resume",
     "headingLine2": "I Work With"
-  },
-  "contact": {
-    "linkedinUrl": "https://www.linkedin.com/in/vikashthyadi/",
-    "instagramUrl": "https://www.instagram.com/vikash.thyadi/",
-    "subtext": "Have a project in mind, or just want to say hello? I'm always open to discussing new ideas and opportunities.",
-    "githubText": "GitHub →",
-    "githubUrl": "https://github.com/vikash11004",
-    "instagramText": "Instagram →",
-    "linkedinText": "LinkedIn →",
-    "headingLine1": "Let's Work",
-    "recipientEmail": "",
-    "sectionLabel": "Get In Touch",
-    "headingLine2": "Together"
-  },
-  "seo": {
-    "projectsTitle": "Projects — Vikash Thyadi",
-    "description": "Vikash Thyadi — Developer & Designer. A refined brutalist portfolio showcasing projects, skills, and creative work.",
-    "themeColor": "#2A2529",
-    "detailTitleTemplate": "{project} — Vikash Thyadi",
-    "faviconEmoji": "⚡",
-    "homeTitle": "Vikash Thyadi — Portfolio"
-  },
-  "navbar": {
-    "homeLabel": "Home",
-    "contactLabel": "Contact",
-    "projectsLabel": "Projects"
-  },
-  "footer": {
-    "copyright": "© 2026 Vikash Thyadi. All rights reserved.",
-    "backToTopLabel": "↑ Back to Top"
-  },
-  "brand": {
-    "name": "Vikash Thyadi",
-    "resumeUrl": "https://res.cloudinary.com/ucebpoei/image/upload/v1790084680/portfolio/ge3nxsl8q2o3mfawydm1.pdf",
-    "logoUrl": "assets/images/logo1.png",
-    "resumeFileName": "Vikash-Thyadi-Resume.pdf"
   }
 };
 

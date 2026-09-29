@@ -286,7 +286,9 @@ function saveAiConfig(cfg) {
   } catch (_) { }
 
   siteContentState = siteContentState || {};
-  siteContentState.aiConfig = { ...cfg };
+  // SECURITY: Never keep raw secrets in public siteContentState
+  const safeAiConfig = { ...cfg, groqApiKey: '', openrouterApiKey: '', customApiKey: '', customEndpoint: '' };
+  siteContentState.aiConfig = safeAiConfig;
 }
 
 function initAiConfigUI() {
@@ -375,18 +377,30 @@ function initAiConfigUI() {
         customModel: customModelInput ? customModelInput.value.trim() : ''
       };
 
+      // Save keys strictly to browser local storage
       saveAiConfig(cfg);
       refreshForm();
 
       if (firebaseReady && isOwnerLoggedIn() && firebaseDb) {
         try {
-          const updated = deepMerge(siteContentState, { aiConfig: cfg });
+          // SECURITY: Only save public model preferences to Firestore. NEVER upload API keys.
+          const publicAiConfig = {
+            provider: 'builtin',
+            groqModel: cfg.groqModel,
+            openrouterModel: cfg.openrouterModel,
+            groqApiKey: '',
+            openrouterApiKey: '',
+            customApiKey: '',
+            customEndpoint: '',
+            customModel: ''
+          };
+          const updated = deepMerge(siteContentState, { aiConfig: publicAiConfig });
           await saveSiteContentToFirestore(updated);
         } catch (_) { }
       }
 
       if (msg) {
-        msg.textContent = '✓ AI configuration saved successfully!';
+        msg.textContent = '✓ AI settings saved! (API keys stored safely in browser only)';
         msg.className = 'admin-storage-config__msg is-success';
         setTimeout(() => { if (msg) msg.textContent = ''; }, 4000);
       }
@@ -1750,7 +1764,10 @@ async function handleAdminLogin(event) {
     setAuthStatus('Signed in successfully.');
     setFormMessage('Signed in successfully.');
     await refreshProjects();
-    if (isOwnerLoggedIn()) await ensureSeedProjects();
+    if (isOwnerLoggedIn()) {
+      await ensureSeedProjects();
+      await scrubLeakedSecretsFromFirestore();
+    }
   } catch (error) {
     console.error('Admin login error:', error);
     let errorMsg = error.message || 'Sign in failed.';
@@ -1995,6 +2012,43 @@ function fillSiteContentForm(content) {
   siteRawJsonBaseline = '';
 }
 
+function sanitizeSiteContentForFirestore(content) {
+  if (!content || typeof content !== 'object') return content;
+  const clone = JSON.parse(JSON.stringify(content));
+  if (clone.aiConfig) {
+    // SECURITY: API keys must NEVER be stored in public Firestore
+    clone.aiConfig.groqApiKey = '';
+    clone.aiConfig.openrouterApiKey = '';
+    clone.aiConfig.customApiKey = '';
+    clone.aiConfig.customEndpoint = '';
+    // Public visitors should always use the built-in offline engine by default
+    clone.aiConfig.provider = 'builtin';
+  }
+  return clone;
+}
+
+async function scrubLeakedSecretsFromFirestore() {
+  if (!firebaseReady || !isOwnerLoggedIn() || !firebaseDb) return;
+  try {
+    const snap = await firebaseDb.collection('site_content').doc(SITE_CONTENT_DOC_ID).get();
+    if (snap.exists) {
+      const data = snap.data() || {};
+      const content = data.content;
+      if (content && content.aiConfig && (content.aiConfig.groqApiKey || content.aiConfig.openrouterApiKey || content.aiConfig.customApiKey)) {
+        console.warn('⚠️ Leaked secret keys found in Firestore site_content/portfolio_site! Automatically scrubbing...');
+        const cleanContent = sanitizeSiteContentForFirestore(content);
+        await firebaseDb.collection('site_content').doc(SITE_CONTENT_DOC_ID).set({
+          content: cleanContent,
+          updated_at: new Date().toISOString()
+        }, { merge: true });
+        console.log('✓ Leaked secrets successfully wiped from Firestore site_content/portfolio_site.');
+      }
+    }
+  } catch (err) {
+    console.error('Failed to auto-scrub Firestore secrets:', err);
+  }
+}
+
 async function saveSiteContentToFirestore(updatedContent) {
   if (!firebaseReady || !isOwnerLoggedIn() || !firebaseDb) {
     throw new Error('You must be signed in as owner.');
@@ -2002,15 +2056,18 @@ async function saveSiteContentToFirestore(updatedContent) {
 
   siteContentState = deepMerge(DEFAULT_SITE_CONTENT, updatedContent);
 
+  // SECURITY: Unconditionally strip secret API keys before sending to public Firestore
+  const sanitizedForPublic = sanitizeSiteContentForFirestore(siteContentState);
+
   await firebaseDb.collection('site_content').doc(SITE_CONTENT_DOC_ID).set({
-    content: siteContentState,
+    content: sanitizedForPublic,
     updated_at: new Date().toISOString()
   }, { merge: true });
 
   try {
     localStorage.setItem(SITE_CONTENT_SYNC_KEY, JSON.stringify({
       updatedAt: new Date().toISOString(),
-      content: siteContentState
+      content: sanitizedForPublic
     }));
   } catch (_error) {
     // Ignore storage sync failures; Firestore remains the source of truth.
@@ -2210,7 +2267,32 @@ async function loadSiteContent() {
     const snap = await firebaseDb.collection('site_content').doc(SITE_CONTENT_DOC_ID).get();
     if (snap.exists) {
       const data = snap.data() || {};
-      siteContentState = deepMerge(DEFAULT_SITE_CONTENT, data.content || {});
+      const remoteContent = data.content || {};
+
+      // AUTOMATIC SECURITY SCRUB: If public Firestore document still has leaked keys, scrub it now!
+      if (
+        isOwnerLoggedIn() &&
+        remoteContent.aiConfig &&
+        (remoteContent.aiConfig.groqApiKey || remoteContent.aiConfig.openrouterApiKey || remoteContent.aiConfig.customApiKey)
+      ) {
+        console.warn('⚠️ Leaked API key detected in live Firestore document! Automatically scrubbing...');
+        const cleanContent = sanitizeSiteContentForFirestore(remoteContent);
+        firebaseDb.collection('site_content').doc(SITE_CONTENT_DOC_ID).set({
+          content: cleanContent,
+          updated_at: new Date().toISOString()
+        }, { merge: true }).then(() => {
+          console.log('✓ Successfully scrubbed secret API keys from live Firestore document.');
+        }).catch(err => {
+          console.error('Failed to scrub leaked keys from Firestore:', err);
+        });
+      }
+
+      siteContentState = deepMerge(DEFAULT_SITE_CONTENT, remoteContent);
+      if (siteContentState.aiConfig) {
+        siteContentState.aiConfig.groqApiKey = '';
+        siteContentState.aiConfig.openrouterApiKey = '';
+        siteContentState.aiConfig.customApiKey = '';
+      }
     } else {
       siteContentState = deepMerge(DEFAULT_SITE_CONTENT, {});
     }
@@ -2541,7 +2623,10 @@ async function initAdmin() {
   if (firebaseReady) {
     await restoreAuthSession();
     await refreshProjects();
-    if (isOwnerLoggedIn()) await ensureSeedProjects();
+    if (isOwnerLoggedIn()) {
+      await ensureSeedProjects();
+      await scrubLeakedSecretsFromFirestore();
+    }
   }
 }
 

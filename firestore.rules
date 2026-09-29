@@ -4,7 +4,8 @@ service cloud.firestore {
     function isOwner() {
       return request.auth != null
         && request.auth.token.email != null
-        && request.auth.token.email == 'vikashthyadi1104@gmail.com';
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() == 'vikashthyadi1104@gmail.com';
     }
 
     match /projects/{projectId} {

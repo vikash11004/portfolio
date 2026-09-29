@@ -5,6 +5,10 @@ config.local.js
 !.env.example
 node_modules/
 .vscode/
+*service-account*.json
+credentials*.json
+*.pem
+*.key
 
 # OS/editor noise
 .DS_Store

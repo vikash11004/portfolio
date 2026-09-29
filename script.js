@@ -1658,7 +1658,8 @@ function setupContactForm() {
   const statusEl = $('#contactFormStatus');
   if (!form || !statusEl) return;
 
-  const web3FormsKey = siteContentState.contact?.web3formsKey || WEB3FORMS_ACCESS_KEY || APP_CONFIG.WEB3FORMS_ACCESS_KEY;
+  if (form.dataset.contactBound === 'true') return;
+  form.dataset.contactBound = 'true';
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();

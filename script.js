@@ -9,6 +9,7 @@
 const APP_CONFIG = window.PORTFOLIO_CONFIG || {};
 const FIREBASE_CONFIG = APP_CONFIG.FIREBASE_CONFIG || null;
 const OWNER_EMAIL = APP_CONFIG.OWNER_EMAIL || '';
+const WEB3FORMS_ACCESS_KEY = APP_CONFIG.WEB3FORMS_ACCESS_KEY || '';
 const DEFAULT_THUMBNAIL = 'assets/images/project-1.png';
 
 const CATEGORY_LABELS = {
@@ -36,6 +37,7 @@ const DEFAULT_SITE_CONTENT = {
     "sectionLabel": "Get In Touch",
     "githubText": "GitHub →",
     "recipientEmail": "",
+    "web3formsKey": "",
     "headingLine2": "Together",
     "instagramUrl": "https://www.instagram.com/vikash.thyadi/"
   },
@@ -1656,12 +1658,7 @@ function setupContactForm() {
   const statusEl = $('#contactFormStatus');
   if (!form || !statusEl) return;
 
-  const recipientEmail = siteContentState.contact?.recipientEmail || OWNER_EMAIL;
-
-  if (!recipientEmail) {
-    setContactFormStatus('Contact form is not configured yet.', true);
-    return;
-  }
+  const web3FormsKey = siteContentState.contact?.web3formsKey || WEB3FORMS_ACCESS_KEY || APP_CONFIG.WEB3FORMS_ACCESS_KEY;
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -1683,6 +1680,12 @@ function setupContactForm() {
       return;
     }
 
+    const currentKey = siteContentState.contact?.web3formsKey || WEB3FORMS_ACCESS_KEY || APP_CONFIG.WEB3FORMS_ACCESS_KEY;
+    if (!currentKey) {
+      setContactFormStatus('Contact form is awaiting Web3Forms Access Key. Add it to config.js or Admin settings.', true);
+      return;
+    }
+
     setContactFormStatus('Sending your message...');
 
     if (submitBtn) {
@@ -1690,22 +1693,38 @@ function setupContactForm() {
       submitBtn.textContent = 'Sending...';
     }
 
-    formData.set('_captcha', 'false');
-    formData.set('_subject', `Portfolio contact message from ${name}`);
-    formData.set('_template', 'table');
+    const honeypotVal = String(formData.get('botcheck') || formData.get('_honey') || '').trim();
+    if (honeypotVal) {
+      // Spam bot detected silently
+      setContactFormStatus('Thanks! Your message has been sent.', false, true);
+      form.reset();
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Send Message';
+      }
+      return;
+    }
 
     try {
-      const response = await fetch(`https://formsubmit.co/ajax/${recipientEmail}`, {
+      const response = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           Accept: 'application/json'
         },
-        body: formData
+        body: JSON.stringify({
+          access_key: currentKey,
+          name: name,
+          email: email,
+          message: message,
+          subject: `Portfolio Message from ${name}`,
+          from_name: 'Portfolio Contact'
+        })
       });
 
       const result = await response.json().catch(() => ({}));
 
-      if (!response.ok || result.success === 'false') {
+      if (!response.ok || !result.success) {
         throw new Error(result.message || 'Unable to send message right now.');
       }
 

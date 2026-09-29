@@ -104,7 +104,8 @@ const DEFAULT_SITE_CONTENT = {
     githubUrl: 'https://github.com/vikash11004',
     linkedinText: 'LinkedIn →',
     linkedinUrl: 'https://www.linkedin.com/in/vikashthyadi/',
-    recipientEmail: ''
+    recipientEmail: '',
+    web3formsKey: ''
   },
   projectsPage: {
     sectionLabel: 'Archive',
@@ -2115,6 +2116,7 @@ function fillSiteContentForm(content) {
   ($('#contactHeadingLine2Input') || {}).value = safe.contact.headingLine2 || '';
   ($('#contactSubtextInput') || {}).value = safe.contact.subtext || '';
   ($('#contactRecipientEmail') || {}).value = safe.contact.recipientEmail || '';
+  ($('#contactWeb3FormsKey') || {}).value = safe.contact.web3formsKey || '';
   ($('#contactInstagramText') || {}).value = safe.contact.instagramText || '';
   ($('#contactInstagramUrl') || {}).value = safe.contact.instagramUrl || '';
   ($('#contactGithubText') || {}).value = safe.contact.githubText || '';
@@ -2311,6 +2313,7 @@ async function handleSiteContentSave(event) {
         headingLine2: String((($('#contactHeadingLine2Input') || {}).value || '')).trim(),
         subtext: String((($('#contactSubtextInput') || {}).value || '')).trim(),
         recipientEmail: String((($('#contactRecipientEmail') || {}).value || '')).trim(),
+        web3formsKey: String((($('#contactWeb3FormsKey') || {}).value || '')).trim(),
         instagramText: String((($('#contactInstagramText') || {}).value || '')).trim(),
         instagramUrl: String((($('#contactInstagramUrl') || {}).value || '')).trim(),
         githubText: String((($('#contactGithubText') || {}).value || '')).trim(),

@@ -11,6 +11,8 @@ window.PORTFOLIO_CONFIG = {
     measurementId: 'G-JDZSFFK8NY'
   },
   OWNER_EMAIL: 'vikashthyadi1104@gmail.com',
+  // Web3Forms Access Key (Free instant key from https://web3forms.com)
+  WEB3FORMS_ACCESS_KEY: 'c55dd7ab-dc6a-4015-8fbe-5aa590904313',
   // Cloudinary image upload configuration (100% free, no credit card required)
   CLOUDINARY: {
     cloudName: 'ucebpoei',

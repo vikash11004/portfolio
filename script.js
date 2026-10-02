@@ -1239,7 +1239,7 @@ function populateSkillsMarquee() {
     : DEFAULT_SITE_CONTENT.skills.items;
   // Duplicate skills for seamless infinite scroll
   const allSkills = [...skills, ...skills];
-  marquee.innerHTML = allSkills.map(skill => `<span class="skill-tag">${skill}</span>`).join('');
+  marquee.innerHTML = allSkills.map((skill, index) => `<span class="skill-tag"${index >= skills.length ? ' aria-hidden="true"' : ''}>${escapeHtml(skill)}</span>`).join('');
 }
 
 

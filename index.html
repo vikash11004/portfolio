@@ -7,9 +7,13 @@
   <meta name="theme-color" content="#2A2529">
   <title>Vikash Thyadi — Portfolio</title>
   <link rel="stylesheet" href="styles.css?v=10">
+  <link rel="stylesheet" href="design.css?v=2">
   <link rel="icon" id="siteFavicon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 </head>
 <body>
+  <a class="skip-link" href="#hero">Skip to content</a>
+  <div class="reading-progress" aria-hidden="true"></div>
+  <div class="custom-cursor" aria-hidden="true"><span>View</span></div>
 
   <!-- Loading Screen -->
   <div class="loader" id="loader">
@@ -23,17 +27,18 @@
   <nav class="navbar" id="navbar">
     <a href="#" class="navbar__logo" data-nav="home" aria-label="Home">
       <img class="navbar__logo-image" id="siteLogoImage" src="assets/images/logo1.png" alt="Logo placeholder">
+      <span class="wordmark">vikash<span class="wordmark__dot">.</span></span>
     </a>
     <div class="navbar__links" id="navLinks">
       <a href="#" class="navbar__link active" data-nav="home" id="navHomeLabel">Home</a>
       <a href="#" class="navbar__link" data-nav="projects-scroll" id="navProjectsLabel">Projects</a>
       <a href="#" class="navbar__link" data-nav="contact-scroll" id="navContactLabel">Contact</a>
     </div>
-    <div class="navbar__toggle" id="navToggle" aria-label="Toggle navigation menu" role="button" tabindex="0">
+    <button class="navbar__toggle" id="navToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="navLinks" type="button">
       <span></span>
       <span></span>
       <span></span>
-    </div>
+    </button>
   </nav>
 
   <!-- ============================================
@@ -43,26 +48,34 @@
 
     <!-- Section 1: Hero -->
     <section class="hero" id="hero">
+      <div class="hero__eyebrow"><span><i></i> A curious mind. A maker at heart.</span><span>PORTFOLIO / 2026</span></div>
       <div class="hero__container">
         <div class="hero__content">
           <span class="hero__label reveal" id="heroLabel">Developer & Designer</span>
           <h1 class="hero__title reveal"><span id="heroTitleLine1">Vikash</span><br><span id="heroTitleLine2">Thyadi</span></h1>
           <p class="hero__subtitle reveal" id="heroSubtitle">Highly motivated and curious engineering student.  </p>
+          <p class="hero__statement reveal">Thoughtful code.<br><em>Meaningful experiences.</em></p>
           <div class="hero__cta-row reveal">
             <a href="#" class="btn btn--primary" data-nav="projects" id="heroPrimaryBtn">View Work</a>
             <a href="assets/resume/VikashThyadi_Resume.pdf" class="btn btn--secondary" id="heroSecondaryBtn" download="Vikash-Thyadi-Resume.pdf">Download Resume</a>
           </div>
         </div>
         <div class="hero__image-wrapper reveal-right">
+          <div class="portrait-orbit" aria-hidden="true"></div>
           <img src="assets/images/profile.jpeg" alt="Vikash Thyadi — Portrait" class="hero__image" id="heroImage" loading="eager">
           <div class="hero__image-border"></div>
+          <div class="portrait-note"><span class="portrait-note__star" aria-hidden="true">✳</span><span>ENGINEER BY MIND.<br>CREATOR BY NATURE.</span></div>
+          <span class="portrait-caption">01 / THE PERSON BEHIND THE PIXELS</span>
         </div>
       </div>
       <div class="hero__scroll-cue" data-scroll="about" role="button" tabindex="0" aria-label="Scroll to About section">
         <span id="heroScrollCueLabel">About Me</span>
         <div class="hero__scroll-arrow">↓</div>
       </div>
+      <span class="hero__footnote">DESIGN WITH INTENT. BUILD WITH CURIOSITY.</span>
     </section>
+
+    <div class="discipline-strip" aria-label="Development, design, and creative thinking"><span>DEVELOPMENT</span><b aria-hidden="true">✳</b><span>DESIGN</span><b aria-hidden="true">✳</b><span>CREATIVE THINKING</span><b aria-hidden="true">✳</b><span>ALWAYS LEARNING</span></div>
 
     <!-- Section 2: About -->
  <section class="about" id="about">
@@ -321,6 +334,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-  <script src="script.js?v=18"></script>
+  <script src="script.js?v=19"></script>
+  <script src="design.js?v=2"></script>
 </body>
 </html>

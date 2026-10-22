@@ -250,6 +250,8 @@ const AI_STORAGE_KEY = 'portfolio_ai_config_override';
 const DEFAULT_AI_CONFIG = {
   provider: 'builtin',
   proxyUrl: '',
+  geminiApiKey: '',
+  geminiModel: 'gemini-2.0-flash',
   groqApiKey: '',
   groqModel: 'openai/gpt-oss-120b',
   openrouterApiKey: '',
@@ -301,7 +303,7 @@ function saveAiConfig(cfg) {
 
   siteContentState = siteContentState || {};
   // SECURITY: Never keep raw secrets in public siteContentState (proxyUrl is safe)
-  const safeAiConfig = { ...cfg, groqApiKey: '', openrouterApiKey: '', customApiKey: '', customEndpoint: '' };
+  const safeAiConfig = { ...cfg, geminiApiKey: '', groqApiKey: '', openrouterApiKey: '', customApiKey: '', customEndpoint: '' };
   siteContentState.aiConfig = safeAiConfig;
 }
 
@@ -309,6 +311,8 @@ function initAiConfigUI() {
   const providerSelect = $('#aiProviderSelect');
   const groqModelSelect = $('#aiGroqModelSelect');
   const groqApiKeyInput = $('#aiGroqApiKey');
+  const geminiModelSelect = $('#aiGeminiModelSelect');
+  const geminiApiKeyInput = $('#aiGeminiApiKey');
   const openrouterApiKeyInput = $('#aiOpenrouterApiKey');
   const proxyUrlInput = $('#aiProxyUrl');
   const proxyFields = $('#proxyAiEndpointFields');
@@ -325,6 +329,8 @@ function initAiConfigUI() {
     if (providerSelect) providerSelect.value = cfg.provider || 'builtin';
     if (groqModelSelect) groqModelSelect.value = normalizeGroqModel(cfg.groqModel);
     if (groqApiKeyInput) groqApiKeyInput.value = cfg.groqApiKey || '';
+    if (geminiModelSelect) geminiModelSelect.value = cfg.geminiModel || 'gemini-2.0-flash';
+    if (geminiApiKeyInput) geminiApiKeyInput.value = cfg.geminiApiKey || '';
     if (openrouterApiKeyInput) openrouterApiKeyInput.value = cfg.openrouterApiKey || '';
     if (proxyUrlInput) proxyUrlInput.value = cfg.proxyUrl || '';
     if (customEndpointInput) customEndpointInput.value = cfg.customEndpoint || '';
@@ -341,6 +347,9 @@ function initAiConfigUI() {
       if (cfg.provider === 'proxy') {
         badge.textContent = cfg.proxyUrl ? '✓ Proxy Ready' : 'Proxy URL Needed';
         badge.className = `admin-storage-config__status ${cfg.proxyUrl ? 'is-connected' : ''}`;
+      } else if (cfg.provider === 'gemini') {
+        badge.textContent = cfg.geminiApiKey ? '✓ Gemini Ready' : 'Gemini Key Needed';
+        badge.className = `admin-storage-config__status ${cfg.geminiApiKey ? 'is-connected' : ''}`;
       } else if (cfg.provider === 'groq') {
         badge.textContent = cfg.groqApiKey ? `✓ Groq Ready` : 'Groq Key Needed';
         badge.className = `admin-storage-config__status ${cfg.groqApiKey ? 'is-connected' : ''}`;
@@ -381,23 +390,40 @@ function initAiConfigUI() {
     });
   }
 
+  if (geminiApiKeyInput) {
+    geminiApiKeyInput.addEventListener('input', () => {
+      const val = geminiApiKeyInput.value.trim();
+      if (val.startsWith('AIzaSy') && providerSelect && providerSelect.value === 'builtin') {
+        providerSelect.value = 'gemini';
+        if (badge) {
+          badge.textContent = '✓ Gemini Ready';
+          badge.className = 'admin-storage-config__status is-connected';
+        }
+      }
+    });
+  }
+
   refreshForm();
 
   if (saveBtn) {
     saveBtn.addEventListener('click', async () => {
       let provider = providerSelect ? providerSelect.value : 'builtin';
       const groqKey = groqApiKeyInput ? groqApiKeyInput.value.trim() : '';
+      const geminiKey = geminiApiKeyInput ? geminiApiKeyInput.value.trim() : '';
 
-      // If user provided a Groq key but left provider on builtin, auto-activate groq
-      if (groqKey && provider === 'builtin') {
-        provider = 'groq';
-        if (providerSelect) providerSelect.value = 'groq';
+      // If user provided a key but left provider on builtin, auto-activate
+      if (provider === 'builtin') {
+        if (groqKey) provider = 'groq';
+        else if (geminiKey) provider = 'gemini';
+        if (providerSelect) providerSelect.value = provider;
       }
 
       const cfg = {
         provider,
         proxyUrl: proxyUrlInput ? proxyUrlInput.value.trim() : '',
-        groqModel: normalizeGroqModel(groqModelSelect ? groqModelSelect.value : 'llama-3.3-70b-versatile'),
+        geminiApiKey: geminiKey,
+        geminiModel: geminiModelSelect ? geminiModelSelect.value : 'gemini-2.0-flash',
+        groqModel: normalizeGroqModel(groqModelSelect ? groqModelSelect.value : 'openai/gpt-oss-120b'),
         groqApiKey: groqKey,
         openrouterApiKey: openrouterApiKeyInput ? openrouterApiKeyInput.value.trim() : '',
         customEndpoint: customEndpointInput ? customEndpointInput.value.trim() : '',
@@ -412,10 +438,12 @@ function initAiConfigUI() {
         try {
           // SECURITY: Only save public model and proxy preferences to Firestore. NEVER upload API keys.
           const publicAiConfig = {
-            provider: cfg.provider === 'proxy' ? 'proxy' : 'builtin',
+            provider: cfg.provider === 'proxy' ? 'proxy' : (cfg.provider === 'gemini' ? 'gemini' : 'builtin'),
             proxyUrl: cfg.proxyUrl,
+            geminiModel: cfg.geminiModel,
             groqModel: cfg.groqModel,
             openrouterModel: cfg.openrouterModel,
+            geminiApiKey: '',
             groqApiKey: '',
             openrouterApiKey: '',
             customApiKey: '',
@@ -438,9 +466,14 @@ function initAiConfigUI() {
   if (testBtn) {
     testBtn.addEventListener('click', async () => {
       let provider = providerSelect ? providerSelect.value : 'builtin';
-      if (provider === 'builtin' && groqApiKeyInput && groqApiKeyInput.value.trim().startsWith('gsk_')) {
-        provider = 'groq';
-        if (providerSelect) providerSelect.value = 'groq';
+      if (provider === 'builtin') {
+        if (groqApiKeyInput && groqApiKeyInput.value.trim().startsWith('gsk_')) {
+          provider = 'groq';
+          if (providerSelect) providerSelect.value = 'groq';
+        } else if (geminiApiKeyInput && geminiApiKeyInput.value.trim().startsWith('AIzaSy')) {
+          provider = 'gemini';
+          if (providerSelect) providerSelect.value = 'gemini';
+        }
       }
 
       if (msg) {
@@ -471,14 +504,16 @@ function initAiConfigUI() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               model: normalizeGroqModel(groqModelSelect ? groqModelSelect.value : 'openai/gpt-oss-120b'),
+              geminiModel: geminiModelSelect ? geminiModelSelect.value : 'gemini-2.0-flash',
               messages: [{ role: 'user', content: 'Say hello in 5 words.' }]
             })
           });
           if (testRes.ok) {
             const data = await testRes.json();
             const reply = data.choices?.[0]?.message?.content || 'OK';
+            const via = data.is_fallback || data.provider === 'gemini-fallback' ? ' (via Gemini Fallback)' : '';
             if (msg) {
-              msg.textContent = `✓ Proxy connected to Groq! ("${reply.trim()}")`;
+              msg.textContent = `✓ Proxy connected${via}! ("${reply.trim().slice(0, 60)}")`;
               msg.className = 'admin-storage-config__msg is-success';
             }
           } else {
@@ -497,6 +532,73 @@ function initAiConfigUI() {
         } catch (err) {
           if (msg) {
             msg.textContent = `✗ Proxy test failed: ${err.message}`;
+            msg.className = 'admin-storage-config__msg is-error';
+          }
+        }
+        return;
+      }
+
+      if (provider === 'gemini') {
+        const key = geminiApiKeyInput ? geminiApiKeyInput.value.trim() : '';
+        const model = geminiModelSelect ? geminiModelSelect.value : 'gemini-2.0-flash';
+        if (!key) {
+          if (msg) {
+            msg.textContent = 'Please enter your Google Gemini API key first.';
+            msg.className = 'admin-storage-config__msg is-error';
+          }
+          return;
+        }
+
+        try {
+          let reply = '';
+          // 1. Try OpenAI-compatible endpoint
+          try {
+            const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${key}`
+              },
+              body: JSON.stringify({
+                model,
+                messages: [{ role: 'user', content: 'Say hello in 5 words.' }]
+              })
+            });
+            if (resp.ok) {
+              const data = await resp.json();
+              reply = data.choices?.[0]?.message?.content || '';
+            }
+          } catch (_) { }
+
+          // 2. Try native REST endpoint if needed
+          if (!reply) {
+            const nativeResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ role: 'user', parts: [{ text: 'Say hello in 5 words.' }] }]
+              })
+            });
+            if (nativeResp.ok) {
+              const nativeData = await nativeResp.json();
+              reply = nativeData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            } else {
+              let detail = '';
+              try {
+                const errData = await nativeResp.json();
+                detail = errData.error?.message || '';
+              } catch (_) { }
+              throw new Error(`HTTP ${nativeResp.status}${detail ? ` — ${detail}` : ''}`);
+            }
+          }
+
+          if (msg) {
+            msg.textContent = `✓ Connected to Google Gemini (${model})! Model answered: "${(reply || 'OK').trim().slice(0, 60)}"`;
+            msg.className = 'admin-storage-config__msg is-success';
+          }
+        } catch (err) {
+          if (msg) {
+            msg.textContent = `✗ Gemini test failed: ${err.message}`;
             msg.className = 'admin-storage-config__msg is-error';
           }
         }
@@ -2167,6 +2269,7 @@ function sanitizeSiteContentForFirestore(content) {
   const clone = JSON.parse(JSON.stringify(content));
   if (clone.aiConfig) {
     // SECURITY: API keys must NEVER be stored in public Firestore
+    clone.aiConfig.geminiApiKey = '';
     clone.aiConfig.groqApiKey = '';
     clone.aiConfig.openrouterApiKey = '';
     clone.aiConfig.customApiKey = '';
@@ -2183,7 +2286,7 @@ async function scrubLeakedSecretsFromFirestore() {
     if (snap.exists) {
       const data = snap.data() || {};
       const content = data.content;
-      if (content && content.aiConfig && (content.aiConfig.groqApiKey || content.aiConfig.openrouterApiKey || content.aiConfig.customApiKey)) {
+      if (content && content.aiConfig && (content.aiConfig.geminiApiKey || content.aiConfig.groqApiKey || content.aiConfig.openrouterApiKey || content.aiConfig.customApiKey)) {
         console.warn('⚠️ Leaked secret keys found in Firestore site_content/portfolio_site! Automatically scrubbing...');
         const cleanContent = sanitizeSiteContentForFirestore(content);
         await firebaseDb.collection('site_content').doc(SITE_CONTENT_DOC_ID).set({
@@ -2423,7 +2526,7 @@ async function loadSiteContent() {
       if (
         isOwnerLoggedIn() &&
         remoteContent.aiConfig &&
-        (remoteContent.aiConfig.groqApiKey || remoteContent.aiConfig.openrouterApiKey || remoteContent.aiConfig.customApiKey)
+        (remoteContent.aiConfig.geminiApiKey || remoteContent.aiConfig.groqApiKey || remoteContent.aiConfig.openrouterApiKey || remoteContent.aiConfig.customApiKey)
       ) {
         console.warn('⚠️ Leaked API key detected in live Firestore document! Automatically scrubbing...');
         const cleanContent = sanitizeSiteContentForFirestore(remoteContent);
@@ -2439,6 +2542,7 @@ async function loadSiteContent() {
 
       siteContentState = deepMerge(DEFAULT_SITE_CONTENT, remoteContent);
       if (siteContentState.aiConfig) {
+        siteContentState.aiConfig.geminiApiKey = '';
         siteContentState.aiConfig.groqApiKey = '';
         siteContentState.aiConfig.openrouterApiKey = '';
         siteContentState.aiConfig.customApiKey = '';
@@ -3251,9 +3355,19 @@ function renderGvenChatLogs() {
       ? log.timestamp.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })
       : 'Recent';
 
-    const isCloud = (log.provider || '').toLowerCase().includes('cloud') || (log.provider || '').toLowerCase().includes('proxy') || (log.provider || '').toLowerCase().includes('groq');
-    const providerBadgeClass = isCloud ? 'gven-log-badge--cloud' : 'gven-log-badge--builtin';
-    const providerLabel = isCloud ? '⚡ Groq LLaMA 3.3' : '📘 Built-in Knowledge Base';
+    const pLower = (log.provider || '').toLowerCase();
+    const isGemini = pLower.includes('gemini');
+    const isCloud = pLower.includes('cloud') || pLower.includes('proxy') || pLower.includes('groq');
+
+    let providerBadgeClass = 'gven-log-badge--builtin';
+    let providerLabel = '📘 Built-in Knowledge Base';
+    if (isGemini) {
+      providerBadgeClass = 'gven-log-badge--gemini';
+      providerLabel = pLower.includes('fallback') ? '✨ Gemini Fallback' : '✨ Google Gemini';
+    } else if (isCloud) {
+      providerBadgeClass = 'gven-log-badge--cloud';
+      providerLabel = '⚡ Groq LLaMA 3.3';
+    }
 
     const shortSession = log.sessionId ? (log.sessionId.length > 14 ? log.sessionId.slice(0, 14) + '…' : log.sessionId) : 'guest';
 

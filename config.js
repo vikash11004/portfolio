@@ -18,10 +18,12 @@ window.PORTFOLIO_CONFIG = {
     cloudName: 'ucebpoei',
     uploadPreset: 'portfolio_uploads'
   },
-  // Cloud AI Provider configuration for GVEN Assistant (Groq, OpenRouter, etc.)
+  // Cloud AI Provider configuration for GVEN Assistant (Groq, Gemini Fallback, OpenRouter, etc.)
   AI_CONFIG: {
-    provider: 'proxy', // 'builtin' | 'proxy' | 'groq' | 'openrouter' | 'custom'
+    provider: 'proxy', // 'builtin' | 'proxy' | 'gemini' | 'groq' | 'openrouter' | 'custom'
     proxyUrl: 'https://gven-ai-proxy.vikashthyadi1104.workers.dev/', // Secure Cloudflare Worker proxy
+    geminiApiKey: '',
+    geminiModel: 'gemini-2.0-flash',
     groqApiKey: '',
     groqModel: 'openai/gpt-oss-120b',
     openrouterApiKey: '',

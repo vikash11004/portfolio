@@ -57,10 +57,10 @@ async function main() {
     process.exit(1);
   }
 
-  console.log('Scrubbing groqApiKey, openrouterApiKey, and customApiKey from live Firestore...');
+  console.log('Scrubbing geminiApiKey, groqApiKey, openrouterApiKey, and customApiKey from live Firestore...');
 
   // Target patch fieldPaths to wipe secrets without touching any other portfolio data
-  const patchUrl = `https://firestore.googleapis.com/v1/${DOC_PATH}?updateMask.fieldPaths=content.aiConfig.groqApiKey&updateMask.fieldPaths=content.aiConfig.openrouterApiKey&updateMask.fieldPaths=content.aiConfig.customApiKey&updateMask.fieldPaths=content.aiConfig.customEndpoint&updateMask.fieldPaths=content.aiConfig.provider`;
+  const patchUrl = `https://firestore.googleapis.com/v1/${DOC_PATH}?updateMask.fieldPaths=content.aiConfig.geminiApiKey&updateMask.fieldPaths=content.aiConfig.groqApiKey&updateMask.fieldPaths=content.aiConfig.openrouterApiKey&updateMask.fieldPaths=content.aiConfig.customApiKey&updateMask.fieldPaths=content.aiConfig.customEndpoint&updateMask.fieldPaths=content.aiConfig.provider`;
 
   const patchBody = {
     fields: {
@@ -70,6 +70,7 @@ async function main() {
             aiConfig: {
               mapValue: {
                 fields: {
+                  geminiApiKey: { stringValue: '' },
                   groqApiKey: { stringValue: '' },
                   openrouterApiKey: { stringValue: '' },
                   customApiKey: { stringValue: '' },

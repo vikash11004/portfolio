@@ -46,6 +46,7 @@ async function syncFallbackFiles() {
 
   // SECURITY: Always sanitize secrets before injecting into fallback code
   if (liveContent && liveContent.aiConfig) {
+    liveContent.aiConfig.geminiApiKey = '';
     liveContent.aiConfig.groqApiKey = '';
     liveContent.aiConfig.openrouterApiKey = '';
     liveContent.aiConfig.customApiKey = '';

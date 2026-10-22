@@ -75,6 +75,8 @@ const DEFAULT_SITE_CONTENT = {
     "description": "Vikash Thyadi — Developer & Designer. A refined brutalist portfolio showcasing projects, skills, and creative work."
   },
   "aiConfig": {
+    "geminiApiKey": "",
+    "geminiModel": "gemini-2.0-flash",
     "groqApiKey": "",
     "customEndpoint": "",
     "groqModel": "openai/gpt-oss-120b",
@@ -2163,6 +2165,104 @@ function getActiveAiConfig() {
   return merged;
 }
 
+function formatAiResult(reply, userQuery, kb, providerUsed = 'gemini') {
+  const qLower = String(userQuery || '').toLowerCase();
+  let resumeCard = null;
+  if (qLower.includes('resume') || qLower.includes('cv') || qLower.includes('download') || reply.toLowerCase().includes('resume')) {
+    const rawUrl = kb.resume.url;
+    const fileName = kb.resume.fileName || 'Vikash-Thyadi-Resume.pdf';
+    resumeCard = {
+      rawUrl,
+      downloadUrl: getDownloadableResumeUrl(rawUrl, fileName),
+      fileName
+    };
+  }
+
+  let projectCards = [];
+  const matchedProject = kb.projects.find(p => qLower.includes((p.title || '').toLowerCase()));
+  if (matchedProject) {
+    projectCards = [matchedProject];
+  } else if (qLower.includes('featured') || qLower.includes('projects')) {
+    projectCards = kb.projects.filter(p => p.featured).slice(0, 3);
+  }
+
+  return {
+    reply,
+    projectCards,
+    resumeCard,
+    provider: providerUsed
+  };
+}
+
+async function callGeminiApi(apiKey, modelName, systemPrompt, userQuery) {
+  const model = modelName || 'gemini-2.0-flash';
+  // Attempt 1: OpenAI-compatible completions endpoint
+  try {
+    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userQuery }
+        ],
+        max_tokens: 700,
+        temperature: 0.6
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const reply = data.choices?.[0]?.message?.content;
+      if (reply) return reply;
+    }
+  } catch (_) { }
+
+  // Attempt 2: Native REST generateContent endpoint
+  const nativeUrl = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const nativeRes = await fetch(nativeUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: systemPrompt }] },
+      contents: [{ role: 'user', parts: [{ text: userQuery }] }],
+      generationConfig: {
+        maxOutputTokens: 700,
+        temperature: 0.6
+      }
+    })
+  });
+
+  if (!nativeRes.ok) {
+    if (model !== 'gemini-1.5-flash') {
+      const fbUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const fbRes = await fetch(fbUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ role: 'user', parts: [{ text: userQuery }] }],
+          generationConfig: { maxOutputTokens: 700, temperature: 0.6 }
+        })
+      });
+      if (fbRes.ok) {
+        const fbData = await fbRes.json();
+        const fbReply = fbData.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (fbReply) return fbReply;
+      }
+    }
+    throw new Error(`Gemini API returned HTTP ${nativeRes.status}`);
+  }
+
+  const nativeData = await nativeRes.json();
+  const nativeReply = nativeData.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!nativeReply) throw new Error('Empty response from Gemini API');
+  return nativeReply;
+}
+
 async function callCloudAiProvider(userQuery, kb) {
   const aiConfig = getActiveAiConfig();
   const proxyUrl = aiConfig.proxyUrl || (window.PORTFOLIO_CONFIG && window.PORTFOLIO_CONFIG.AI_CONFIG && window.PORTFOLIO_CONFIG.AI_CONFIG.proxyUrl) || 'https://gven-ai-proxy.vikashthyadi1104.workers.dev/';
@@ -2172,6 +2272,8 @@ async function callCloudAiProvider(userQuery, kb) {
   // If a serverless proxy URL is available, route to Cloud AI proxy
   if (proxyUrl && (provider === 'proxy' || provider === 'builtin')) {
     provider = 'proxy';
+  } else if (provider === 'gemini' || (aiConfig.geminiApiKey && aiConfig.geminiApiKey.startsWith('AIzaSy') && provider !== 'groq' && provider !== 'openrouter')) {
+    provider = 'gemini';
   } else if (provider === 'groq' || (aiConfig.groqApiKey && aiConfig.groqApiKey.startsWith('gsk_'))) {
     provider = 'groq';
   } else if (provider === 'openrouter' || (aiConfig.openrouterApiKey && aiConfig.openrouterApiKey.startsWith('sk-or-'))) {
@@ -2180,6 +2282,23 @@ async function callCloudAiProvider(userQuery, kb) {
 
   if (provider === 'builtin') {
     return null;
+  }
+
+  const systemPrompt = `You are GVEN (Guided Virtual Extension of Vikash Thyadi), the personal AI assistant for Vikash Thyadi on his portfolio website.
+Answer concisely, warmly, and accurately using strictly the verified portfolio knowledge base provided below.
+If asked about downloading his resume or CV, mention that his verified resume PDF can be downloaded directly right here in the widget.
+If asked about contact or hiring, provide his email (${kb.contact.email}) and links.
+Use clear markdown formatting (**bold**, *italic*, - bullet lists). Keep answers direct and helpful.
+
+--- LIVE PORTFOLIO KNOWLEDGE BASE ---
+${exportKnowledgeBaseAsMarkdown(kb, userQuery)}`;
+
+  // Direct Google Gemini Provider
+  if (provider === 'gemini') {
+    const apiKey = aiConfig.geminiApiKey || '';
+    if (!apiKey) return null;
+    const reply = await callGeminiApi(apiKey, aiConfig.geminiModel, systemPrompt, userQuery);
+    return formatAiResult(reply, userQuery, kb, 'gemini');
   }
 
   let endpoint = '';
@@ -2218,15 +2337,6 @@ async function callCloudAiProvider(userQuery, kb) {
     return null;
   }
 
-  const systemPrompt = `You are GVEN (Guided Virtual Extension of Vikash Thyadi), the personal AI assistant for Vikash Thyadi on his portfolio website.
-Answer concisely, warmly, and accurately using strictly the verified portfolio knowledge base provided below.
-If asked about downloading his resume or CV, mention that his verified resume PDF can be downloaded directly right here in the widget.
-If asked about contact or hiring, provide his email (${kb.contact.email}) and links.
-Use clear markdown formatting (**bold**, *italic*, - bullet lists). Keep answers direct and helpful.
-
---- LIVE PORTFOLIO KNOWLEDGE BASE ---
-${exportKnowledgeBaseAsMarkdown(kb, userQuery)}`;
-
   const headers = { 'Content-Type': 'application/json' };
   if (apiKey) {
     headers['Authorization'] = `Bearer ${apiKey}`;
@@ -2237,6 +2347,7 @@ ${exportKnowledgeBaseAsMarkdown(kb, userQuery)}`;
     headers,
     body: JSON.stringify({
       model,
+      geminiModel: aiConfig.geminiModel || 'gemini-2.0-flash',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userQuery }
@@ -2254,31 +2365,8 @@ ${exportKnowledgeBaseAsMarkdown(kb, userQuery)}`;
   const reply = data.choices?.[0]?.message?.content;
   if (!reply) throw new Error('Empty response from Cloud AI');
 
-  const qLower = userQuery.toLowerCase();
-  let resumeCard = null;
-  if (qLower.includes('resume') || qLower.includes('cv') || qLower.includes('download') || reply.toLowerCase().includes('resume')) {
-    const rawUrl = kb.resume.url;
-    const fileName = kb.resume.fileName || 'Vikash-Thyadi-Resume.pdf';
-    resumeCard = {
-      rawUrl,
-      downloadUrl: getDownloadableResumeUrl(rawUrl, fileName),
-      fileName
-    };
-  }
-
-  let projectCards = [];
-  const matchedProject = kb.projects.find(p => qLower.includes((p.title || '').toLowerCase()));
-  if (matchedProject) {
-    projectCards = [matchedProject];
-  } else if (qLower.includes('featured') || qLower.includes('projects')) {
-    projectCards = kb.projects.filter(p => p.featured).slice(0, 3);
-  }
-
-  return {
-    reply,
-    projectCards,
-    resumeCard
-  };
+  const providerUsed = data.provider || (provider === 'proxy' ? 'cloud-proxy' : provider);
+  return formatAiResult(reply, userQuery, kb, providerUsed);
 }
 
 function initAiChatbot() {
@@ -2483,16 +2571,41 @@ function initAiChatbot() {
       let result = null;
       let providerUsed = 'built-in';
 
-      // 1. Attempt Cloud AI provider if configured with API key
+      const aiConfig = getActiveAiConfig();
+
+      // 1. Attempt Cloud AI provider (Proxy or configured active provider)
       try {
         result = await callCloudAiProvider(q, kb);
-        if (result) providerUsed = 'cloud-proxy';
+        if (result) providerUsed = result.provider || 'cloud-proxy';
       } catch (cloudErr) {
-        console.warn('Cloud AI failed, falling back to live knowledge base:', cloudErr.message || cloudErr);
+        console.warn('Primary Cloud AI failed, checking for Gemini fallback:', cloudErr.message || cloudErr);
         result = null;
       }
 
-      // 2. Seamless fallback to built-in knowledge base engine
+      // 2. Direct Gemini Fallback (if primary failed and a Gemini key is configured)
+      if (!result && aiConfig.geminiApiKey) {
+        try {
+          const systemPrompt = `You are GVEN (Guided Virtual Extension of Vikash Thyadi), the personal AI assistant for Vikash Thyadi on his portfolio website.
+Answer concisely, warmly, and accurately using strictly the verified portfolio knowledge base provided below.
+If asked about downloading his resume or CV, mention that his verified resume PDF can be downloaded directly right here in the widget.
+If asked about contact or hiring, provide his email (${kb.contact.email}) and links.
+Use clear markdown formatting (**bold**, *italic*, - bullet lists). Keep answers direct and helpful.
+
+--- LIVE PORTFOLIO KNOWLEDGE BASE ---
+${exportKnowledgeBaseAsMarkdown(kb, q)}`;
+
+          const geminiReply = await callGeminiApi(aiConfig.geminiApiKey, aiConfig.geminiModel, systemPrompt, q);
+          if (geminiReply) {
+            result = formatAiResult(geminiReply, q, kb, 'gemini-fallback');
+            providerUsed = 'gemini-fallback';
+          }
+        } catch (geminiErr) {
+          console.warn('Gemini fallback failed:', geminiErr.message || geminiErr);
+          result = null;
+        }
+      }
+
+      // 3. Seamless fallback to built-in knowledge base engine
       if (!result) {
         await new Promise(r => setTimeout(r, 380));
         result = queryLiveKnowledgeBase(q);

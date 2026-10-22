@@ -3849,6 +3849,12 @@ ol {
   border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
+.gven-log-badge--gemini {
+  background: rgba(139, 92, 246, 0.18);
+  color: #c084fc;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+}
+
 .gven-log-card__actions {
   display: flex;
   gap: 0.4rem;

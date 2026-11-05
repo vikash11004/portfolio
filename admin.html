@@ -5,19 +5,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Owner-only admin for managing portfolio projects.">
-  <meta name="theme-color" content="#2A2529">
+  <meta name="theme-color" content="#f5f3eb">
   <title>Admin — Vikash Thyadi</title>
   <link rel="stylesheet" href="styles.css?v=11">
+  <link rel="stylesheet" href="admin-design.css?v=1">
   <link rel="stylesheet" href="admin-polish.css?v=1">
 </head>
 
 <body>
+  <a class="admin-skip" href="#adminMain">Skip to console</a>
   <!-- Top Admin Bar -->
   <header class="admin-topbar">
     <div class="admin-topbar__left">
       <a href="index.html" class="admin-topbar__brand" title="View Portfolio Home">
-        <img src="assets/images/logo1.png" alt="Vikash Thyadi" class="admin-topbar__logo" onerror="this.style.display='none'">
-        <span class="admin-topbar__title">VIKASH THYADI</span>
+        <span class="admin-topbar__title">vikash<span class="brand-dot">.</span></span>
       </a>
       <span class="admin-topbar__tag">Owner Console</span>
     </div>
@@ -35,14 +36,15 @@
     </div>
   </header>
 
-  <main class="admin-page">
+  <main class="admin-page" id="adminMain" tabindex="-1">
     <div class="admin-page__container">
       <div class="admin-page__header">
         <div class="admin-page__header-text">
           <span class="section-label">Owner Console</span>
-          <h1 class="admin-page__title">Content &amp; Project CMS</h1>
+          <h1 class="admin-page__title">Your creative <em>workspace.</em></h1>
           <p class="admin-page__subtitle">Manage projects, profile assets, website content, and AI provider settings in real time.</p>
         </div>
+        <div class="admin-header-note"><span aria-hidden="true">✳</span><span>CURATE YOUR WORK.<br>MAKE IT YOURS.</span></div>
       </div>
 
       <div class="admin-disabled reveal visible" id="adminDisabled" hidden>
@@ -53,11 +55,11 @@
       <section class="admin-panel" id="adminPanel" hidden>
         <!-- Tab Navigation Bar -->
         <div class="admin-tabs-nav" role="tablist">
-          <button type="button" class="admin-tab-btn active" data-tab="projectsTab">📁 Projects</button>
-          <button type="button" class="admin-tab-btn" data-tab="assetsTab">📸 Photos &amp; Assets</button>
-          <button type="button" class="admin-tab-btn" data-tab="contentTab">📝 Website Content</button>
-          <button type="button" class="admin-tab-btn" data-tab="settingsTab">⚙️ Settings &amp; SEO</button>
-          <button type="button" class="admin-tab-btn" data-tab="gvenLogsTab">🤖 GVEN Chat Logs <span class="gven-log-count-badge" id="gvenLogCountBadge" style="display:none;">0</span></button>
+          <button type="button" class="admin-tab-btn active" data-tab="projectsTab"><span class="tab-index" aria-hidden="true">01</span> Projects</button>
+          <button type="button" class="admin-tab-btn" data-tab="assetsTab"><span class="tab-index" aria-hidden="true">02</span> Photos &amp; Assets</button>
+          <button type="button" class="admin-tab-btn" data-tab="contentTab"><span class="tab-index" aria-hidden="true">03</span> Website Content</button>
+          <button type="button" class="admin-tab-btn" data-tab="settingsTab"><span class="tab-index" aria-hidden="true">04</span> Settings &amp; SEO</button>
+          <button type="button" class="admin-tab-btn" data-tab="gvenLogsTab"><span class="tab-index" aria-hidden="true">05</span> GVEN Chat Logs <span class="gven-log-count-badge" id="gvenLogCountBadge" style="display:none;">0</span></button>
         </div>
 
         <!-- ============================================
@@ -880,6 +882,7 @@
     </div>
   </main>
 
+  <footer class="admin-footer"><span>VIKASH THYADI / OWNER CONSOLE</span><span>DESIGN WITH INTENT. BUILD WITH CURIOSITY.</span></footer>
   <script src="config.js?v=3"></script>
   <script src="projects-data.js?v=2"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>

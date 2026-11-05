@@ -2,46 +2,8 @@
 (() => {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
-  const cursor = document.querySelector('.custom-cursor');
   const portrait = document.querySelector('.hero__image-wrapper');
   const progress = document.querySelector('.reading-progress');
-  let frame = 0;
-  let targetX = 0, targetY = 0, x = 0, y = 0;
-  let moving = false;
-
-  function drawCursor() {
-    x += (targetX - x) * .24;
-    y += (targetY - y) * .24;
-    cursor.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
-    if (moving && (Math.abs(targetX - x) > .1 || Math.abs(targetY - y) > .1)) {
-      frame = requestAnimationFrame(drawCursor);
-    } else frame = 0;
-  }
-  document.addEventListener('pointermove', event => {
-    if (!finePointer.matches || reducedMotion.matches || event.pointerType === 'touch') return;
-    targetX = event.clientX;
-    targetY = event.clientY;
-    if (!moving) { x = targetX; y = targetY; }
-    moving = true;
-    cursor.style.opacity = '1';
-    const interactive = event.target.closest('a, button, [role="button"], input, textarea');
-    cursor.classList.toggle('is-link', !!interactive);
-    cursor.classList.toggle('is-project', !!event.target.closest('.project-card'));
-    if (!frame) frame = requestAnimationFrame(drawCursor);
-  }, { passive: true });
-  function hideCursor() {
-    moving = false;
-    cursor.style.opacity = '0';
-    cancelAnimationFrame(frame);
-    frame = 0;
-  }
-  document.documentElement.addEventListener('pointerleave', hideCursor);
-  window.addEventListener('blur', hideCursor);
-  document.addEventListener('pointerdown', hideCursor, { passive: true });
-  reducedMotion.addEventListener('change', hideCursor);
-  finePointer.addEventListener('change', hideCursor);
-  document.addEventListener('keydown', event => { if (event.key === 'Tab') hideCursor(); });
-
   portrait.addEventListener('pointermove', event => {
     if (reducedMotion.matches || !finePointer.matches) return;
     const bounds = portrait.getBoundingClientRect();

@@ -284,12 +284,12 @@ async function init() {
     // Ignore storage access errors; network fetch will run.
   }
 
-  // 2. Fetch fresh live data from Firestore / REST and render
-  await loadSiteContent();
+  // Render usable cached/default content before waiting for the network.
   applySiteContent();
   setupContactForm();
-
-  await loadProjects();
+  hideLoader();
+  initAiChatbot();
+  await Promise.all([loadSiteContent().then(applySiteContent), loadProjects()]);
 
   updateNavbarTheme();
   updateHomeNavActiveState();
@@ -297,12 +297,9 @@ async function init() {
   populateFeaturedProjects();
   populateProjectsGrid();
   populateSkillsMarquee();
-  initAiChatbot();
 
   // Hide loader after a short delay for effect
-  requestAnimationFrame(() => {
-    setTimeout(hideLoader, 400);
-  });
+  triggerInitialReveals();
 }
 
 function hideLoader() {
@@ -561,15 +558,16 @@ function renderAboutEducationItems(items) {
   const list = $('#aboutEducationList');
   if (!list) return;
 
-  const safeItems = Array.isArray(items) && items.length
+  const safeItems = Array.isArray(items)
     ? items
     : DEFAULT_SITE_CONTENT.about.educationItems;
 
   list.innerHTML = safeItems.map(item => `
     <div class="education-item reveal">
-      <div class="education-item__year">${item.year || ''}</div>
-      <div class="education-item__title">${item.title || ''}</div>
-      <div class="education-item__detail">${item.detail || ''}</div>
+      <div class="education-item__year">${escapeHtml(item.year || '')}</div>
+      <div class="education-item__kind">${escapeHtml(({ education: 'Education', experience: 'Experience', certification: 'Certification / Award' })[item.kind] || '')}</div>
+      <h3 class="education-item__title">${/^https?:\/\//i.test(item.certificateUrl || '') ? `<a href="${escapeHtml(item.certificateUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title || '')}</a>` : escapeHtml(item.title || '')}</h3>
+      <div class="education-item__detail">${window.DOMPurify ? window.DOMPurify.sanitize(item.detail || '') : escapeHtml(item.detail || '')}</div>
     </div>
   `).join('');
 
@@ -602,6 +600,9 @@ function applySiteContent() {
   setText('#heroTitleLine1', content.hero.titleLine1);
   setText('#heroTitleLine2', content.hero.titleLine2);
   setText('#heroSubtitle', content.hero.subtitle);
+  setText('#heroStatementLine1Text', content.hero.statementLine1 ?? 'Thoughtful code.');
+  setText('#heroStatementLine2Text', content.hero.statementLine2 ?? 'Meaningful experiences.');
+  setAttr('#siteLogoImage', 'alt', content.brand.name);
   setText('#heroPrimaryBtn', content.hero.primaryButtonText);
   setText('#heroSecondaryBtn', content.hero.secondaryButtonText);
   setText('#heroScrollCueLabel', content.hero.scrollCueText);
@@ -623,6 +624,9 @@ function applySiteContent() {
   setText('#aboutHeadingLine1', content.about.headingLine1);
   setText('#aboutHeadingLine2', content.about.headingLine2);
   setText('#aboutBio', content.about.bio);
+  const aboutPhoto = document.querySelector('.about__image-wrapper');
+  if (aboutPhoto) aboutPhoto.hidden = content.about.showImage !== true;
+  setText('.wordmark', content.brand.name);
   setAttr('#aboutImage', 'src', content.about.imageUrl);
   setAttr('#aboutImage', 'alt', content.about.imageAlt);
   renderAboutEducationItems(content.about.educationItems);
@@ -1236,7 +1240,7 @@ function getProjectExcerpt(project) {
 // ─── Populate Skills Marquee ────────────────────
 function populateSkillsMarquee() {
   const marquee = $('#skillsMarquee');
-  const skills = Array.isArray(siteContentState.skills?.items) && siteContentState.skills.items.length
+  const skills = Array.isArray(siteContentState.skills?.items)
     ? siteContentState.skills.items
     : DEFAULT_SITE_CONTENT.skills.items;
   // Duplicate skills for seamless infinite scroll

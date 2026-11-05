@@ -7,7 +7,8 @@
   <meta name="description" content="Owner-only admin for managing portfolio projects.">
   <meta name="theme-color" content="#2A2529">
   <title>Admin — Vikash Thyadi</title>
-  <link rel="stylesheet" href="styles.css?v=8">
+  <link rel="stylesheet" href="styles.css?v=11">
+  <link rel="stylesheet" href="admin-polish.css?v=1">
 </head>
 
 <body>
@@ -305,6 +306,7 @@
                   <label>Alt Description
                     <input type="text" id="aboutImageAlt" placeholder="Vikash working at desk">
                   </label>
+                  <label><input type="checkbox" id="aboutShowImage"> Show optional background photo</label>
                 </div>
 
                 <!-- Site Logo Card -->
@@ -430,6 +432,12 @@
               <label>Hero Subtitle / Bio Pitch
                 <textarea id="heroSubtitleInput" rows="2" required></textarea>
               </label>
+
+              <!-- About Section -->
+              <div class="project-form__grid">
+                <label>Hero Statement Line 1<input type="text" id="heroStatementLine1"></label>
+                <label>Hero Statement Line 2<input type="text" id="heroStatementLine2"></label>
+              </div>
 
               <!-- About Section -->
               <div class="admin-section-divider">
@@ -878,7 +886,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
-  <script src="admin.js?v=17"></script>
+  <script src="admin.js?v=19"></script>
 </body>
 
 </html>

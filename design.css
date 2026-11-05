@@ -223,3 +223,65 @@ h2 { font-weight: 500 !important; letter-spacing: -.055em !important; }
   .projects-preview__grid > .project-card:last-child:nth-child(odd) { grid-column: 1 / -1; display: grid; grid-template-columns: 1.35fr 1fr; align-items: center; gap: 50px; }
   .projects-preview__grid > .project-card:last-child:nth-child(odd) .project-card__content { padding: 0; }
 }
+
+/* Readable background and a first screen sized to the actual viewport. */
+.loader { display: none; }
+.hero .reveal, .hero .reveal-right { opacity: 1; transform: none; }
+.navbar__logo-image { display: block; width: 150px; height: 48px; object-fit: contain; }
+.wordmark { display: none; }
+.hero { min-height: calc(100svh - 36px); padding-top: 140px; padding-bottom: 80px; }
+.hero__eyebrow { top: 108px; }
+.hero__title { font-size: 88px; letter-spacing: 0; }
+.hero__subtitle { font-size: 17px; }
+.hero__statement { font-size: 23px; letter-spacing: 0; }
+.hero__image-wrapper { height: min(480px, calc(100svh - 240px)); min-height: 260px; }
+.about__container { display: flex; flex-direction: column; gap: 28px; }
+.about__left, .about__right { width: 100%; }
+.about__right { display: contents; }
+.about__right > .section-label { order: -3; margin: 0; }
+.about__heading { order: -2; font-size: 44px; letter-spacing: 0; margin: 0; }
+.about__heading br { display: none; }
+.about__heading span + span::before { content: ' '; }
+.about__bio { font-size: 18px; line-height: 1.8; margin: 0; max-width: 85ch; }
+.about__image-wrapper:not([hidden]) { max-width: 360px; margin-bottom: 24px; }
+.about__image-wrapper[hidden] { display: none; }
+.about__education-list { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 48px; margin-top: 20px; }
+.education-item { padding: 28px 0; border-left: 0; border-top: 2px solid #c8d2cb; border-bottom: 0; min-width: 0; }
+.education-item::before { display: none; }
+.education-item__year { font-size: 14px; letter-spacing: 0; font-weight: 600; }
+.education-item__kind { font-size: 13px; color: var(--dark-gray); }
+.education-item__title { font-size: 24px; line-height: 1.4; letter-spacing: 0; margin: 12px 0; overflow-wrap: anywhere; }
+.education-item__detail { font-size: 17px; line-height: 1.85; color: #344b41; white-space: pre-line; overflow-wrap: anywhere; }
+.education-item__title a { color: inherit; text-decoration: underline; text-decoration-color: #8dafa0; text-underline-offset: 5px; text-decoration-thickness: 1px; }
+.education-item__title a:hover, .education-item__title a:focus-visible { color: var(--orange); text-decoration-color: currentColor; }
+.custom-cursor { display: none !important; }
+@media (hover: hover) and (pointer: fine) {
+  body, a, button, [role="button"], .project-card { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M4 2L4 25L10 19L15 30L20 27L15 17L25 17Z' fill='white' stroke='%23171717' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 2, auto; }
+  input, textarea, [contenteditable] { cursor: text; }
+  button:disabled { cursor: not-allowed; }
+}
+@media (min-width: 769px) and (max-height: 800px) {
+  .hero { padding-top: 120px; padding-bottom: 64px; }
+  .hero__eyebrow { top: 96px; }
+  .hero__title { font-size: 68px; margin-bottom: 18px; }
+  .hero__label { margin-bottom: 16px; }
+  .hero__statement { margin-bottom: 18px; font-size: 20px; }
+  .hero__scroll-cue { bottom: 14px; }
+}
+@media (max-width: 768px) {
+  .hero { min-height: calc(100svh - 28px); padding-top: 110px; padding-bottom: 62px; }
+  .hero__eyebrow { top: 88px; }
+  .hero__container { grid-template-columns: minmax(0, 1fr) 120px; gap: 16px; }
+  .hero__content { grid-column: 1 / -1; }
+  .hero__title { font-size: 64px; max-width: 100%; overflow-wrap: anywhere; }
+  .hero__image-wrapper { display: none; }
+  .hero__statement { font-size: 20px; margin-bottom: 20px; }
+  .hero__subtitle { font-size: 16px; }
+  .hero__cta-row { gap: 12px; }
+  .hero__cta-row .btn { font-size: 13px; padding: 12px 16px; }
+  .hero__scroll-cue { bottom: 14px; }
+  .about__education-list { grid-template-columns: 1fr; }
+  .about__heading { font-size: 32px; }
+  .education-item__title { font-size: 22px; }
+  .wordmark { font-size: 20px; letter-spacing: 0; }
+}

@@ -1491,13 +1491,42 @@ function createEducationItemCard(item = {}, index = 0) {
     <label>Description / Details (HTML formatting like &lt;br&gt; supported)
       <textarea class="exp-detail-input" rows="3" placeholder="Institution, achievements, awards, key focus areas...">${escapeHtml(item.detail || '')}</textarea>
     </label>
+    <div class="project-form__grid">
+      <label>Category
+        <select class="exp-kind-input">
+          <option value="education">Education</option>
+          <option value="experience">Experience</option>
+          <option value="certification">Certification / Award</option>
+        </select>
+      </label>
+      <label>Title Link (optional)
+        <input type="url" class="exp-certificate-input" value="${escapeHtml(item.certificateUrl || '')}" placeholder="https://..." pattern="https?://.*">
+      </label>
+    </div>
+    <div class="admin-exp-order">
+      <button type="button" class="admin-btn admin-btn--outline exp-up" aria-label="Move milestone up">&uarr;</button>
+      <button type="button" class="admin-btn admin-btn--outline exp-down" aria-label="Move milestone down">&darr;</button>
+    </div>
   `;
+
+  card.querySelector('.exp-kind-input').value = item.kind || (index === 0 ? 'education' : 'experience');
+  card.querySelector('.exp-up').onclick = () => {
+    if (card.previousElementSibling) card.before(card.previousElementSibling);
+    renumberEducationCards();
+    card.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  card.querySelector('.exp-down').onclick = () => {
+    if (card.nextElementSibling) card.after(card.nextElementSibling);
+    renumberEducationCards();
+    card.dispatchEvent(new Event('input', { bubbles: true }));
+  };
 
   const delBtn = card.querySelector('.admin-exp-card__del-btn');
   if (delBtn) {
     delBtn.addEventListener('click', () => {
       card.remove();
       renumberEducationCards();
+      $('#siteContentForm').dispatchEvent(new Event('input', { bubbles: true }));
     });
   }
 
@@ -1523,7 +1552,10 @@ function getEducationItemsFromDOM() {
     const title = (titleInput?.value || '').trim();
     const detail = (detailInput?.value || '').trim();
     if (year || title || detail) {
-      items.push({ year, title, detail });
+      const kind = card.querySelector('.exp-kind-input').value;
+      const certificateUrl = card.querySelector('.exp-certificate-input').value.trim();
+      if (certificateUrl && !/^https?:\/\//i.test(certificateUrl)) throw new Error('Certificate links must start with https:// or http://.');
+      items.push({ year, title, detail, kind, certificateUrl });
     }
   });
   return items;
@@ -2136,7 +2168,13 @@ function initAdminTabs() {
   if (!tabBtns.length) return;
 
   function switchTab(targetId) {
-    tabBtns.forEach((b) => b.classList.toggle('active', b.dataset.tab === targetId));
+    tabBtns.forEach((b) => {
+      b.classList.toggle('active', b.dataset.tab === targetId);
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', String(b.dataset.tab === targetId));
+      b.setAttribute('aria-controls', b.dataset.tab);
+      b.tabIndex = b.dataset.tab === targetId ? 0 : -1;
+    });
     tabPanels.forEach((p) => p.classList.toggle('active', p.id === targetId));
 
     if (targetId === 'gvenLogsTab') {
@@ -2151,12 +2189,24 @@ function initAdminTabs() {
   }
 
   tabBtns.forEach((btn) => {
+    btn.addEventListener('keydown', event => {
+      const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
+      if (!keys.includes(event.key)) return;
+      event.preventDefault();
+      const tabs = [...tabBtns];
+      const offset = event.key === 'ArrowLeft' ? -1 : 1;
+      const index = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (tabs.indexOf(btn) + offset + tabs.length) % tabs.length;
+      switchTab(tabs[index].dataset.tab);
+      tabs[index].focus();
+    });
     btn.addEventListener('click', () => {
       switchTab(btn.dataset.tab);
     });
   });
 
   // Support contextual links across tabs: e.g. <a href="#" data-admin-tab-link="assetsTab">
+  tabPanels.forEach(panel => panel.setAttribute('role', 'tabpanel'));
+  switchTab('projectsTab');
   document.querySelectorAll('[data-admin-tab-link]').forEach((link) => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
@@ -2171,6 +2221,9 @@ function initAdminTabs() {
 }
 
 function fillSiteContentForm(content) {
+  $('#aboutShowImage').checked = content.about?.showImage === true;
+  $('#heroStatementLine1').value = content.hero?.statementLine1 ?? 'Thoughtful code.';
+  $('#heroStatementLine2').value = content.hero?.statementLine2 ?? 'Meaningful experiences.';
   const safe = deepMerge(DEFAULT_SITE_CONTENT, content || {});
 
   // TAB 2: Photos & Assets
@@ -2306,10 +2359,10 @@ async function saveSiteContentToFirestore(updatedContent) {
     throw new Error('You must be signed in as owner.');
   }
 
-  siteContentState = deepMerge(DEFAULT_SITE_CONTENT, updatedContent);
+  const nextContent = deepMerge(DEFAULT_SITE_CONTENT, updatedContent);
 
   // SECURITY: Unconditionally strip secret API keys before sending to public Firestore
-  const sanitizedForPublic = sanitizeSiteContentForFirestore(siteContentState);
+  const sanitizedForPublic = sanitizeSiteContentForFirestore(nextContent);
 
   await firebaseDb.collection('site_content').doc(SITE_CONTENT_DOC_ID).set({
     content: sanitizedForPublic,
@@ -2325,7 +2378,7 @@ async function saveSiteContentToFirestore(updatedContent) {
     // Ignore storage sync failures; Firestore remains the source of truth.
   }
 
-  fillSiteContentForm(siteContentState);
+  siteContentState = nextContent;
   return siteContentState;
 }
 
@@ -2352,6 +2405,7 @@ async function handleAssetsSave(event) {
       },
       about: {
         imageUrl: aboutImgVal || siteContentState.about?.imageUrl || DEFAULT_SITE_CONTENT.about.imageUrl,
+        showImage: $('#aboutShowImage').checked,
         imageAlt: aboutAltVal || siteContentState.about?.imageAlt || DEFAULT_SITE_CONTENT.about.imageAlt
       },
       brand: {
@@ -2363,6 +2417,7 @@ async function handleAssetsSave(event) {
 
     const updated = deepMerge(siteContentState, patch);
     await saveSiteContentToFirestore(updated);
+    $('#siteAssetsForm').dataset.dirty = 'false';
     setAssetsMessage('✓ Photos and assets saved! Changes are live on your portfolio.');
   } catch (error) {
     setAssetsMessage(error.message || 'Unable to save photos/assets.', true);
@@ -2391,6 +2446,8 @@ async function handleSiteContentSave(event) {
         titleLine1: String((($('#heroTitleLine1Input') || {}).value || '')).trim(),
         titleLine2: String((($('#heroTitleLine2Input') || {}).value || '')).trim(),
         subtitle: String((($('#heroSubtitleInput') || {}).value || '')).trim(),
+        statementLine1: $('#heroStatementLine1').value.trim(),
+        statementLine2: $('#heroStatementLine2').value.trim(),
         primaryButtonText: String((($('#heroPrimaryButtonText') || {}).value || '')).trim(),
         secondaryButtonText: String((($('#heroSecondaryButtonText') || {}).value || '')).trim(),
         scrollCueText: String((($('#heroScrollCueText') || {}).value || '')).trim(),
@@ -2459,8 +2516,15 @@ async function handleSiteContentSave(event) {
       }
     };
 
+    // Assets have their own save action; leave drafts in that tab unpublished.
+    delete patch.hero.imageUrl;
+    delete patch.hero.imageAlt;
+    delete patch.about.imageUrl;
+    delete patch.about.imageAlt;
+    delete patch.brand;
     const updated = deepMerge(siteContentState, patch);
     await saveSiteContentToFirestore(updated);
+    $('#siteContentForm').dataset.dirty = 'false';
     setSiteMessage('✓ Website content saved! Changes are live on your portfolio.');
   } catch (error) {
     setSiteMessage(error.message || 'Unable to save site content.', true);
@@ -2502,6 +2566,7 @@ async function handleSeoSave(event) {
 
     const updated = deepMerge(siteContentState, patch);
     await saveSiteContentToFirestore(updated);
+    $('#seoSettingsForm').dataset.dirty = 'false';
     setSeoMessage('✓ SEO & Appearance settings saved! Changes are live.');
   } catch (error) {
     setSeoMessage(error.message || 'Unable to save SEO settings.', true);
@@ -2509,7 +2574,7 @@ async function handleSeoSave(event) {
 }
 
 async function loadSiteContent() {
-  siteContentState = deepMerge(DEFAULT_SITE_CONTENT, {});
+  if (document.querySelector('form[data-dirty="true"]') && !window.confirm('Reload saved content and discard unsaved edits?')) return;
 
   if (!firebaseReady || !firebaseDb) {
     fillSiteContentForm(siteContentState);
@@ -2552,9 +2617,9 @@ async function loadSiteContent() {
     }
     fillSiteContentForm(siteContentState);
     setSiteMessage('Website content loaded.');
+    document.querySelectorAll('form[data-dirty]').forEach(form => { form.dataset.dirty = 'false'; });
   } catch (error) {
     setSiteMessage(`Unable to load site content (${error.message}).`, true);
-    fillSiteContentForm(siteContentState);
   }
 }
 
@@ -2606,9 +2671,33 @@ function setupEvents() {
   if (signOutBtn) signOutBtn.addEventListener('click', handleAdminSignOut);
   if (projectForm) projectForm.addEventListener('submit', handleProjectSave);
   if (clearBtn) clearBtn.addEventListener('click', clearProjectForm);
-  if (assetsForm) assetsForm.addEventListener('submit', handleAssetsSave);
-  if (siteForm) siteForm.addEventListener('submit', handleSiteContentSave);
-  if (seoForm) seoForm.addEventListener('submit', handleSeoSave);
+  [[assetsForm, handleAssetsSave], [siteForm, handleSiteContentSave], [seoForm, handleSeoSave]].forEach(([form, handler]) => {
+    form.addEventListener('input', () => { form.dataset.dirty = 'true'; });
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (form.dataset.saving === 'true') return;
+      form.dataset.saving = 'true';
+      form.setAttribute('aria-busy', 'true');
+      const controls = [...form.querySelectorAll('input, textarea, select, button')];
+      const previous = controls.map(control => control.disabled);
+      try {
+        const saving = handler(event);
+        controls.forEach(control => { control.disabled = true; });
+        await saving;
+      }
+      finally {
+        form.dataset.saving = 'false';
+        form.setAttribute('aria-busy', 'false');
+        controls.forEach((control, index) => { control.disabled = previous[index]; });
+      }
+    });
+  });
+  window.addEventListener('beforeunload', event => {
+    if (document.querySelector('form[data-dirty="true"]')) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
+  });
 
   // Quick Action & Cancel Handlers for Projects
   const topSaveProjectBtn = $('#topSaveProjectBtn');
@@ -2713,6 +2802,7 @@ function setupEvents() {
       const card = createEducationItemCard({ year: '', title: '', detail: '' }, count);
       container.appendChild(card);
       card.querySelector('.exp-year-input')?.focus();
+      siteForm.dataset.dirty = 'true';
     });
   }
 
@@ -3481,16 +3571,15 @@ async function initAdmin() {
   setupFirebase();
   updateAdminAvailability();
 
-  await loadSiteContent();
-
   if (firebaseReady) {
     await restoreAuthSession();
-    await refreshProjects();
+    await Promise.all([loadSiteContent(), refreshProjects()]);
     if (isOwnerLoggedIn()) {
       await ensureSeedProjects();
       await scrubLeakedSecretsFromFirestore();
-      initGvenChatLogs();
     }
+  } else {
+    await loadSiteContent();
   }
 }
 

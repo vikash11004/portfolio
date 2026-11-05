@@ -393,24 +393,34 @@
         ? window.firebase.app()
         : window.firebase.initializeApp(FIREBASE_CONFIG);
       const firebaseAuth = firebaseApp.auth();
+      let redirectStarted = false;
+      let signingIn = false;
+
+      function openConsole(user) {
+        if (redirectStarted || !user?.email || user.email.trim().toLowerCase() !== OWNER_EMAIL.toLowerCase()) return;
+        redirectStarted = true;
+        showSuccess('Authentication successful! Opening Admin Console...');
+        setLoading(true, 'Opening Admin Console...');
+        window.location.replace('admin.html');
+      }
 
       // If user is already signed in and is the owner, redirect immediately to admin.html
       firebaseAuth.onAuthStateChanged((user) => {
         if (user && user.email) {
           const userEmail = user.email.trim().toLowerCase();
           if (userEmail === OWNER_EMAIL.toLowerCase()) {
-            showSuccess(`Already authenticated as ${user.email}. Redirecting to Console...`);
-            setLoading(true, 'Redirecting to Console...');
-            setTimeout(() => {
-              window.location.replace('admin.html');
-            }, 500);
+            if (!signingIn) openConsole(user);
           }
         }
+      }, () => {
+        setLoading(false);
+        showError('Unable to check your session. Check your connection and reload.');
       });
 
       // Handle Sign In submission
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (signingIn || redirectStarted) return;
         hideAlerts();
 
         const email = (emailInput.value || '').trim();
@@ -427,16 +437,14 @@
         }
 
         try {
+          signingIn = true;
           setLoading(true, 'Verifying credentials...');
+          await firebaseAuth.setPersistence(window.firebase.auth.Auth.Persistence.LOCAL);
           const cred = await firebaseAuth.signInWithEmailAndPassword(email, password);
           const user = cred.user;
 
           if (user && user.email && user.email.trim().toLowerCase() === OWNER_EMAIL.toLowerCase()) {
-            showSuccess('Authentication successful! Opening Admin Console...');
-            setLoading(true, 'Loading Admin Console...');
-            setTimeout(() => {
-              window.location.replace('admin.html');
-            }, 600);
+            openConsole(user);
           } else {
             setLoading(false);
             showError('This account does not have owner access privileges.');
@@ -456,6 +464,8 @@
             msg = 'Network connection failed. Please check your internet connection.';
           }
           showError(msg);
+        } finally {
+          signingIn = false;
         }
       });
     })();

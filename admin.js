@@ -128,6 +128,8 @@ let firebaseStorage = null;
 let firebaseReady = false;
 let currentUser = null;
 let authResolved = false;
+let authSessionReady = null;
+let authRedirectStarted = false;
 let projectsState = [];
 let projectSearchQuery = '';
 let siteContentState = deepMerge(DEFAULT_SITE_CONTENT, {});
@@ -1671,9 +1673,10 @@ function updateAdminAvailability() {
     if (userEmailSpan) userEmailSpan.textContent = currentUser.email;
   } else {
     panel.hidden = true;
-    if (userEmailSpan) userEmailSpan.textContent = 'Redirecting...';
+    if (userEmailSpan) userEmailSpan.textContent = authResolved ? 'Redirecting...' : 'Checking session...';
     // If Firebase Auth has finished resolving and user is not authenticated as owner, redirect to dedicated login page
-    if (authResolved) {
+    if (authResolved && !authRedirectStarted) {
+      authRedirectStarted = true;
       console.log('Unauthenticated access to Owner Console. Redirecting to login.html...');
       window.location.replace('login.html');
     }
@@ -1710,22 +1713,26 @@ function setupFirebase() {
   }
   firebaseReady = true;
 
-  firebaseAuth.onAuthStateChanged((user) => {
-    currentUser = user || null;
-    authResolved = true;
-    updateAdminAvailability();
-    renderAdminProjectsList();
-    if (isOwnerLoggedIn()) {
-      initGvenChatLogs();
-    }
+  authSessionReady = new Promise(resolve => {
+    firebaseAuth.onAuthStateChanged((user) => {
+      currentUser = user || null;
+      authResolved = true;
+      updateAdminAvailability();
+      renderAdminProjectsList();
+      resolve(user);
+    }, error => {
+      currentUser = null;
+      $('#adminPanel').hidden = true;
+      $('#adminUserEmail').textContent = 'Session check failed. Reload to retry.';
+      console.error('Unable to restore admin session:', error);
+      resolve(null);
+    });
   });
 }
 
 async function restoreAuthSession() {
   if (!firebaseReady || !firebaseAuth) return;
-  currentUser = firebaseAuth.currentUser || null;
-  authResolved = true;
-  updateAdminAvailability();
+  await authSessionReady;
 }
 
 function mapProjectToViewModel(docId, row) {
@@ -2049,9 +2056,14 @@ async function handleAdminSignOut() {
       await firebaseAuth.signOut();
     } catch (e) {
       console.error('Sign out error:', e);
+      $('#adminUserEmail').textContent = 'Sign out failed. Please retry.';
+      return;
     }
   }
-  window.location.replace('login.html');
+  if (!authRedirectStarted) {
+    authRedirectStarted = true;
+    window.location.replace('login.html');
+  }
 }
 
 async function handleAdminListAction(event) {
@@ -3573,6 +3585,7 @@ async function initAdmin() {
 
   if (firebaseReady) {
     await restoreAuthSession();
+    if (!isOwnerLoggedIn()) return;
     await Promise.all([loadSiteContent(), refreshProjects()]);
     if (isOwnerLoggedIn()) {
       await ensureSeedProjects();

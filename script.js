@@ -564,10 +564,14 @@ function renderAboutEducationItems(items) {
 
   list.innerHTML = safeItems.map(item => `
     <div class="education-item reveal">
+      <div class="education-item__meta">
       <div class="education-item__year">${escapeHtml(item.year || '')}</div>
       <div class="education-item__kind">${escapeHtml(({ education: 'Education', experience: 'Experience', certification: 'Certification / Award' })[item.kind] || '')}</div>
+      </div>
+      <div class="education-item__body">
       <h3 class="education-item__title">${/^https?:\/\//i.test(item.certificateUrl || '') ? `<a href="${escapeHtml(item.certificateUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title || '')}</a>` : escapeHtml(item.title || '')}</h3>
       <div class="education-item__detail">${window.DOMPurify ? window.DOMPurify.sanitize(item.detail || '') : escapeHtml(item.detail || '')}</div>
+      </div>
     </div>
   `).join('');
 

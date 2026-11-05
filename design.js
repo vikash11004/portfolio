@@ -4,6 +4,36 @@
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
   const portrait = document.querySelector('.hero__image-wrapper');
   const progress = document.querySelector('.reading-progress');
+  const cursor = document.querySelector('.custom-cursor');
+  let cursorFrame = 0;
+  let pointerX = 0, pointerY = 0;
+  const resetCursor = () => {
+    document.body.classList.remove('cursor-active');
+    cursor?.classList.remove('is-pressed');
+    cancelAnimationFrame(cursorFrame);
+    cursorFrame = 0;
+  };
+  document.addEventListener('pointermove', event => {
+    if (!cursor || !finePointer.matches || reducedMotion.matches || event.pointerType === 'touch' || event.target.closest('input, textarea, select, [contenteditable], :disabled')) {
+      resetCursor();
+      return;
+    }
+    pointerX = event.clientX;
+    pointerY = event.clientY;
+    cursor.classList.toggle('is-link', !!event.target.closest('a, button, [role="button"]'));
+    if (!cursorFrame) cursorFrame = requestAnimationFrame(() => {
+      cursor.style.transform = `translate3d(${pointerX - 15}px, ${pointerY - 15}px, 0)`;
+      document.body.classList.add('cursor-active');
+      cursorFrame = 0;
+    });
+  }, { passive: true });
+  document.addEventListener('pointerdown', () => cursor?.classList.add('is-pressed'), { passive: true });
+  document.addEventListener('pointerup', () => cursor?.classList.remove('is-pressed'), { passive: true });
+  document.documentElement.addEventListener('pointerleave', resetCursor);
+  window.addEventListener('blur', resetCursor);
+  document.addEventListener('keydown', resetCursor);
+  finePointer.addEventListener('change', resetCursor);
+  reducedMotion.addEventListener('change', resetCursor);
   portrait.addEventListener('pointermove', event => {
     if (reducedMotion.matches || !finePointer.matches) return;
     const bounds = portrait.getBoundingClientRect();

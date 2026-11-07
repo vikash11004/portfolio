@@ -3,11 +3,15 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test:admin": "node scripts/check-content-editor.mjs && node scripts/check-auth-flow.mjs && node scripts/check-admin-workspace.mjs",
     "migrate:firestore": "node scripts/migrate-supabase-to-firestore.mjs",
     "sync:fallback": "node scripts/sync-firestore-fallback.mjs",
     "deploy": "firebase deploy --only firestore:rules,storage,hosting"
   },
   "dependencies": {
     "firebase-admin": "^13.0.2"
+  },
+  "devDependencies": {
+    "playwright": "^1.65.0"
   }
 }

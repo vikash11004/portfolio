@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="styles.css?v=11">
   <link rel="stylesheet" href="admin-design.css?v=3">
   <link rel="stylesheet" href="admin-polish.css?v=1">
+  <link rel="stylesheet" href="admin-workspace.css?v=1">
 </head>
 
 <body>
@@ -41,8 +42,7 @@
       <div class="admin-page__header">
         <div class="admin-page__header-text">
           <span class="section-label">Owner Console</span>
-          <h1 class="admin-page__title">Your creative <em>workspace.</em></h1>
-          <p class="admin-page__subtitle">Manage projects, profile assets, website content, and AI provider settings in real time.</p>
+          <h1 class="admin-page__title">Portfolio admin</h1>
         </div>
         <div class="admin-header-note"><span aria-hidden="true">✳</span><span>CURATE YOUR WORK.<br>MAKE IT YOURS.</span></div>
       </div>
@@ -55,9 +55,9 @@
       <section class="admin-panel" id="adminPanel" hidden>
         <!-- Tab Navigation Bar -->
         <div class="admin-tabs-nav" role="tablist">
-          <button type="button" class="admin-tab-btn active" data-tab="projectsTab"><span class="tab-index" aria-hidden="true">01</span> Projects</button>
+          <button type="button" class="admin-tab-btn active" data-tab="contentTab">Website Content</button>
+          <button type="button" class="admin-tab-btn" data-tab="projectsTab"><span class="tab-index" aria-hidden="true">01</span> Projects</button>
           <button type="button" class="admin-tab-btn" data-tab="assetsTab"><span class="tab-index" aria-hidden="true">02</span> Photos &amp; Assets</button>
-          <button type="button" class="admin-tab-btn" data-tab="contentTab"><span class="tab-index" aria-hidden="true">03</span> Website Content</button>
           <button type="button" class="admin-tab-btn" data-tab="settingsTab"><span class="tab-index" aria-hidden="true">04</span> Settings &amp; SEO</button>
           <button type="button" class="admin-tab-btn" data-tab="gvenLogsTab"><span class="tab-index" aria-hidden="true">05</span> GVEN Chat Logs <span class="gven-log-count-badge" id="gvenLogCountBadge" style="display:none;">0</span></button>
         </div>
@@ -358,11 +358,7 @@
           <div class="admin-editor admin-editor--wide">
             <div class="admin-editor__header">
               <div class="admin-editor__title-group">
-                <h2 class="admin-panel__heading">Website Content &amp; Text</h2>
-              </div>
-              <div class="admin-editor__quick-actions">
-                <button type="button" class="admin-btn admin-btn--outline admin-btn--sm" id="topReloadSiteContentBtn">🔄 Reload Database</button>
-                <button type="button" class="admin-btn admin-btn--primary admin-btn--sm" id="topSaveSiteContentBtn">💾 Save Website Content</button>
+                <h2 class="admin-panel__heading">Website content</h2>
               </div>
             </div>
             <form id="siteContentForm" class="project-form">
@@ -434,16 +430,28 @@
                 <div>
                   <h3>Education, Certifications, Experience &amp; Achievements</h3>
                 </div>
-                <button type="button" class="admin-btn admin-btn--primary admin-btn--sm" id="addEducationItemBtn">+ Add Milestone</button>
-              </div>
-              <div class="milestone-admin-actions">
-                <button type="button" class="admin-btn admin-btn--outline" data-add-milestone="education">+ Education</button>
-                <button type="button" class="admin-btn admin-btn--outline" data-add-milestone="certification">+ Certification</button>
-                <button type="button" class="admin-btn admin-btn--outline" data-add-milestone="experience">+ Experience</button>
-                <button type="button" class="admin-btn admin-btn--outline" data-add-milestone="achievement">+ Achievement</button>
               </div>
               <div class="admin-exp-container" id="educationItemsContainer">
-                <!-- Dynamically populated by admin.js -->
+                <section class="admin-collection" data-collection="education" aria-label="Education">
+                  <header><h3>Education</h3><button type="button" class="admin-btn admin-btn--primary" data-add-milestone="education">+ Add education</button></header>
+                  <p class="collection-count" aria-live="polite"></p><div class="collection-items"></div>
+                  <p class="collection-empty">No education entries yet.</p>
+                </section>
+                <section class="admin-collection" data-collection="experience" aria-label="Experience">
+                  <header><h3>Experience</h3><button type="button" class="admin-btn admin-btn--primary" data-add-milestone="experience">+ Add experience</button></header>
+                  <p class="collection-count" aria-live="polite"></p><div class="collection-items"></div>
+                  <p class="collection-empty">No experience entries yet.</p>
+                </section>
+                <section class="admin-collection" data-collection="certification" aria-label="Certifications">
+                  <header><h3>Certifications</h3><button type="button" class="admin-btn admin-btn--primary" data-add-milestone="certification">+ Add certification</button></header>
+                  <p class="collection-count" aria-live="polite"></p><div class="collection-items"></div>
+                  <p class="collection-empty">No certifications yet.</p>
+                </section>
+                <section class="admin-collection" data-collection="achievement" aria-label="Achievements">
+                  <header><h3>Achievements</h3><button type="button" class="admin-btn admin-btn--primary" data-add-milestone="achievement">+ Add achievement</button></header>
+                  <p class="collection-count" aria-live="polite"></p><div class="collection-items"></div>
+                  <p class="collection-empty">No achievements yet.</p>
+                </section>
               </div>
 
               <!-- Skills -->
@@ -568,8 +576,8 @@
               </label>
 
               <div class="project-form__actions project-form__actions--bottom">
-                <button type="submit" class="admin-btn admin-btn--primary admin-btn--lg" id="saveSiteContentBtn">💾 Save Website Content</button>
-                <button type="button" class="admin-btn admin-btn--outline admin-btn--lg" id="reloadSiteContentBtn">🔄 Reload from Database</button>
+                <button type="submit" class="admin-btn admin-btn--primary admin-btn--lg" id="saveSiteContentBtn">Save all content</button>
+                <button type="button" class="admin-btn admin-btn--outline admin-btn--lg" id="reloadSiteContentBtn">Reload saved content</button>
               </div>
               <p class="project-form__message" id="siteFormMessage"></p>
             </form>
@@ -856,7 +864,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
   <script src="milestones.js?v=2"></script>
-  <script src="admin.js?v=22"></script>
+  <script src="admin-workspace.js?v=1"></script>
+  <script src="admin.js?v=23"></script>
 </body>
 
 </html>

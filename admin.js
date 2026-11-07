@@ -1465,23 +1465,26 @@ function parseUrlList(value, fallback = []) {
 function renderEducationItems(items) {
   const container = $('#educationItemsContainer');
   if (!container) return;
-  container.innerHTML = '';
+  container.querySelectorAll('.collection-items').forEach(list => { list.innerHTML = ''; });
   const list = window.PortfolioMilestones.normalize(items);
 
   list.forEach((item, index) => {
     const card = createEducationItemCard(item, index);
-    container.appendChild(card);
+    container.querySelector(`[data-collection="${item.kind}"] .collection-items`).appendChild(card);
   });
+  renumberEducationCards();
 }
 
 function createEducationItemCard(item = {}, index = 0) {
-  const card = document.createElement('div');
+  const card = document.createElement('details');
   card.className = 'admin-exp-card';
   card.innerHTML = `
-    <div class="admin-exp-card__header">
-      <span class="admin-exp-card__num">Milestone #${index + 1}</span>
-      <button type="button" class="admin-exp-card__del-btn" title="Delete milestone">✕ Remove</button>
-    </div>
+    <summary class="admin-exp-card__header">
+      <span class="admin-exp-card__num">${index + 1}</span>
+      <span class="entry-title">${escapeHtml(item.title || 'Untitled entry')}</span>
+      <span class="entry-status">${item.featured ? 'Featured' : 'Full list only'}</span>
+    </summary>
+    <div class="entry-editor">
     <div class="project-form__grid">
       <label>Year / Period
         <input type="text" class="exp-year-input" value="${escapeHtml(item.year || '')}" placeholder="Optional year or period">
@@ -1510,17 +1513,31 @@ function createEducationItemCard(item = {}, index = 0) {
       <label class="milestone-featured"><input type="checkbox" class="exp-featured-input" ${item.featured === true ? 'checked' : ''}> Featured on home page</label>
       <button type="button" class="admin-btn admin-btn--outline exp-up" aria-label="Move milestone up">&uarr;</button>
       <button type="button" class="admin-btn admin-btn--outline exp-down" aria-label="Move milestone down">&darr;</button>
+      <button type="button" class="admin-btn admin-btn--danger admin-exp-card__del-btn">Remove entry</button>
+    </div>
     </div>
   `;
 
   card.querySelector('.exp-kind-input').value = item.kind || 'education';
+  card.addEventListener('input', () => {
+    card.querySelector('.entry-title').textContent = card.querySelector('.exp-title-input').value.trim() || 'Untitled entry';
+    card.querySelector('.entry-status').textContent = card.querySelector('.exp-featured-input').checked ? 'Featured' : 'Full list only';
+    renumberEducationCards();
+  });
+  card.querySelector('.exp-kind-input').addEventListener('change', event => {
+    const kind = event.target.value;
+    document.querySelector(`[data-collection="${kind}"] .collection-items`).appendChild(card);
+    window.AdminWorkspace?.show(kind);
+    renumberEducationCards();
+    card.dispatchEvent(new Event('input', { bubbles: true }));
+  });
   card.querySelector('.exp-up').onclick = () => {
-    if (card.previousElementSibling) card.before(card.previousElementSibling);
+    if (card.previousElementSibling) card.previousElementSibling.before(card);
     renumberEducationCards();
     card.dispatchEvent(new Event('input', { bubbles: true }));
   };
   card.querySelector('.exp-down').onclick = () => {
-    if (card.nextElementSibling) card.after(card.nextElementSibling);
+    if (card.nextElementSibling) card.nextElementSibling.after(card);
     renumberEducationCards();
     card.dispatchEvent(new Event('input', { bubbles: true }));
   };
@@ -1528,9 +1545,12 @@ function createEducationItemCard(item = {}, index = 0) {
   const delBtn = card.querySelector('.admin-exp-card__del-btn');
   if (delBtn) {
     delBtn.addEventListener('click', () => {
+      if (!window.confirm(`Remove "${card.querySelector('.exp-title-input').value || 'Untitled entry'}"? Save website content to publish this removal.`)) return;
+      const collection = card.closest('[data-collection]');
       card.remove();
       renumberEducationCards();
       $('#siteContentForm').dispatchEvent(new Event('input', { bubbles: true }));
+      collection?.querySelector('[data-add-milestone]').focus();
     });
   }
 
@@ -1538,10 +1558,16 @@ function createEducationItemCard(item = {}, index = 0) {
 }
 
 function renumberEducationCards() {
-  const cards = document.querySelectorAll('#educationItemsContainer .admin-exp-card');
-  cards.forEach((card, idx) => {
-    const numEl = card.querySelector('.admin-exp-card__num');
-    if (numEl) numEl.textContent = `Milestone #${idx + 1}`;
+  document.querySelectorAll('[data-collection]').forEach(collection => {
+    const cards = [...collection.querySelectorAll('.admin-exp-card')];
+    const featured = cards.filter(card => card.querySelector('.exp-featured-input').checked).length;
+    collection.querySelector('.collection-count').textContent = `${cards.length} ${cards.length === 1 ? 'entry' : 'entries'} / ${featured} featured / ${cards.length - featured} full list only`;
+    collection.querySelector('.collection-empty').hidden = cards.length > 0;
+    cards.forEach((card, idx) => {
+      card.querySelector('.admin-exp-card__num').textContent = String(idx + 1).padStart(2, '0');
+      card.querySelector('.exp-up').disabled = idx === 0;
+      card.querySelector('.exp-down').disabled = idx === cards.length - 1;
+    });
   });
 }
 
@@ -2221,7 +2247,7 @@ function initAdminTabs() {
 
   // Support contextual links across tabs: e.g. <a href="#" data-admin-tab-link="assetsTab">
   tabPanels.forEach(panel => panel.setAttribute('role', 'tabpanel'));
-  switchTab('projectsTab');
+  switchTab('contentTab');
   document.querySelectorAll('[data-admin-tab-link]').forEach((link) => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
@@ -2655,6 +2681,7 @@ async function seedDatabaseWithProjects() {
 window.seedDatabaseWithProjects = seedDatabaseWithProjects;
 
 function setupEvents() {
+  window.AdminWorkspace?.init();
   const signOutBtn = $('#adminSignOutBtn');
   const projectForm = $('#projectForm');
   const clearBtn = $('#clearProjectForm');
@@ -2664,7 +2691,6 @@ function setupEvents() {
   const assetsForm = $('#siteAssetsForm');
   const seoForm = $('#seoSettingsForm');
   const reloadSiteBtn = $('#reloadSiteContentBtn');
-  const addEducationBtn = $('#addEducationItemBtn');
 
   initAdminTabs();
 
@@ -2794,23 +2820,13 @@ function setupEvents() {
     });
   }
 
-  if (addEducationBtn) {
-    addEducationBtn.addEventListener('click', () => {
-      const container = $('#educationItemsContainer');
-      if (!container) return;
-      const count = container.querySelectorAll('.admin-exp-card').length;
-      const card = createEducationItemCard({ year: '', title: '', detail: '' }, count);
-      container.appendChild(card);
-      card.querySelector('.exp-year-input')?.focus();
-      siteForm.dataset.dirty = 'true';
-    });
-  }
-
   document.querySelectorAll('[data-add-milestone]').forEach(button => {
     button.addEventListener('click', () => {
-      const container = $('#educationItemsContainer');
+      const container = document.querySelector(`[data-collection="${button.dataset.addMilestone}"] .collection-items`);
       const card = createEducationItemCard({ kind: button.dataset.addMilestone }, container.children.length);
       container.appendChild(card);
+      card.open = true;
+      renumberEducationCards();
       siteForm.dataset.dirty = 'true';
       card.scrollIntoView({ behavior: 'smooth', block: 'center' });
       card.querySelector('.exp-title-input').focus({ preventScroll: true });

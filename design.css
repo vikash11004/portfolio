@@ -115,7 +115,7 @@ h2 { font-weight: 500 !important; letter-spacing: -.055em !important; }
 .skills__marquee-container::after { background: linear-gradient(to left, #e8ebdf, transparent); }
 .skill-tag { color: var(--charcoal); opacity: 1; border: 1px solid #213b3430; border-radius: 50px; font: 14px var(--font-display); padding: 16px 25px; }
 .skills__resume-row { justify-content: flex-start; }
-.btn--resume { color: var(--charcoal); border-color: #213b3466; }
+.btn--resume { background: var(--charcoal); color: var(--ivory); border: 1px solid var(--charcoal); }
 .contact { background: var(--ivory); }
 .contact__heading { color: var(--charcoal); font-size: clamp(3.2rem, 6.3vw, 6.3rem); }
 #contactHeadingLine2 { font-family: Georgia, serif; font-style: italic; color: var(--orange); font-weight: 400; }

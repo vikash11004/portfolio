@@ -96,8 +96,8 @@ h2 { font-family: var(--font-editorial); font-weight: 400 !important; }
 .skills__marquee-container::before, .skills__marquee-container::after { display: none; }
 .skills__marquee:hover { animation-play-state: paused; }
 .skill-tag { border: 0; border-right: 1px solid #11120d55; border-radius: 0; color: var(--accent); font: 500 24px var(--font-body); padding: 12px 40px; }
-.btn--resume { border: 1px solid var(--accent); color: var(--accent); }
-.btn--resume:hover { background: var(--accent); color: var(--paper); }
+.btn--resume { background: var(--accent); color: var(--paper); border: 1px solid var(--accent); }
+.btn--resume:hover { background: var(--paper); color: var(--accent); border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 20px #11120d18; }
 .contact { background: var(--paper); padding-block: 110px; }
 .contact__container { grid-template-columns: 1.1fr 1fr; gap: 80px; }
 .contact__heading { font: 400 88px/.98 var(--font-editorial); color: var(--accent); }

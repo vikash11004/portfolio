@@ -49,6 +49,12 @@ try {
     const css = getComputedStyle(document.documentElement);
     return ['--ink', '--muted', '--highlight', '--paper'].map(name => css.getPropertyValue(name).trim());
   }), ['#11120d', '#565449', '#d8cfbc', '#fffbf4']);
+  const resumeBtnStyle = await page.locator('#skillsResumeBtn').evaluate(el => {
+    const cs = getComputedStyle(el);
+    return { bg: cs.backgroundColor, color: cs.color };
+  });
+  assert.notEqual(resumeBtnStyle.bg, resumeBtnStyle.color, 'Download resume button text must contrast with its background');
+  assert.equal(resumeBtnStyle.color, 'rgb(255, 251, 244)', 'Download resume button text must be visible paper color');
   await page.waitForTimeout(1700);
   const out = process.env.SCREENSHOT_DIR || path.join(tmpdir(), 'portfolio-design');
   await mkdir(out, { recursive: true });

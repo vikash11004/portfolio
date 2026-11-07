@@ -127,6 +127,39 @@ try {
   await page.locator('.workspace-section-select').selectOption('education');
   await page.evaluate(() => renderEducationItems([]));
   assert.equal(await page.locator('[data-collection="education"] .collection-empty').isVisible(), true);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.locator('[data-tab="projectsTab"]').click();
+  const workingSwitch = page.getByRole('switch', { name: 'Working', exact: true });
+  await workingSwitch.check();
+  assert.equal(await workingSwitch.isChecked(), true);
+  await page.evaluate(() => document.querySelector('#projectForm').reset());
+  assert.equal(await workingSwitch.isChecked(), false);
+  await page.addScriptTag({ content: `
+    const firebaseReady = true;
+    const firebaseDb = {};
+    const DEFAULT_THUMBNAIL = '';
+    const projectSearchQuery = '';
+    const projectsState = [{ rowId: 'example', id: 'example', title: 'Example project', working: false, year: '2026' }];
+    function isOwnerLoggedIn() { return true; }
+    async function updateProjectField(id, patch) { Object.assign(projectsState.find(p => p.rowId === id), patch); renderAdminProjectsList(); return true; }
+    ${block('async function handleAdminListAction(', 'function initAdminTabs()')}
+    renderAdminProjectsList();
+    $('#projectRowId').value = 'example';
+  ` });
+  const workingButton = page.locator('#adminProjectList [data-action="working"]');
+  await workingButton.click();
+  assert.equal(await workingButton.getAttribute('aria-pressed'), 'true');
+  assert.equal(await workingSwitch.isChecked(), true);
+  assert.equal(await page.locator('#adminProjectList .project-working-badge').innerText(), 'Working');
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    await page.locator('#adminProjectList').screenshot({ path: path.join(shots, `working-${width}.png`) });
+  }
+  await workingButton.click();
+  assert.equal(await workingButton.getAttribute('aria-pressed'), 'false');
+  assert.equal(await workingSwitch.isChecked(), false);
+  assert.equal(await page.locator('#adminProjectList .project-working-badge').count(), 0);
   assert.deepEqual(errors, []);
   console.log(`Passed: section isolation, preserved controls/drafts, ordering, category moves, featured state, add/remove, hidden-field validation, empty states and four responsive widths. Screenshots: ${shots}`);
 } finally {

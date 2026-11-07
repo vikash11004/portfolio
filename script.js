@@ -832,6 +832,7 @@ function mapDbProjectToViewModel(row) {
     liveUrl: row.live_url || row.liveUrl || null,
     githubUrl: row.github_url || row.githubUrl || null,
     featured: !!row.featured,
+    working: row.working === true,
     sortOrder: row.sort_order || row.sortOrder || 0
   };
 }
@@ -1264,6 +1265,7 @@ function createProjectCard(project) {
       </div>
       <div class="project-card__content">
         <div class="project-card__category">${metaText}</div>
+        ${project.working ? '<span class="project-working-badge" title="Work in progress">Working</span>' : ''}
         <div class="project-card__title">${project.title}</div>
         <div class="project-card__desc">${cardDesc}</div>
       </div>
@@ -1518,6 +1520,7 @@ async function populateProjectDetail(project) {
   const requestId = ++projectDescriptionRequestId;
 
   $('#detailTitle').textContent = project.title;
+  $('#detailWorking').hidden = project.working !== true;
 
   // Meta
   $('#detailMeta').innerHTML = `

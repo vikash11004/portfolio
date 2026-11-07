@@ -1789,6 +1789,7 @@ function mapProjectToViewModel(docId, row) {
     liveUrl: row.live_url || row.liveUrl || null,
     githubUrl: row.github_url || row.githubUrl || null,
     featured: !!row.featured,
+    working: row.working === true,
     sortOrder: row.sort_order || row.sortOrder || 0
   };
 }
@@ -1864,6 +1865,7 @@ function fillProjectForm(project) {
   ($('#projectGithubUrl') || {}).value = project.githubUrl || '';
   ($('#projectSortOrder') || {}).value = Number.isFinite(project.sortOrder) ? project.sortOrder : 0;
   ($('#projectFeatured') || {}).value = project.featured ? 'true' : 'false';
+  ($('#projectWorking') || {}).checked = project.working === true;
   ($('#projectTech') || {}).value = Array.isArray(project.tech) ? project.tech.join(', ') : '';
   ($('#projectShortDescription') || {}).value = project.shortDescription || '';
   ($('#projectDescription') || {}).value = project.description || '';
@@ -1902,6 +1904,7 @@ function getProjectPayloadFromForm() {
     live_url: liveUrl && liveUrl.trim() ? liveUrl.trim() : null,
     github_url: githubUrl && githubUrl.trim() ? githubUrl.trim() : null,
     featured,
+    working: $('#projectWorking')?.checked === true,
     sort_order: Number.isFinite(sortOrder) ? sortOrder : 0,
     updated_at: new Date().toISOString()
   };
@@ -1944,6 +1947,7 @@ async function ensureSeedProjects() {
         live_url: p.live_url || p.liveUrl || null,
         github_url: p.github_url || p.githubUrl || null,
         featured: !!p.featured,
+        working: p.working === true,
         sort_order: Number.isFinite(p.sort_order) ? p.sort_order : (Number.isFinite(p.sortOrder) ? p.sortOrder : 0),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -1961,7 +1965,7 @@ async function ensureSeedProjects() {
 }
 
 async function updateProjectField(rowId, patch) {
-  if (!rowId || !firebaseDb) return;
+  if (!rowId || !firebaseDb) return false;
 
   try {
     await firebaseDb.collection('projects').doc(rowId).set({
@@ -1969,8 +1973,10 @@ async function updateProjectField(rowId, patch) {
       updated_at: new Date().toISOString()
     }, { merge: true });
     await refreshProjects();
+    return true;
   } catch (error) {
     setFormMessage(error.message || 'Unable to update project.', true);
+    return false;
   }
 }
 
@@ -2112,6 +2118,24 @@ async function handleAdminListAction(event) {
     return;
   }
 
+  if (action === 'working') {
+    const button = event.currentTarget;
+    if (button.disabled) return;
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+    try {
+      const working = !project.working;
+      const saved = await updateProjectField(project.rowId, { working });
+      if (saved && $('#projectRowId')?.value === project.rowId) {
+        $('#projectWorking').checked = working;
+      }
+    } finally {
+      button.disabled = false;
+      button.removeAttribute('aria-busy');
+    }
+    return;
+  }
+
   if (action === 'delete') {
     const ok = window.confirm(`Delete "${project.title}"? This cannot be undone.`);
     if (!ok) return;
@@ -2185,12 +2209,14 @@ function renderAdminProjectsList() {
             <div class="admin-project-item__title-row">
               <h3 title="${escapeHtml(project.title)}">${escapeHtml(project.title)}</h3>
               ${project.featured ? '<span class="admin-project-item__featured-pill">★ Featured</span>' : ''}
+              ${project.working ? '<span class="project-working-badge">Working</span>' : ''}
             </div>
             <p>${escapeHtml(project.categoryLabel || 'General')} · ${escapeHtml(project.year || 'N/A')}</p>
           </div>
         </div>
         <div class="admin-project-item__actions">
           <button type="button" class="admin-btn admin-btn--dark admin-btn--sm" data-action="edit" data-id="${project.id}" title="Edit project details">✏️ Edit</button>
+          <button type="button" class="admin-btn admin-btn--outline admin-btn--sm project-working-action" data-action="working" data-id="${project.id}" aria-pressed="${project.working === true}" title="${project.working ? 'Remove working status' : 'Mark as work in progress'}">Working</button>
           <button type="button" class="admin-btn admin-btn--feature admin-btn--sm ${project.featured ? 'is-featured' : ''}" data-action="feature" data-id="${project.id}" title="${project.featured ? 'Remove from landing page' : 'Feature on landing page'}">${project.featured ? '★ Featured' : '☆ Feature'}</button>
           <button type="button" class="admin-btn admin-btn--danger admin-btn--sm" data-action="delete" data-id="${project.id}" title="Delete project">🗑️</button>
         </div>

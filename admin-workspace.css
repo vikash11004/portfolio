@@ -1,4 +1,7 @@
 /* Operational editing workspace, scoped away from the sign-in page. */
+.admin-page .project-working-toggle { flex-direction: row; align-items: center; gap: 12px; align-self: end; min-height: 45px; }
+.project-working-toggle input { accent-color: #28644d; }
+.project-working-action[aria-pressed='true'] { background: #dceee4; border-color: #28644d; color: #1b4b38 !important; }
 .admin-topbar { background: #fff; min-height: 72px; }
 .admin-topbar__tag { letter-spacing: 0; }
 .admin-tabs-nav { top: 72px; }

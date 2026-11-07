@@ -607,6 +607,29 @@ ol {
   overflow: hidden;
 }
 
+.project-working-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border: 1px solid #b7d8c4;
+  border-radius: 4px;
+  background: #e8f3ec;
+  color: #215238;
+  font: 600 12px/1.4 var(--font-body);
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.project-working-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.project-working-badge[hidden] { display: none; }
+.project-card__content .project-working-badge { margin-bottom: 10px; }
+
 .project-card__content {
   padding: 1.5rem;
 }

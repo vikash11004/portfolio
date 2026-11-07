@@ -3,7 +3,7 @@
    ============================================ */
 
 /* --- Google Fonts --- */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+/* Font faces are self-hosted in visual-system.css. */
 
 /* --- Design Tokens --- */
 :root {

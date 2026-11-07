@@ -1,0 +1,42 @@
+/* Shared palette and locally hosted Fontshare typefaces. See assets/fonts/Fontshare.md. */
+@font-face { font-family: 'Cabinet Grotesk'; src: url('assets/fonts/cabinet-grotesk-regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Cabinet Grotesk'; src: url('assets/fonts/cabinet-grotesk-medium.woff2') format('woff2'); font-weight: 500 600; font-display: swap; }
+@font-face { font-family: 'Cabinet Grotesk'; src: url('assets/fonts/cabinet-grotesk-bold.woff2') format('woff2'); font-weight: 700 800; font-display: swap; }
+@font-face { font-family: 'Stardom'; src: url('assets/fonts/stardom-regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+:root {
+  --accent: #11120d;
+  --accent-strong: #11120d;
+  --highlight: #d8cfbc;
+  --paper: #fffbf4;
+  --ink: #11120d;
+  --muted: #565449;
+  --line: #d8cfbc;
+  --charcoal: var(--ink);
+  --black: #11120d;
+  --ivory: var(--paper);
+  --light-gray: #d8cfbc;
+  --dark-gray: var(--muted);
+  --orange: var(--accent);
+  --orange-hover: #565449;
+  --orange-dark: var(--accent-strong);
+  --border-light: 1px solid var(--line);
+  --border-dark: 1px solid #d8cfbc55;
+  --font-body: 'Cabinet Grotesk', Arial, sans-serif;
+  --font-display: 'Cabinet Grotesk', Arial, sans-serif;
+  --font-editorial: 'Stardom', Georgia, serif;
+  --font-mono: 'Cabinet Grotesk', Arial, sans-serif;
+  --h1-size: 88px;
+  --h2-size: 60px;
+  --h3-size: 26px;
+  --body-size: 17px;
+  --small-size: 14px;
+  --xs-size: 12px;
+}
+body { color: var(--ink); background: var(--paper); }
+body *, body *::before, body *::after { letter-spacing: 0 !important; }
+::selection { background: var(--highlight); color: var(--ink); }
+:focus-visible { outline: 2px solid var(--muted); outline-offset: 5px; }
+.project-working-badge { background: var(--highlight); border-color: var(--muted); color: var(--ink); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

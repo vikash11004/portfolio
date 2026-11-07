@@ -1507,6 +1507,7 @@ function createEducationItemCard(item = {}, index = 0) {
       </label>
     </div>
     <div class="admin-exp-order">
+      <label class="milestone-featured"><input type="checkbox" class="exp-featured-input" ${item.featured === true ? 'checked' : ''}> Featured on home page</label>
       <button type="button" class="admin-btn admin-btn--outline exp-up" aria-label="Move milestone up">&uarr;</button>
       <button type="button" class="admin-btn admin-btn--outline exp-down" aria-label="Move milestone down">&darr;</button>
     </div>
@@ -1558,7 +1559,8 @@ function getEducationItemsFromDOM() {
       const kind = card.querySelector('.exp-kind-input').value;
       const certificateUrl = card.querySelector('.exp-certificate-input').value.trim();
       if (certificateUrl && !/^https?:\/\//i.test(certificateUrl)) throw new Error('Certificate links must start with https:// or http://.');
-      items.push({ year, title, detail, kind, certificateUrl });
+      const featured = card.querySelector('.exp-featured-input').checked;
+      items.push({ year, title, detail, kind, certificateUrl, featured });
     }
   });
   return items;
@@ -2269,8 +2271,9 @@ function fillSiteContentForm(content) {
   ($('#heroScrollCueText') || {}).value = safe.hero.scrollCueText || '';
 
   ($('#aboutSectionLabelInput') || {}).value = safe.about.sectionLabel || '';
-  ($('#aboutHeadingLine1Input') || {}).value = safe.about.learningTitle || 'Education & Certifications';
-  ($('#aboutHeadingLine2Input') || {}).value = safe.about.careerTitle || 'Experience & Achievements';
+  const headings = window.PortfolioMilestones.headings(safe.about);
+  ($('#aboutHeadingLine1Input') || {}).value = headings.learning;
+  ($('#aboutHeadingLine2Input') || {}).value = headings.career;
   $('#careerSectionLabelInput').value = safe.about.careerLabel || 'Professional Journey';
   ($('#aboutBioInput') || {}).value = safe.about.bio || '';
 

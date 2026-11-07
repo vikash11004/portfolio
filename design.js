@@ -14,7 +14,7 @@
     cursorFrame = 0;
   };
   document.addEventListener('pointermove', event => {
-    if (!cursor || !finePointer.matches || reducedMotion.matches || event.pointerType === 'touch' || event.target.closest('input, textarea, select, [contenteditable], :disabled')) {
+    if (!cursor || !cursor.querySelector('img')?.naturalWidth || !finePointer.matches || reducedMotion.matches || event.pointerType === 'touch' || event.target.closest('input, textarea, select, [contenteditable], :disabled')) {
       resetCursor();
       return;
     }
@@ -22,7 +22,7 @@
     pointerY = event.clientY;
     cursor.classList.toggle('is-link', !!event.target.closest('a, button, [role="button"]'));
     if (!cursorFrame) cursorFrame = requestAnimationFrame(() => {
-      cursor.style.transform = `translate3d(${pointerX - 15}px, ${pointerY - 15}px, 0)`;
+      cursor.style.transform = `translate3d(${pointerX - 7.5}px, ${pointerY - 5.25}px, 0)`;
       document.body.classList.add('cursor-active');
       cursorFrame = 0;
     });

@@ -198,10 +198,13 @@ const pageTransition = $('#pageTransition');
 const pages = {
   home: $('#page-home'),
   projects: $('#page-projects'),
+  milestones: $('#page-milestones'),
   detail: $('#page-detail')
 };
 
 let currentPage = 'home';
+let navigationTimer = null;
+let currentMilestoneKind = 'certification';
 let currentProjectId = null;
 let projectDescriptionRequestId = 0;
 const markdownSourceCache = new Map();
@@ -288,6 +291,7 @@ async function init() {
   applySiteContent();
   setupContactForm();
   hideLoader();
+  openMilestoneRoute();
   initAiChatbot();
   await Promise.all([loadSiteContent().then(applySiteContent), loadProjects()]);
 
@@ -300,6 +304,7 @@ async function init() {
 
   // Hide loader after a short delay for effect
   triggerInitialReveals();
+  openMilestoneRoute();
 }
 
 function hideLoader() {
@@ -562,10 +567,21 @@ function renderAboutEducationItems(items) {
   Object.entries({ education: '#aboutEducationList', certification: '#certificationList', experience: '#experienceList', achievement: '#achievementList' }).forEach(([kind, selector]) => {
   const list = $(selector);
   if (!list) return;
-  const entries = safeItems.filter(item => item.kind === kind);
+  const { featured: entries, hasMore } = window.PortfolioMilestones.partition(safeItems, kind);
+  const moreLink = $(`#more-${kind}`);
+  if (moreLink) moreLink.hidden = !hasMore;
 
-  list.innerHTML = entries.map(item => `
-    <div class="education-item reveal">
+  list.innerHTML = !entries.length && hasMore ? '<p class="milestone-empty">No featured entries.</p>' : milestoneEntriesHtml(entries);
+  if (observer) {
+    list.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  }
+  });
+  renderMilestoneArchive(safeItems);
+}
+
+function milestoneEntriesHtml(entries) {
+  return entries.map(item => `
+    <div class="education-item">
       <div class="education-item__meta">
       <div class="education-item__year">${escapeHtml(item.year || '')}</div>
       </div>
@@ -576,10 +592,32 @@ function renderAboutEducationItems(items) {
     </div>
   `).join('') || '<p class="milestone-empty">No entries published yet.</p>';
 
-  if (observer) {
-    list.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => observer.observe(el));
-  }
+}
+
+function renderMilestoneArchive(items = siteContentState.about.educationItems) {
+  const list = $('#milestoneArchiveList');
+  if (!list) return;
+  const labels = { education: 'Education', experience: 'Experience', certification: 'Certifications', achievement: 'Achievements' };
+  const { all } = window.PortfolioMilestones.partition(items, currentMilestoneKind);
+  list.innerHTML = milestoneEntriesHtml(all);
+  setText('#milestoneArchiveTitle', labels[currentMilestoneKind]);
+  document.querySelectorAll('[data-archive-kind]').forEach(link => {
+    if (link.dataset.archiveKind === currentMilestoneKind) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
   });
+  if (currentPage === 'milestones') updatePageTitle('milestones');
+}
+
+function openMilestoneRoute() {
+  const match = location.hash.match(/^#milestones\/(education|experience|certification|achievement)$/);
+  if (match) {
+    currentMilestoneKind = match[1];
+    renderMilestoneArchive();
+    navigateTo('milestones');
+    window.scrollTo(0, 0);
+  } else if (currentPage === 'milestones' || location.hash === '#home') {
+    navigateTo('home');
+  }
 }
 
 function applySiteContent() {
@@ -627,8 +665,9 @@ function applySiteContent() {
   }
 
   setText('#aboutSectionLabel', content.about.sectionLabel);
-  setText('#learningHeading', content.about.learningTitle || 'Education & Certifications');
-  setText('#careerHeading', content.about.careerTitle || 'Experience & Achievements');
+  const headings = window.PortfolioMilestones.headings(content.about);
+  setText('#learningHeading', headings.learning);
+  setText('#careerHeading', headings.career);
   setText('#careerSectionLabel', content.about.careerLabel || 'Professional Journey');
   setText('#aboutBio', content.about.bio);
   setText('.wordmark', content.brand.name);
@@ -1254,6 +1293,7 @@ function populateSkillsMarquee() {
 
 // ─── Navigation / Routing ───────────────────────
 function setupNavigation() {
+  window.addEventListener('hashchange', openMilestoneRoute);
   // Nav link clicks
   document.addEventListener('click', (e) => {
     const navItem = e.target.closest('[data-nav]');
@@ -1394,17 +1434,24 @@ function updateNavbarTheme() {
 
 
 function navigateTo(page, callback) {
+  clearTimeout(navigationTimer);
+  if (page !== 'milestones' && location.hash.startsWith('#milestones/')) {
+    history.replaceState(null, '', location.pathname + location.search);
+  }
   if (page === 'admin' && !isOwnerLoggedIn()) {
     updateAdminAvailability();
     page = 'home';
   }
 
-  if (page === currentPage) return;
+  if (page === currentPage) {
+    pageTransition.classList.remove('active');
+    return;
+  }
 
   // Transition out
   pageTransition.classList.add('active');
 
-  setTimeout(() => {
+  navigationTimer = setTimeout(() => {
     // Hide all pages
     Object.values(pages).forEach(p => p.classList.remove('active'));
 
@@ -1569,6 +1616,7 @@ document.addEventListener('click', (e) => {
 
 function updatePageTitle(page) {
   const titles = {
+    milestones: `${$('#milestoneArchiveTitle')?.textContent || 'Background'} - ${siteContentState.brand.name}`,
     home: siteContentState.seo?.homeTitle || DEFAULT_SITE_CONTENT.seo.homeTitle,
     projects: siteContentState.seo?.projectsTitle || DEFAULT_SITE_CONTENT.seo.projectsTitle,
     detail: siteContentState.seo?.detailTitleTemplate?.replace('{project}', 'Project') || DEFAULT_SITE_CONTENT.seo.detailTitleTemplate.replace('{project}', 'Project'),

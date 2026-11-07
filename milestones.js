@@ -22,6 +22,16 @@ window.PortfolioMilestones = {
         if (details.length === 2) return details.map((detail, index) => ({ ...item, title: index === 0 ? 'AITAM 24-hour Hackathon' : 'V Cube 7-hour Hackathon', detail, kind: 'achievement', certificateUrl: '' }));
       }
       return [{ ...item, kind }];
-    });
+    }).map(item => ({ ...item, featured: item.featured !== false }));
+  },
+  partition(items, kind) {
+    const all = this.normalize(items).filter(item => item.kind === kind);
+    return { all, featured: all.filter(item => item.featured), hasMore: all.some(item => !item.featured) };
+  },
+  headings(about = {}) {
+    return {
+      learning: !about.learningTitle || about.learningTitle === 'Education & Certifications' ? 'Education & Experience' : about.learningTitle,
+      career: !about.careerTitle || about.careerTitle === 'Experience & Achievements' ? 'Certifications & Achievements' : about.careerTitle
+    };
   }
 };

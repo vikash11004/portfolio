@@ -1,5 +1,7 @@
 /* Owner console and sign-in: the public portfolio's editorial palette. */
 .milestone-admin-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+.milestone-featured { display: inline-flex !important; align-items: center; gap: 10px; margin-right: auto; }
+.milestone-featured input { width: 18px !important; height: 18px; accent-color: #28644d; }
 :root {
   --charcoal: #213b34;
   --black: #172c26;

@@ -1466,7 +1466,7 @@ function renderEducationItems(items) {
   const container = $('#educationItemsContainer');
   if (!container) return;
   container.innerHTML = '';
-  const list = Array.isArray(items) && items.length ? items : [];
+  const list = window.PortfolioMilestones.normalize(items);
 
   list.forEach((item, index) => {
     const card = createEducationItemCard(item, index);
@@ -1484,7 +1484,7 @@ function createEducationItemCard(item = {}, index = 0) {
     </div>
     <div class="project-form__grid">
       <label>Year / Period
-        <input type="text" class="exp-year-input" value="${escapeHtml(item.year || '')}" placeholder="e.g. 2023 — Present, Achievements, 2024" required>
+        <input type="text" class="exp-year-input" value="${escapeHtml(item.year || '')}" placeholder="Optional year or period">
       </label>
       <label>Title / Degree / Role
         <input type="text" class="exp-title-input" value="${escapeHtml(item.title || '')}" placeholder="e.g. B.Tech in CSE (Data Science), Hackathons" required>
@@ -1498,7 +1498,8 @@ function createEducationItemCard(item = {}, index = 0) {
         <select class="exp-kind-input">
           <option value="education">Education</option>
           <option value="experience">Experience</option>
-          <option value="certification">Certification / Award</option>
+          <option value="certification">Certification</option>
+          <option value="achievement">Achievement</option>
         </select>
       </label>
       <label>Title Link (optional)
@@ -1511,7 +1512,7 @@ function createEducationItemCard(item = {}, index = 0) {
     </div>
   `;
 
-  card.querySelector('.exp-kind-input').value = item.kind || (index === 0 ? 'education' : 'experience');
+  card.querySelector('.exp-kind-input').value = item.kind || 'education';
   card.querySelector('.exp-up').onclick = () => {
     if (card.previousElementSibling) card.before(card.previousElementSibling);
     renumberEducationCards();
@@ -2233,7 +2234,6 @@ function initAdminTabs() {
 }
 
 function fillSiteContentForm(content) {
-  $('#aboutShowImage').checked = content.about?.showImage === true;
   $('#heroStatementLine1').value = content.hero?.statementLine1 ?? 'Thoughtful code.';
   $('#heroStatementLine2').value = content.hero?.statementLine2 ?? 'Meaningful experiences.';
   const safe = deepMerge(DEFAULT_SITE_CONTENT, content || {});
@@ -2241,16 +2241,12 @@ function fillSiteContentForm(content) {
   // TAB 2: Photos & Assets
   ($('#heroImageUrl') || {}).value = safe.hero.imageUrl || '';
   ($('#heroImageAlt') || {}).value = safe.hero.imageAlt || '';
-  ($('#aboutImageUrl') || {}).value = safe.about.imageUrl || '';
-  ($('#aboutImageAlt') || {}).value = safe.about.imageAlt || '';
   ($('#siteLogoUrl') || {}).value = safe.brand.logoUrl || '';
   ($('#brandResumeUrl') || {}).value = safe.brand.resumeUrl || '';
   ($('#brandResumeFileName') || {}).value = safe.brand.resumeFileName || '';
 
   const heroImg = $('#heroAssetPreviewImg');
   if (heroImg) heroImg.src = safe.hero.imageUrl || 'assets/images/profile.jpeg';
-  const aboutImg = $('#aboutAssetPreviewImg');
-  if (aboutImg) aboutImg.src = safe.about.imageUrl || 'assets/images/about.jpeg';
   const logoImg = $('#logoAssetPreviewImg');
   if (logoImg) logoImg.src = safe.brand.logoUrl || 'assets/images/logo1.png';
 
@@ -2273,8 +2269,9 @@ function fillSiteContentForm(content) {
   ($('#heroScrollCueText') || {}).value = safe.hero.scrollCueText || '';
 
   ($('#aboutSectionLabelInput') || {}).value = safe.about.sectionLabel || '';
-  ($('#aboutHeadingLine1Input') || {}).value = safe.about.headingLine1 || '';
-  ($('#aboutHeadingLine2Input') || {}).value = safe.about.headingLine2 || '';
+  ($('#aboutHeadingLine1Input') || {}).value = safe.about.learningTitle || 'Education & Certifications';
+  ($('#aboutHeadingLine2Input') || {}).value = safe.about.careerTitle || 'Experience & Achievements';
+  $('#careerSectionLabelInput').value = safe.about.careerLabel || 'Professional Journey';
   ($('#aboutBioInput') || {}).value = safe.about.bio || '';
 
   // Populate dynamic milestone cards (no JSON required)
@@ -2404,8 +2401,6 @@ async function handleAssetsSave(event) {
   try {
     const heroImgVal = String((($('#heroImageUrl') || {}).value || '')).trim();
     const heroAltVal = String((($('#heroImageAlt') || {}).value || '')).trim();
-    const aboutImgVal = String((($('#aboutImageUrl') || {}).value || '')).trim();
-    const aboutAltVal = String((($('#aboutImageAlt') || {}).value || '')).trim();
     const logoUrlVal = String((($('#siteLogoUrl') || {}).value || '')).trim();
     const resumeUrlVal = String((($('#brandResumeUrl') || {}).value || '')).trim();
     const resumeFileNameVal = String((($('#brandResumeFileName') || {}).value || '')).trim();
@@ -2414,11 +2409,6 @@ async function handleAssetsSave(event) {
       hero: {
         imageUrl: heroImgVal || siteContentState.hero?.imageUrl || DEFAULT_SITE_CONTENT.hero.imageUrl,
         imageAlt: heroAltVal || siteContentState.hero?.imageAlt || DEFAULT_SITE_CONTENT.hero.imageAlt
-      },
-      about: {
-        imageUrl: aboutImgVal || siteContentState.about?.imageUrl || DEFAULT_SITE_CONTENT.about.imageUrl,
-        showImage: $('#aboutShowImage').checked,
-        imageAlt: aboutAltVal || siteContentState.about?.imageAlt || DEFAULT_SITE_CONTENT.about.imageAlt
       },
       brand: {
         logoUrl: logoUrlVal || siteContentState.brand?.logoUrl || DEFAULT_SITE_CONTENT.brand.logoUrl,
@@ -2446,8 +2436,6 @@ async function handleSiteContentSave(event) {
   try {
     const heroImgVal = String((($('#heroImageUrl') || {}).value || '')).trim();
     const heroAltVal = String((($('#heroImageAlt') || {}).value || '')).trim();
-    const aboutImgVal = String((($('#aboutImageUrl') || {}).value || '')).trim();
-    const aboutAltVal = String((($('#aboutImageAlt') || {}).value || '')).trim();
     const logoUrlVal = String((($('#siteLogoUrl') || {}).value || '')).trim();
     const resumeUrlVal = String((($('#brandResumeUrl') || {}).value || '')).trim();
     const resumeFileNameVal = String((($('#brandResumeFileName') || {}).value || '')).trim();
@@ -2468,12 +2456,11 @@ async function handleSiteContentSave(event) {
       },
       about: {
         sectionLabel: String((($('#aboutSectionLabelInput') || {}).value || '')).trim(),
-        headingLine1: String((($('#aboutHeadingLine1Input') || {}).value || '')).trim(),
-        headingLine2: String((($('#aboutHeadingLine2Input') || {}).value || '')).trim(),
+        learningTitle: String((($('#aboutHeadingLine1Input') || {}).value || '')).trim(),
+        careerTitle: String((($('#aboutHeadingLine2Input') || {}).value || '')).trim(),
+        careerLabel: $('#careerSectionLabelInput').value.trim(),
         bio: String((($('#aboutBioInput') || {}).value || '')).trim(),
-        educationItems: getEducationItemsFromDOM(),
-        imageUrl: aboutImgVal || siteContentState.about?.imageUrl || DEFAULT_SITE_CONTENT.about.imageUrl,
-        imageAlt: aboutAltVal || siteContentState.about?.imageAlt || DEFAULT_SITE_CONTENT.about.imageAlt
+        educationItems: getEducationItemsFromDOM()
       },
       projectsPreview: {
         sectionLabel: String((($('#featuredSectionLabelInput') || {}).value || '')).trim(),
@@ -2531,8 +2518,6 @@ async function handleSiteContentSave(event) {
     // Assets have their own save action; leave drafts in that tab unpublished.
     delete patch.hero.imageUrl;
     delete patch.hero.imageAlt;
-    delete patch.about.imageUrl;
-    delete patch.about.imageAlt;
     delete patch.brand;
     const updated = deepMerge(siteContentState, patch);
     await saveSiteContentToFirestore(updated);
@@ -2818,6 +2803,17 @@ function setupEvents() {
     });
   }
 
+  document.querySelectorAll('[data-add-milestone]').forEach(button => {
+    button.addEventListener('click', () => {
+      const container = $('#educationItemsContainer');
+      const card = createEducationItemCard({ kind: button.dataset.addMilestone }, container.children.length);
+      container.appendChild(card);
+      siteForm.dataset.dirty = 'true';
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      card.querySelector('.exp-title-input').focus({ preventScroll: true });
+    });
+  });
+
   if (reloadSiteBtn) {
     reloadSiteBtn.addEventListener('click', () => {
       loadSiteContent().catch((error) => {
@@ -2865,15 +2861,6 @@ function setupEvents() {
     inputSelector: '#heroImageUrl',
     previewImgSelector: '#heroAssetPreviewImg',
     kind: 'hero'
-  });
-
-  setupAssetCardDropzone({
-    dropzoneSelector: '#aboutAssetDropzone',
-    fileInputSelector: '#aboutAssetFileInput',
-    statusSelector: '#aboutAssetDropzoneStatus',
-    inputSelector: '#aboutImageUrl',
-    previewImgSelector: '#aboutAssetPreviewImg',
-    kind: 'about'
   });
 
   setupAssetCardDropzone({

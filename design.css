@@ -68,9 +68,10 @@ section { scroll-margin-top: 100px; }
 .section-label { font-size: 10px; letter-spacing: .18em; margin-bottom: 25px; }
 .section-label::before { margin-right: 14px; opacity: .65; }
 .about .section-label::before { content: '01 /'; }
-.projects-preview .section-label::before { content: '02 /'; }
-.skills .section-label::before { content: '03 /'; }
-.contact .section-label::before { content: '04 /'; }
+.experience .section-label::before { content: '02 /'; }
+.projects-preview .section-label::before { content: '03 /'; }
+.skills .section-label::before { content: '04 /'; }
+.contact .section-label::before { content: '05 /'; }
 h2 { font-weight: 500 !important; letter-spacing: -.055em !important; }
 .about__container { grid-template-columns: .9fr 1.1fr; gap: 9vw; }
 .about__image-wrapper { border: 0; border-radius: 8px; }
@@ -235,18 +236,25 @@ h2 { font-weight: 500 !important; letter-spacing: -.055em !important; }
 .hero__subtitle { font-size: 17px; }
 .hero__statement { font-size: 23px; letter-spacing: 0; }
 .hero__image-wrapper { height: min(480px, calc(100svh - 240px)); min-height: 260px; }
-.about__container { display: grid; grid-template-columns: minmax(240px, .8fr) minmax(0, 1.6fr); gap: 64px; align-items: start; }
+.about__container { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; align-items: start; }
 .about__left, .about__right { width: 100%; }
-.about__right { display: block; padding: 0; }
+.about__right { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 64px; padding: 0; }
+.experience { background: #e9efea; border-top: 1px solid #cbd6ce; }
+.milestone-column { min-width: 0; }
+.milestone-column__heading { font: 600 18px var(--font-display); letter-spacing: 0; color: #344f41; margin-bottom: 24px; }
+.milestone-column + .milestone-column { border-left: 1px solid #bdcbbf; padding-left: 48px; }
+.milestone-empty { color: #53665b; font-size: 16px; padding-block: 24px; border-top: 1px solid #bdcbbf; }
+#certificationList, #achievementList { counter-reset: credential; }
+#certificationList .education-item__title::before, #achievementList .education-item__title::before { counter-increment: credential; content: counter(credential, decimal-leading-zero) ' / '; color: #8b4730; font: 13px var(--font-mono); vertical-align: middle; }
 .about__right > .section-label { order: -3; margin: 0; }
 .about__heading { font-size: 40px; line-height: 1.18; letter-spacing: 0; margin: 20px 0 28px; font-weight: 600; }
 .about__heading br { display: block; }
 .about__heading span + span::before { content: ' '; }
-.about__bio { font-size: 17px; line-height: 1.9; margin: 0; max-width: 42ch; color: #41534a; }
+.about__bio { font-size: 17px; line-height: 1.9; margin: 0; max-width: 85ch; color: #41534a; }
 .about__image-wrapper:not([hidden]) { max-width: 360px; margin-bottom: 24px; }
 .about__image-wrapper[hidden] { display: none; }
 .about__education-list { width: 100%; display: grid; grid-template-columns: 1fr; gap: 0; margin: 0; }
-.education-item { display: grid; grid-template-columns: 125px minmax(0, 1fr); gap: 24px; padding: 32px 0; border-left: 0; border-top: 1px solid #bdcbbf; border-bottom: 0; min-width: 0; }
+.education-item { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 28px 0; border-left: 0; border-top: 1px solid #bdcbbf; border-bottom: 0; min-width: 0; }
 .education-item:first-child { border-top: 3px solid var(--charcoal); }
 .education-item__meta { padding-top: 4px; }
 .education-item__body { min-width: 0; }
@@ -267,7 +275,7 @@ h2 { font-weight: 500 !important; letter-spacing: -.055em !important; }
   .custom-cursor.is-pressed::before { transform: rotate(90deg) scale(.55); }
   .custom-cursor span { display: none !important; }
 }
-@media (max-width: 1100px) { .about__container { gap: 36px; grid-template-columns: minmax(220px, .7fr) minmax(0, 1.3fr); } .education-item { grid-template-columns: 1fr; gap: 12px; } .education-item__meta { display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; } }
+@media (max-width: 1100px) { .about__right { gap: 32px; } .milestone-column + .milestone-column { padding-left: 28px; } }
 @media (min-width: 769px) and (max-height: 800px) {
   .hero { padding-top: 120px; padding-bottom: 64px; }
   .hero__eyebrow { top: 96px; }
@@ -290,6 +298,8 @@ h2 { font-weight: 500 !important; letter-spacing: -.055em !important; }
   .hero__scroll-cue { bottom: 14px; }
   .about__education-list { grid-template-columns: 1fr; }
   .about__container { grid-template-columns: 1fr; gap: 32px; }
+  .about__right { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .milestone-column + .milestone-column { border-left: 0; padding-left: 0; }
   .about__bio { max-width: 65ch; }
   .about__heading { font-size: 32px; }
   .education-item__title { font-size: 22px; }

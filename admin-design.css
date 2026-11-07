@@ -1,4 +1,5 @@
 /* Owner console and sign-in: the public portfolio's editorial palette. */
+.milestone-admin-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
 :root {
   --charcoal: #213b34;
   --black: #172c26;

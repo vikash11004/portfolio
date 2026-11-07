@@ -555,29 +555,31 @@ function setAllText(sel, value) {
 }
 
 function renderAboutEducationItems(items) {
-  const list = $('#aboutEducationList');
-  if (!list) return;
-
-  const safeItems = Array.isArray(items)
+  const safeItems = window.PortfolioMilestones.normalize(Array.isArray(items)
     ? items
-    : DEFAULT_SITE_CONTENT.about.educationItems;
+    : DEFAULT_SITE_CONTENT.about.educationItems);
 
-  list.innerHTML = safeItems.map(item => `
+  Object.entries({ education: '#aboutEducationList', certification: '#certificationList', experience: '#experienceList', achievement: '#achievementList' }).forEach(([kind, selector]) => {
+  const list = $(selector);
+  if (!list) return;
+  const entries = safeItems.filter(item => item.kind === kind);
+
+  list.innerHTML = entries.map(item => `
     <div class="education-item reveal">
       <div class="education-item__meta">
       <div class="education-item__year">${escapeHtml(item.year || '')}</div>
-      <div class="education-item__kind">${escapeHtml(({ education: 'Education', experience: 'Experience', certification: 'Certification / Award' })[item.kind] || '')}</div>
       </div>
       <div class="education-item__body">
-      <h3 class="education-item__title">${/^https?:\/\//i.test(item.certificateUrl || '') ? `<a href="${escapeHtml(item.certificateUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title || '')}</a>` : escapeHtml(item.title || '')}</h3>
+      <h4 class="education-item__title">${/^https?:\/\//i.test(item.certificateUrl || '') ? `<a href="${escapeHtml(item.certificateUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title || '')}</a>` : escapeHtml(item.title || '')}</h4>
       <div class="education-item__detail">${window.DOMPurify ? window.DOMPurify.sanitize(item.detail || '') : escapeHtml(item.detail || '')}</div>
       </div>
     </div>
-  `).join('');
+  `).join('') || '<p class="milestone-empty">No entries published yet.</p>';
 
   if (observer) {
     list.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => observer.observe(el));
   }
+  });
 }
 
 function applySiteContent() {
@@ -625,14 +627,11 @@ function applySiteContent() {
   }
 
   setText('#aboutSectionLabel', content.about.sectionLabel);
-  setText('#aboutHeadingLine1', content.about.headingLine1);
-  setText('#aboutHeadingLine2', content.about.headingLine2);
+  setText('#learningHeading', content.about.learningTitle || 'Education & Certifications');
+  setText('#careerHeading', content.about.careerTitle || 'Experience & Achievements');
+  setText('#careerSectionLabel', content.about.careerLabel || 'Professional Journey');
   setText('#aboutBio', content.about.bio);
-  const aboutPhoto = document.querySelector('.about__image-wrapper');
-  if (aboutPhoto) aboutPhoto.hidden = content.about.showImage !== true;
   setText('.wordmark', content.brand.name);
-  setAttr('#aboutImage', 'src', content.about.imageUrl);
-  setAttr('#aboutImage', 'alt', content.about.imageAlt);
   renderAboutEducationItems(content.about.educationItems);
 
   setText('#featuredSectionLabel', content.projectsPreview.sectionLabel);

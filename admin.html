@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#f5f3eb">
   <title>Admin — Vikash Thyadi</title>
   <link rel="stylesheet" href="styles.css?v=11">
-  <link rel="stylesheet" href="admin-design.css?v=1">
+  <link rel="stylesheet" href="admin-design.css?v=2">
   <link rel="stylesheet" href="admin-polish.css?v=1">
 </head>
 
@@ -277,40 +277,6 @@
                   </label>
                 </div>
 
-                <!-- About Photo Card -->
-                <div class="admin-asset-card">
-                  <div class="admin-asset-card__header">
-                    <h3 class="admin-asset-card__title">About Working Photo</h3>
-                    <span class="admin-asset-card__badge">About Section</span>
-                  </div>
-                  <p class="admin-asset-card__desc">Photo shown in the About section (e.g. working at desk, workspace).
-                  </p>
-                  <div class="admin-asset-preview-box" id="aboutAssetPreviewBox">
-                    <img id="aboutAssetPreviewImg" src="assets/images/about.jpeg" alt="About photo preview">
-                  </div>
-                  <div class="project-dropzone" id="aboutAssetDropzone" tabindex="0" role="button"
-                    aria-label="Upload about photo">
-                    <input type="file" id="aboutAssetFileInput" accept="image/*" class="project-dropzone__file-input"
-                      tabindex="-1">
-                    <div class="project-dropzone__content">
-                      <span class="project-dropzone__icon">📷</span>
-                      <span class="project-dropzone__text">Drop new photo here or <strong>browse</strong></span>
-                      <span class="project-dropzone__subtext">JPG, PNG, WEBP</span>
-                    </div>
-                    <div class="project-dropzone__status" id="aboutAssetDropzoneStatus"></div>
-                    <div class="project-dropzone__progress-bar" style="display:none;">
-                      <div class="project-dropzone__progress-fill"></div>
-                    </div>
-                  </div>
-                  <label>Image URL
-                    <input type="text" id="aboutImageUrl" placeholder="assets/images/about.jpeg">
-                  </label>
-                  <label>Alt Description
-                    <input type="text" id="aboutImageAlt" placeholder="Vikash working at desk">
-                  </label>
-                  <label><input type="checkbox" id="aboutShowImage"> Show optional background photo</label>
-                </div>
-
                 <!-- Site Logo Card -->
                 <div class="admin-asset-card">
                   <div class="admin-asset-card__header">
@@ -444,37 +410,37 @@
               <!-- About Section -->
               <div class="admin-section-divider">
                 <div>
-                  <h3>About Section</h3>
-                  <p>Your personal story, background, and philosophy.
-                    <em>(To update About working photo, visit <a href="#" data-admin-tab-link="assetsTab"
-                        style="color: var(--accent); font-weight: 600; text-decoration: underline;">Photos & Assets
-                        ↗</a>)</em>
-                  </p>
+                  <h3>Background &amp; Professional Journey</h3>
                 </div>
               </div>
               <div class="project-form__grid">
                 <label>Section Label
                   <input type="text" id="aboutSectionLabelInput" required>
                 </label>
-                <label>Heading Line 1
+                <label>Education &amp; Certifications Heading
                   <input type="text" id="aboutHeadingLine1Input" required>
                 </label>
-                <label>Heading Line 2
+                <label>Experience &amp; Achievements Heading
                   <input type="text" id="aboutHeadingLine2Input" required>
                 </label>
               </div>
-              <label>About Bio
+              <label>Experience Section Label<input type="text" id="careerSectionLabelInput" required></label>
+              <label>Background Introduction
                 <textarea id="aboutBioInput" rows="4" required></textarea>
               </label>
 
               <!-- Education & Experience (INTERACTIVE CARDS) -->
               <div class="admin-section-divider">
                 <div>
-                  <h3>Education &amp; Achievements</h3>
-                  <p>Interactive milestone cards — click "+ Add Milestone" to add one, or delete with the red button. No
-                    JSON needed!</p>
+                  <h3>Education, Certifications, Experience &amp; Achievements</h3>
                 </div>
                 <button type="button" class="admin-btn admin-btn--primary admin-btn--sm" id="addEducationItemBtn">+ Add Milestone</button>
+              </div>
+              <div class="milestone-admin-actions">
+                <button type="button" class="admin-btn admin-btn--outline" data-add-milestone="education">+ Education</button>
+                <button type="button" class="admin-btn admin-btn--outline" data-add-milestone="certification">+ Certification</button>
+                <button type="button" class="admin-btn admin-btn--outline" data-add-milestone="experience">+ Experience</button>
+                <button type="button" class="admin-btn admin-btn--outline" data-add-milestone="achievement">+ Achievement</button>
               </div>
               <div class="admin-exp-container" id="educationItemsContainer">
                 <!-- Dynamically populated by admin.js -->
@@ -889,7 +855,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
-  <script src="admin.js?v=20"></script>
+  <script src="milestones.js?v=1"></script>
+  <script src="admin.js?v=21"></script>
 </body>
 
 </html>
